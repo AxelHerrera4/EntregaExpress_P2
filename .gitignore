@@ -1,0 +1,29 @@
+# Root .gitignore for EntregaExpress_P2
+
+# Maven build output
+**/target/
+
+# Compiled class files
+*.class
+
+# Logs and temp files
+*.log
+*.tmp
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDEs
+.idea/
+.vscode/
+*.iml
+
+# Maven wrapper jars (if generated locally)
+.mvn/wrapper/maven-wrapper.jar
+
+# Docker
+docker-compose.override.yml
+
+# Other
+.env
