@@ -1,0 +1,16 @@
+version: '3.8'
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: billing_db
+    environment:
+      POSTGRES_DB: db_billing_users
+      POSTGRES_USER: billing
+      POSTGRES_PASSWORD: qwerty123
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_users_data_new:/var/lib/postgresql/data
+
+volumes:
+  postgres_users_data_new:
