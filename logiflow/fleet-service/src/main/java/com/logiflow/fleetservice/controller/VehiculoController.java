@@ -1,0 +1,187 @@
+package com.logiflow.fleetservice.controller;
+
+
+import com.logiflow.fleetservice.dto.request.VehiculoCreateRequest;
+import com.logiflow.fleetservice.dto.request.VehiculoUpdateRequest;
+import com.logiflow.fleetservice.dto.response.VehiculoResponse;
+import com.logiflow.fleetservice.model.entity.enums.TipoVehiculo;
+import com.logiflow.fleetservice.service.VehiculoServiceImpl;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+/**
+ * Controlador REST para gestión de vehículos de la flota
+ * Implementa operaciones CRUD básicas según Fase 1
+ */
+@RestController
+@RequestMapping("/vehiculos")
+@RequiredArgsConstructor
+@Slf4j
+@Tag(name = "Vehículos", description = "API para gestión de vehículos de la flota")
+@SecurityRequirement(name = "Bearer Authentication")
+public class VehiculoController {
+
+  private final VehiculoServiceImpl vehiculoService;
+
+  @PostMapping
+  @PreAuthorize("hasAnyRole('SUPERVISOR', 'GERENTE', 'ADMINISTRADOR')")
+  @Operation(summary = "Crear un nuevo vehículo",
+          description = "Crea un nuevo vehículo en la flota usando Factory Pattern")
+  @ApiResponses(value = {
+          @ApiResponse(responseCode = "201", description = "Vehículo creado exitosamente"),
+          @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos"),
+          @ApiResponse(responseCode = "409", description = "Ya existe un vehículo con esa placa"),
+          @ApiResponse(responseCode = "401", description = "No autenticado"),
+          @ApiResponse(responseCode = "403", description = "Sin permisos suficientes")
+  })
+  public ResponseEntity<VehiculoResponse> crearVehiculo(
+          @Valid @RequestBody VehiculoCreateRequest request
+  ) {
+    log.info("POST /vehiculos - Creando vehículo");
+    VehiculoResponse response = vehiculoService.crearVehiculo(request);
+    return ResponseEntity.status(HttpStatus.CREATED).body(response);
+  }
+
+  @GetMapping("/{id}")
+  @PreAuthorize("hasAnyRole('REPARTIDOR', 'SUPERVISOR', 'GERENTE', 'ADMINISTRADOR')")
+  @Operation(summary = "Obtener vehículo por ID",
+          description = "Consulta los detalles de un vehículo específico")
+  @ApiResponses(value = {
+          @ApiResponse(responseCode = "200", description = "Vehículo encontrado"),
+          @ApiResponse(responseCode = "404", description = "Vehículo no encontrado"),
+          @ApiResponse(responseCode = "401", description = "No autenticado")
+  })
+  public ResponseEntity<VehiculoResponse> obtenerVehiculoPorId(
+          @Parameter(description = "ID del vehículo", required = true)
+          @PathVariable Long id
+  ) {
+    log.info("GET /vehiculos/{} - Consultando vehículo", id);
+    VehiculoResponse response = vehiculoService.obtenerVehiculoPorId(id);
+    return ResponseEntity.ok(response);
+  }
+
+  @GetMapping
+  @PreAuthorize("hasAnyRole('SUPERVISOR', 'GERENTE', 'ADMINISTRADOR')")
+  @Operation(summary = "Listar todos los vehículos",
+          description = "Obtiene la lista completa de vehículos de la flota")
+  @ApiResponse(responseCode = "200", description = "Lista de vehículos obtenida")
+  public ResponseEntity<List<VehiculoResponse>> listarVehiculos() {
+    log.info("GET /vehiculos - Listando todos los vehículos");
+    List<VehiculoResponse> vehiculos = vehiculoService.obtenerTodosLosVehiculos();
+    return ResponseEntity.ok(vehiculos);
+  }
+
+  @GetMapping("/tipo/{tipo}")
+  @PreAuthorize("hasAnyRole('SUPERVISOR', 'GERENTE', 'ADMINISTRADOR')")
+  @Operation(summary = "Listar vehículos por tipo",
+          description = "Filtra vehículos según su tipo (MOTORIZADO, VEHICULO_LIVIANO, CAMION)")
+  @ApiResponse(responseCode = "200", description = "Lista filtrada obtenida")
+  public ResponseEntity<List<VehiculoResponse>> listarVehiculosPorTipo(
+          @Parameter(description = "Tipo de vehículo", required = true)
+          @PathVariable TipoVehiculo tipo
+  ) {
+    log.info("GET /vehiculos/tipo/{} - Filtrando por tipo", tipo);
+    List<VehiculoResponse> vehiculos = vehiculoService.obtenerVehiculosPorTipo(tipo);
+    return ResponseEntity.ok(vehiculos);
+  }
+
+  @GetMapping("/activos")
+  @PreAuthorize("hasAnyRole('SUPERVISOR', 'GERENTE', 'ADMINISTRADOR')")
+  @Operation(summary = "Listar vehículos activos",
+          description = "Obtiene solo los vehículos que están activos")
+  @ApiResponse(responseCode = "200", description = "Lista de vehículos activos")
+  public ResponseEntity<List<VehiculoResponse>> listarVehiculosActivos() {
+    log.info("GET /vehiculos/activos - Listando vehículos activos");
+    List<VehiculoResponse> vehiculos = vehiculoService.obtenerVehiculosActivos();
+    return ResponseEntity.ok(vehiculos);
+  }
+
+  @GetMapping("/disponibles")
+  @PreAuthorize("hasAnyRole('SUPERVISOR', 'GERENTE', 'ADMINISTRADOR')")
+  @Operation(summary = "Listar vehículos disponibles",
+          description = "Obtiene vehículos sin asignar a ningún repartidor")
+  @ApiResponse(responseCode = "200", description = "Lista de vehículos disponibles")
+  public ResponseEntity<List<VehiculoResponse>> listarVehiculosDisponibles() {
+    log.info("GET /vehiculos/disponibles - Listando vehículos sin asignar");
+    List<VehiculoResponse> vehiculos = vehiculoService.obtenerVehiculosDisponibles();
+    return ResponseEntity.ok(vehiculos);
+  }
+
+  @PatchMapping("/{id}")
+  @PreAuthorize("hasAnyRole('SUPERVISOR', 'GERENTE', 'ADMINISTRADOR')")
+  @Operation(summary = "Actualizar vehículo parcialmente",
+          description = "Actualiza campos específicos de un vehículo (PATCH)")
+  @ApiResponses(value = {
+          @ApiResponse(responseCode = "200", description = "Vehículo actualizado"),
+          @ApiResponse(responseCode = "404", description = "Vehículo no encontrado"),
+          @ApiResponse(responseCode = "400", description = "Datos inválidos")
+  })
+  public ResponseEntity<VehiculoResponse> actualizarVehiculo(
+          @Parameter(description = "ID del vehículo", required = true)
+          @PathVariable Long id,
+          @Valid @RequestBody VehiculoUpdateRequest request
+  ) {
+    log.info("PATCH /vehiculos/{} - Actualizando vehículo", id);
+    VehiculoResponse response = vehiculoService.actualizarVehiculo(id, request);
+    return ResponseEntity.ok(response);
+  }
+
+  @PatchMapping("/{id}/estado")
+  @PreAuthorize("hasAnyRole('SUPERVISOR', 'GERENTE', 'ADMINISTRADOR')")
+  @Operation(summary = "Cambiar estado del vehículo",
+          description = "Activa o desactiva un vehículo")
+  @ApiResponse(responseCode = "200", description = "Estado actualizado")
+  public ResponseEntity<VehiculoResponse> cambiarEstado(
+          @PathVariable Long id,
+          @RequestParam Boolean activo
+  ) {
+    log.info("PATCH /vehiculos/{}/estado - Cambiando a: {}", id, activo);
+    VehiculoResponse response = vehiculoService.actualizarEstadoVehiculo(id, activo);
+    return ResponseEntity.ok(response);
+  }
+
+  @DeleteMapping("/{id}")
+  @PreAuthorize("hasAnyRole('GERENTE', 'ADMINISTRADOR')")
+  @Operation(summary = "Eliminar vehículo",
+          description = "Eliminación lógica del vehículo (marca como inactivo)")
+  @ApiResponses(value = {
+          @ApiResponse(responseCode = "204", description = "Vehículo eliminado"),
+          @ApiResponse(responseCode = "404", description = "Vehículo no encontrado")
+  })
+  public ResponseEntity<Void> eliminarVehiculo(
+          @Parameter(description = "ID del vehículo", required = true)
+          @PathVariable Long id
+  ) {
+    log.info("DELETE /vehiculos/{} - Eliminando vehículo", id);
+    vehiculoService.eliminarVehiculo(id);
+    return ResponseEntity.noContent().build();
+  }
+
+  @PostMapping("/{id}/ubicacion")
+  @PreAuthorize("hasAnyRole('REPARTIDOR', 'SUPERVISOR', 'ADMINISTRADOR')")
+  @Operation(summary = "Registrar ubicación GPS",
+          description = "Actualiza la ubicación GPS del vehículo (implementa IRegistrableGPS)")
+  @ApiResponse(responseCode = "200", description = "Ubicación registrada")
+  public ResponseEntity<Void> registrarUbicacion(
+          @PathVariable Long id,
+          @RequestParam Double latitud,
+          @RequestParam Double longitud
+  ) {
+    log.info("POST /vehiculos/{}/ubicacion - Registrando GPS", id);
+    vehiculoService.registrarUbicacionGPS(id, latitud, longitud);
+    return ResponseEntity.ok().build();
+  }
+}
