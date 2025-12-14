@@ -1,4 +1,4 @@
-package com.logiflow.fleetservice.dto;
+package com.logiflow.fleetservice.dto.request;
 
 import com.logiflow.fleetservice.model.entity.enums.TipoVehiculo;
 import jakarta.validation.constraints.*;
