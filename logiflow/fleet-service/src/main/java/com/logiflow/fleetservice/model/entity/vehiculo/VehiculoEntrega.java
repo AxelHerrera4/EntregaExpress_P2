@@ -1,4 +1,4 @@
-package com.logiflow.fleetservice.model.entity;
+package com.logiflow.fleetservice.model.entity.vehiculo;
 
 import com.logiflow.fleetservice.model.entity.enums.TipoVehiculo;
 import com.logiflow.fleetservice.model.interfaces.IRegistrableGPS;

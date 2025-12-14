@@ -1,4 +1,4 @@
-package com.logiflow.fleetservice.model.entity;
+package com.logiflow.fleetservice.model.entity.vehiculo;
 
 
 import jakarta.persistence.DiscriminatorValue;
