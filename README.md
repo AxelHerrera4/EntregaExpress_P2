@@ -45,6 +45,19 @@ Plataforma de gestión logística basada en microservicios con **Spring Boot** p
 
 ---
 
+## 🧪 Sesiones de Tests
+
+ **Documentación completa de todos los tests y casos de prueba:**
+
+### ➡️ [Ver Sesiones de Tests - TESTS_SESSION.md](TESTS_SESSION.md)
+
+Consulta la documentación de tests para:
+- ✅ Análisis de cobertura detallado
+- 📊 Explicación de cada componente probado
+- 🎯 Tipos de tests implementados
+
+---
+
 ## 🏢 Microservicios
 
 <details>
@@ -231,44 +244,18 @@ Realiza una petición **POST** a `/api/tarifas-base`:
 curl -X POST http://localhost:8082/api/tarifas-base \
   -H "Content-Type: application/json" \
   -d '{
-    "tipoEntrega": "URBANA",
-    "tarifaBase": 5.00,
-    "descripcion": "Tarifa estándar para entregas urbanas",
-    "activa": true
-  }'
+  "tipoEntrega": "Multinacional",
+  "tarifaBase": 5
+      }'
 ```
 
 **Respuesta exitosa (201 Created):**
 ```json
 {
-  "id": "550e8400-e29b-41d4-a716-446655440000",
-  "tipoEntrega": "URBANA",
-  "tarifaBase": 5.00,
-  "descripcion": "Tarifa estándar para entregas urbanas",
-  "activa": true,
-  "fechaCreacion": "2025-12-13T10:30:00"
+    "id": "8d7f67cd-573a-4625-a743-00f7cd15cd6b",
+    "tipoEntrega": "MULTINACIONAL",
+    "tarifaBase": 5
 }
-```
-
-**Crear tarifas para otros tipos:**
-```bash
-# Tarifa Intermunicipal
-curl -X POST http://localhost:8082/api/tarifas-base \
-  -H "Content-Type: application/json" \
-  -d '{
-    "tipoEntrega": "INTERMUNICIPAL",
-    "tarifaBase": 8.00,
-    "descripcion": "Tarifa para entregas entre municipios"
-  }'
-
-# Tarifa Nacional
-curl -X POST http://localhost:8082/api/tarifas-base \
-  -H "Content-Type: application/json" \
-  -d '{
-    "tipoEntrega": "NACIONAL",
-    "tarifaBase": 10.00,
-    "descripcion": "Tarifa para entregas nacionales"
-  }'
 ```
 
 </details>
@@ -282,11 +269,10 @@ Realiza una petición **POST** a `/api/facturas`:
 curl -X POST http://localhost:8082/api/facturas \
   -H "Content-Type: application/json" \
   -d '{
-    "pedidoId": 10110,
-    "tipoEntrega": "URBANA",
-    "distanciaKm": 15.5,
-    "descripcion": "Entrega de paquete urgente a domicilio"
-  }'
+  "pedidoId":101210,
+  "tipoEntrega": "Nacional",
+  "distanciaKm": 55
+}'
 ```
 
 **Proceso interno en la aplicación:**
@@ -298,38 +284,14 @@ curl -X POST http://localhost:8082/api/facturas \
 **Respuesta exitosa (201 Created):**
 ```json
 {
-  "id": "b575a85f-ad0b-4369-a639-d9172c85193d",
-  "pedidoId": 10110,
-  "tipoEntrega": "URBANA",
-  "montoTotal": 12.75,
-  "estado": "BORRADOR",
-  "distanciaKm": 15.5,
-  "descripcion": "Entrega de paquete urgente a domicilio",
-  "fechaCreacion": "2025-12-13T14:30:21"
+    "id": "9b6da0ad-a599-4145-aa33-fc3e8c85faef",
+    "pedidoId": 101210,
+    "tipoEntrega": "Nacional",
+    "montoTotal": 87.50,
+    "estado": "BORRADOR",
+    "fechaCreacion": "2025-12-13T17:25:56.5310398",
+    "distanciaKm": 55.0
 }
-```
-
-**Crear facturas con otros tipos de entrega:**
-```bash
-# Intermunicipal (distancia: 50 km, tarifa: 8.00)
-# Monto: 8.00 + (1.0 × 50) = $58.00
-curl -X POST http://localhost:8082/api/facturas \
-  -H "Content-Type: application/json" \
-  -d '{
-    "pedidoId": 10111,
-    "tipoEntrega": "INTERMUNICIPAL",
-    "distanciaKm": 50.0
-  }'
-
-# Nacional (distancia: 200 km, tarifa: 10.00)
-# Monto: 10.00 + (1.5 × 200) = $310.00
-curl -X POST http://localhost:8082/api/facturas \
-  -H "Content-Type: application/json" \
-  -d '{
-    "pedidoId": 10112,
-    "tipoEntrega": "NACIONAL",
-    "distanciaKm": 200.0
-  }'
 ```
 
 </details>
@@ -349,11 +311,10 @@ curl -X GET http://localhost:8082/api/facturas/b575a85f-ad0b-4369-a639-d9172c851
   "id": "b575a85f-ad0b-4369-a639-d9172c85193d",
   "pedidoId": 10110,
   "tipoEntrega": "URBANA",
-  "montoTotal": 12.75,
-  "estado": "BORRADOR",
-  "distanciaKm": 15.5,
-  "descripcion": "Entrega de paquete urgente a domicilio",
-  "fechaCreacion": "2025-12-13T14:30:21"
+   "montoTotal": 87.50,
+    "estado": "BORRADOR",
+    "fechaCreacion": "2025-12-13T17:25:56.53104",
+    "distanciaKm": 55.0
 }
 ```
 
@@ -392,7 +353,6 @@ curl -X PATCH "http://localhost:8082/api/facturas/b575a85f-ad0b-4369-a639-d9172c
   "montoTotal": 12.75,
   "estado": "PAGADA",
   "distanciaKm": 15.5,
-  "descripcion": "Entrega de paquete urgente a domicilio",
   "fechaCreacion": "2025-12-13T14:30:21"
 }
 ```
@@ -416,6 +376,7 @@ Una vez iniciado el servicio, accede a la documentación interactiva:
 **Alternativas:**
 - OpenAPI JSON: `http://localhost:8082/v3/api-docs`
 - ReDoc (vista alternativa): `http://localhost:8082/swagger-ui/index.html`
+- Documentación de pruebas unitarias Postman: `https://documenter.getpostman.com/view/41705034/2sB3dTrnW8`
 
 </details>
 
@@ -523,6 +484,6 @@ Para información sobre otros servicios, consulta:
 | Patrones | ✅ Implementados | ✅ Documentados |
 | API Documentation | ✅ Swagger/OpenAPI | ✅ Disponible |
 
-**Última actualización:** 13 de Diciembre de 2025
+
 
 </div>
