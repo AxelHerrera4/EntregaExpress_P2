@@ -1,0 +1,17 @@
+version: '3.8'
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: pedido_db
+    environment:
+      POSTGRES_DB: pedidos_db
+      POSTGRES_USER: pedido_user
+      POSTGRES_PASSWORD: pedido_pass
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_users_data_new:/var/lib/postgresql/data
+
+volumes:
+  postgres_users_data_new:
+
