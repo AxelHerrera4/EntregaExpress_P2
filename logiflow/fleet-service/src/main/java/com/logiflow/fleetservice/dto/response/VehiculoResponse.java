@@ -1,5 +1,6 @@
 package com.logiflow.fleetservice.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.logiflow.fleetservice.dto.CoordenadaDTO;
 import com.logiflow.fleetservice.model.entity.enums.TipoVehiculo;
 import lombok.AllArgsConstructor;
@@ -11,6 +12,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class VehiculoResponse {
   private Long id;
   private TipoVehiculo tipo;

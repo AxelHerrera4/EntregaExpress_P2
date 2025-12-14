@@ -75,43 +75,6 @@ public class RepartidorController {
     return ResponseEntity.ok(repartidores);
   }
 
-  @GetMapping("/estado/{estado}")
-  @PreAuthorize("hasAnyRole('SUPERVISOR', 'GERENTE', 'ADMINISTRADOR')")
-  @Operation(summary = "Listar repartidores por estado")
-  @ApiResponse(responseCode = "200", description = "Lista filtrada")
-  public ResponseEntity<List<RepartidorResponse>> listarPorEstado(
-          @Parameter(description = "Estado del repartidor")
-          @PathVariable EstadoRepartidor estado
-  ) {
-    log.info("GET /repartidores/estado/{}", estado);
-    List<RepartidorResponse> repartidores = repartidorService.obtenerRepartidoresPorEstado(estado);
-    return ResponseEntity.ok(repartidores);
-  }
-
-  @GetMapping("/disponibles")
-  @PreAuthorize("hasAnyRole('SUPERVISOR', 'GERENTE', 'ADMINISTRADOR')")
-  @Operation(summary = "Listar repartidores disponibles",
-          description = "Repartidores en estado DISPONIBLE con vehículo asignado")
-  @ApiResponse(responseCode = "200", description = "Lista de disponibles")
-  public ResponseEntity<List<RepartidorResponse>> listarDisponibles() {
-    log.info("GET /repartidores/disponibles");
-    List<RepartidorResponse> repartidores = repartidorService.obtenerRepartidoresDisponibles();
-    return ResponseEntity.ok(repartidores);
-  }
-
-  @GetMapping("/zona/{zona}")
-  @PreAuthorize("hasAnyRole('SUPERVISOR', 'GERENTE', 'ADMINISTRADOR')")
-  @Operation(summary = "Listar repartidores por zona")
-  @ApiResponse(responseCode = "200", description = "Lista por zona")
-  public ResponseEntity<List<RepartidorResponse>> listarPorZona(
-          @Parameter(description = "Zona asignada")
-          @PathVariable String zona
-  ) {
-    log.info("GET /repartidores/zona/{}", zona);
-    List<RepartidorResponse> repartidores = repartidorService.obtenerRepartidoresPorZona(zona);
-    return ResponseEntity.ok(repartidores);
-  }
-
   @PatchMapping("/{id}")
   @PreAuthorize("hasAnyRole('REPARTIDOR', 'SUPERVISOR', 'GERENTE', 'ADMINISTRADOR')")
   @Operation(summary = "Actualizar repartidor",

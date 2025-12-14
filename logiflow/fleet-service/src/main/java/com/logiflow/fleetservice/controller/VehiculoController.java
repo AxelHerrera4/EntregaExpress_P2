@@ -4,7 +4,6 @@ package com.logiflow.fleetservice.controller;
 import com.logiflow.fleetservice.dto.request.VehiculoCreateRequest;
 import com.logiflow.fleetservice.dto.request.VehiculoUpdateRequest;
 import com.logiflow.fleetservice.dto.response.VehiculoResponse;
-import com.logiflow.fleetservice.model.entity.enums.TipoVehiculo;
 import com.logiflow.fleetservice.service.VehiculoServiceImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -22,10 +21,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/**
- * Controlador REST para gestión de vehículos de la flota
- * Implementa operaciones CRUD básicas según Fase 1
- */
+
 @RestController
 @RequestMapping("/vehiculos")
 @RequiredArgsConstructor
@@ -84,42 +80,6 @@ public class VehiculoController {
     return ResponseEntity.ok(vehiculos);
   }
 
-  @GetMapping("/tipo/{tipo}")
-  @PreAuthorize("hasAnyRole('SUPERVISOR', 'GERENTE', 'ADMINISTRADOR')")
-  @Operation(summary = "Listar vehículos por tipo",
-          description = "Filtra vehículos según su tipo (MOTORIZADO, VEHICULO_LIVIANO, CAMION)")
-  @ApiResponse(responseCode = "200", description = "Lista filtrada obtenida")
-  public ResponseEntity<List<VehiculoResponse>> listarVehiculosPorTipo(
-          @Parameter(description = "Tipo de vehículo", required = true)
-          @PathVariable TipoVehiculo tipo
-  ) {
-    log.info("GET /vehiculos/tipo/{} - Filtrando por tipo", tipo);
-    List<VehiculoResponse> vehiculos = vehiculoService.obtenerVehiculosPorTipo(tipo);
-    return ResponseEntity.ok(vehiculos);
-  }
-
-  @GetMapping("/activos")
-  @PreAuthorize("hasAnyRole('SUPERVISOR', 'GERENTE', 'ADMINISTRADOR')")
-  @Operation(summary = "Listar vehículos activos",
-          description = "Obtiene solo los vehículos que están activos")
-  @ApiResponse(responseCode = "200", description = "Lista de vehículos activos")
-  public ResponseEntity<List<VehiculoResponse>> listarVehiculosActivos() {
-    log.info("GET /vehiculos/activos - Listando vehículos activos");
-    List<VehiculoResponse> vehiculos = vehiculoService.obtenerVehiculosActivos();
-    return ResponseEntity.ok(vehiculos);
-  }
-
-  @GetMapping("/disponibles")
-  @PreAuthorize("hasAnyRole('SUPERVISOR', 'GERENTE', 'ADMINISTRADOR')")
-  @Operation(summary = "Listar vehículos disponibles",
-          description = "Obtiene vehículos sin asignar a ningún repartidor")
-  @ApiResponse(responseCode = "200", description = "Lista de vehículos disponibles")
-  public ResponseEntity<List<VehiculoResponse>> listarVehiculosDisponibles() {
-    log.info("GET /vehiculos/disponibles - Listando vehículos sin asignar");
-    List<VehiculoResponse> vehiculos = vehiculoService.obtenerVehiculosDisponibles();
-    return ResponseEntity.ok(vehiculos);
-  }
-
   @PatchMapping("/{id}")
   @PreAuthorize("hasAnyRole('SUPERVISOR', 'GERENTE', 'ADMINISTRADOR')")
   @Operation(summary = "Actualizar vehículo parcialmente",
@@ -168,20 +128,5 @@ public class VehiculoController {
     log.info("DELETE /vehiculos/{} - Eliminando vehículo", id);
     vehiculoService.eliminarVehiculo(id);
     return ResponseEntity.noContent().build();
-  }
-
-  @PostMapping("/{id}/ubicacion")
-  @PreAuthorize("hasAnyRole('REPARTIDOR', 'SUPERVISOR', 'ADMINISTRADOR')")
-  @Operation(summary = "Registrar ubicación GPS",
-          description = "Actualiza la ubicación GPS del vehículo (implementa IRegistrableGPS)")
-  @ApiResponse(responseCode = "200", description = "Ubicación registrada")
-  public ResponseEntity<Void> registrarUbicacion(
-          @PathVariable Long id,
-          @RequestParam Double latitud,
-          @RequestParam Double longitud
-  ) {
-    log.info("POST /vehiculos/{}/ubicacion - Registrando GPS", id);
-    vehiculoService.registrarUbicacionGPS(id, latitud, longitud);
-    return ResponseEntity.ok().build();
   }
 }
