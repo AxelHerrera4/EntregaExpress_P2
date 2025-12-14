@@ -89,7 +89,7 @@ public class FacturaServiceImpl implements FacturaService {
 
     @Override
     @Transactional(readOnly = true)
-    public FacturaResponseDTO obtenerFacturaPorPedidoId(Long pedidoId) {
+    public FacturaResponseDTO obtenerFacturaPorPedidoId(String pedidoId) {
         log.debug("Consultando factura por pedidoId={}", pedidoId);
         return facturaRepository.findByPedidoId(pedidoId)
                 .map(this::mapToResponse)

@@ -2,7 +2,6 @@ package ec.edu.espe.billing_service.model.entity;
 import ec.edu.espe.billing_service.model.enums.EstadoFactura;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.validator.constraints.UniqueElements;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -21,7 +20,7 @@ public class Factura {
     private UUID id;
 
     @Column(name = "pedido_id", nullable = false, unique = true)
-    private Long pedidoId;
+    private String pedidoId; // UUID del pedido como String
 
 
     @Column(name = "tipo_entrega", nullable = false)

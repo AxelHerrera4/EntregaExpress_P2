@@ -15,7 +15,7 @@ import java.util.UUID;
 public class FacturaResponseDTO {
 
     private UUID id;
-    private Long pedidoId;
+    private String pedidoId; // UUID del pedido como String
     private String tipoEntrega;
     private BigDecimal montoTotal;
     private EstadoFactura estado;;

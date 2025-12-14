@@ -2,6 +2,7 @@ package com.logiflow.pedidoservice.model;
 
 import jakarta.persistence.Embeddable;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,15 +21,19 @@ import lombok.NoArgsConstructor;
 public class Direccion {
 
     @NotBlank(message = "La calle es obligatoria y no puede estar vacía")
+    @Pattern(regexp = "^[A-Za-z0-9\\s]+$", message = "La calle solo puede contener letras, números y espacios")
     private String calle;
 
     @NotBlank(message = "El número es obligatorio y no puede estar vacío")
+    @Pattern(regexp = "^[A-Za-z0-9]+$", message = "El número solo puede contener letras y números (sin espacios ni caracteres especiales)")
     private String numero;
 
     @NotBlank(message = "La ciudad es obligatoria y no puede estar vacía")
+    @Pattern(regexp = "^[A-Za-z\\s]+$", message = "La ciudad solo puede contener letras y espacios")
     private String ciudad;
 
     @NotBlank(message = "La provincia es obligatoria y no puede estar vacía")
+    @Pattern(regexp = "^[A-Za-z\\s]+$", message = "La provincia solo puede contener letras y espacios")
     private String provincia;
 }
 

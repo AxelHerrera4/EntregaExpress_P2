@@ -40,7 +40,7 @@ public class FacturaController {
 
     @Operation(summary = "Obtener factura por ID de pedido")
     @GetMapping("/pedido/{pedidoId}")
-    public ResponseEntity<FacturaResponseDTO> obtenerFacturaPorPedidoId(@PathVariable Long pedidoId) {
+    public ResponseEntity<FacturaResponseDTO> obtenerFacturaPorPedidoId(@PathVariable String pedidoId) {
         FacturaResponseDTO factura = facturaService.obtenerFacturaPorPedidoId(pedidoId);
         return ResponseEntity.ok(factura);
     }

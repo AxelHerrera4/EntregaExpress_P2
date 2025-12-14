@@ -1,0 +1,57 @@
+# Ignorar archivos y directorios innecesarios al construir la imagen Docker
+
+# Maven
+target/
+!target/*.jar
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.settings/
+.classpath
+.project
+.factorypath
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.bak
+*~
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose.yaml
+docker-compose.yml
+
+# Documentación
+*.md
+README.md
+IMPLEMENTACION_COMPLETADA.md
+
+# Logs
+logs/
+*.log
+
+# Temporal
+tmp/
+temp/
+

@@ -46,7 +46,7 @@ public class PedidoRequest {
     private Double peso;
 
     @NotBlank(message = "El teléfono de contacto es obligatorio")
-    @Pattern(regexp = "^[0-9]{7,15}$", message = "El teléfono debe contener entre 7 y 15 dígitos numéricos (ejemplo: 0999999999)")
+    @Pattern(regexp = "^[0-9]{10}$", message = "El teléfono debe contener exactamente 10 dígitos numéricos (ejemplo: 0987654321)")
     private String telefonoContacto;
 
     private String nombreDestinatario;

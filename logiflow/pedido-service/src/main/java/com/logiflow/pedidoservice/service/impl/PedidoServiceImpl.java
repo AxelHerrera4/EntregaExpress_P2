@@ -1,9 +1,8 @@
 package com.logiflow.pedidoservice.service.impl;
 
-import com.logiflow.pedidoservice.dto.PedidoMapper;
-import com.logiflow.pedidoservice.dto.PedidoPatchRequest;
-import com.logiflow.pedidoservice.dto.PedidoRequest;
-import com.logiflow.pedidoservice.dto.PedidoResponse;
+import com.logiflow.pedidoservice.client.BillingClient;
+import com.logiflow.pedidoservice.client.FleetClient;
+import com.logiflow.pedidoservice.dto.*;
 import com.logiflow.pedidoservice.model.EstadoPedido;
 import com.logiflow.pedidoservice.model.ModalidadServicio;
 import com.logiflow.pedidoservice.model.Pedido;
@@ -14,6 +13,7 @@ import com.logiflow.pedidoservice.service.PedidoService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,6 +37,14 @@ public class PedidoServiceImpl implements PedidoService {
     private final PedidoRepository pedidoRepository;
     private final PedidoMapper pedidoMapper;
     private final CoberturaValidationService coberturaValidationService;
+    private final BillingClient billingClient;
+    private final FleetClient fleetClient;
+
+    @Value("${integration.billing.enabled:true}")
+    private boolean billingIntegrationEnabled;
+
+    @Value("${integration.fleet.enabled:false}")
+    private boolean fleetIntegrationEnabled;
 
     @Override
     @Transactional
@@ -52,12 +60,111 @@ public class PedidoServiceImpl implements PedidoService {
         // Validar tipo de entrega disponible para la cobertura
         validateTipoEntrega(request.getTipoEntrega(), pedido.getCobertura());
 
-        // Guardar pedido
+        // Guardar pedido primero para obtener su ID
         Pedido savedPedido = pedidoRepository.save(pedido);
-        
-        log.info("Pedido creado exitosamente con ID: {}", savedPedido.getId());
-        
+        log.info("Pedido creado con ID: {}", savedPedido.getId());
+
+        // ============= INTEGRACIÓN CON BILLING SERVICE =============
+        if (billingIntegrationEnabled) {
+            try {
+                log.info("Integrando con Billing Service para crear factura...");
+
+                // Calcular distancia estimada (puedes implementar lógica más sofisticada)
+                Double distanciaKm = calcularDistanciaEstimada(
+                    savedPedido.getDireccionOrigen().getCiudad(),
+                    savedPedido.getDireccionDestino().getCiudad(),
+                    savedPedido.getModalidadServicio()
+                );
+
+                // Crear request para Billing Service
+                FacturaRequest facturaRequest = FacturaRequest.builder()
+                        .pedidoId(savedPedido.getId())
+                        .tipoEntrega(savedPedido.getTipoEntrega().name())
+                        .distanciaKm(distanciaKm)
+                        .peso(savedPedido.getPeso())
+                        .build();
+
+                // Llamar a Billing Service
+                FacturaResponse facturaResponse = billingClient.crearFactura(facturaRequest);
+
+                // Asociar factura al pedido
+                savedPedido.setFacturaId(facturaResponse.getId());
+                savedPedido.setTarifaCalculada(facturaResponse.getMontoTotal().doubleValue());
+
+                // Actualizar pedido con la factura
+                savedPedido = pedidoRepository.save(savedPedido);
+
+                log.info("Factura creada y asociada: ID={}, Monto={}",
+                        facturaResponse.getId(), facturaResponse.getMontoTotal());
+
+            } catch (Exception e) {
+                log.error("Error al integrar con Billing Service: {}", e.getMessage());
+                log.warn("El pedido fue creado pero sin factura. Crear factura manualmente más tarde.");
+                // No lanzamos la excepción para no bloquear la creación del pedido
+            }
+        } else {
+            log.info("Integración con Billing Service deshabilitada");
+        }
+
+        // ============= INTEGRACIÓN CON FLEET SERVICE (OPCIONAL) =============
+        if (fleetIntegrationEnabled) {
+            try {
+                log.info("Integrando con Fleet Service para asignar repartidor...");
+
+                // Crear request para Fleet Service
+                AsignacionRequest asignacionRequest = AsignacionRequest.builder()
+                        .pedidoId(savedPedido.getId())
+                        .modalidadServicio(savedPedido.getModalidadServicio().name())
+                        .tipoEntrega(savedPedido.getTipoEntrega().name())
+                        .prioridad(savedPedido.getPrioridad().name())
+                        .ciudadOrigen(savedPedido.getDireccionOrigen().getCiudad())
+                        .ciudadDestino(savedPedido.getDireccionDestino().getCiudad())
+                        .peso(savedPedido.getPeso())
+                        .build();
+
+                // Llamar a Fleet Service
+                AsignacionResponse asignacionResponse = fleetClient.asignarRepartidor(asignacionRequest);
+
+                // Si la asignación fue exitosa, actualizar el pedido
+                if ("ASIGNADO".equals(asignacionResponse.getEstado())) {
+                    savedPedido.setRepartidorId(asignacionResponse.getRepartidorId());
+                    savedPedido.setVehiculoId(asignacionResponse.getVehiculoId());
+                    savedPedido.setEstado(EstadoPedido.ASIGNADO);
+
+                    savedPedido = pedidoRepository.save(savedPedido);
+
+                    log.info("Repartidor asignado: ID={}, Vehículo={}",
+                            asignacionResponse.getRepartidorId(), asignacionResponse.getVehiculoId());
+                } else {
+                    log.warn("No se pudo asignar repartidor: {}", asignacionResponse.getMensaje());
+                }
+
+            } catch (Exception e) {
+                log.error("Error al integrar con Fleet Service: {}", e.getMessage());
+                log.warn("El pedido quedará en estado PENDIENTE para asignación manual");
+                // No lanzamos la excepción para no bloquear la creación del pedido
+            }
+        } else {
+            log.info("Integración con Fleet Service deshabilitada o no disponible");
+        }
+
+        log.info("Pedido creado exitosamente - ID: {}, Estado: {}",
+                savedPedido.getId(), savedPedido.getEstado());
+
         return pedidoMapper.toResponse(savedPedido);
+    }
+
+    /**
+     * Calcula distancia estimada entre origen y destino
+     * TODO: Implementar cálculo real usando API de mapas o base de datos de distancias
+     */
+    private Double calcularDistanciaEstimada(String ciudadOrigen, String ciudadDestino, ModalidadServicio modalidad) {
+        // Por ahora devolvemos estimación basada en modalidad
+        return switch (modalidad) {
+            case URBANA_RAPIDA -> 10.0; // ~10 km para entregas urbanas
+            case INTERMUNICIPAL -> 50.0; // ~50 km para entregas intermunicipales
+            case NACIONAL -> 200.0; // ~200 km para entregas nacionales
+        };
     }
 
     @Override
@@ -143,6 +250,17 @@ public class PedidoServiceImpl implements PedidoService {
             throw new IllegalStateException("No se puede cancelar un pedido ya entregado");
         }
         
+        // Si el pedido tiene repartidor asignado, liberar en Fleet Service
+        if (fleetIntegrationEnabled && pedido.getRepartidorId() != null) {
+            try {
+                log.info("Liberando asignación en Fleet Service...");
+                fleetClient.liberarAsignacion(id);
+            } catch (Exception e) {
+                log.error("Error al liberar asignación en Fleet Service: {}", e.getMessage());
+                // Continuamos con la cancelación aunque falle la liberación
+            }
+        }
+
         // Cambiar estado a cancelado
         pedido.setEstado(EstadoPedido.CANCELADO);
 
