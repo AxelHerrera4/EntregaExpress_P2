@@ -1,4 +1,4 @@
-package com.logiflow.fleetservice.entity.enums;
+package com.logiflow.fleetservice.model.entity.enums;
 
 public enum TipoVehiculo {
   MOTORIZADO("Moto o motocicleta para entregas urbanas"),

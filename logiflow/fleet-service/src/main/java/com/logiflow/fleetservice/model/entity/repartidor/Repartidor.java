@@ -80,6 +80,7 @@ public class Repartidor {
 
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
+  @Builder.Default
   private EstadoRepartidor estado = EstadoRepartidor.DISPONIBLE;
 
   @Column(name = "zona_asignada", length = 100)
@@ -101,28 +102,34 @@ public class Repartidor {
   // ========== MÉTRICAS ==========
 
   @Column(name = "entregas_completadas")
+  @Builder.Default
   private Integer entregasCompletadas = 0;
 
   @Column(name = "entregas_fallidas")
+  @Builder.Default
   private Integer entregasFallidas = 0;
 
   @Column(name = "calificacion_promedio")
+  @Builder.Default
   private Double calificacionPromedio = 0.0;
 
   @Column(name = "total_calificaciones")
+  @Builder.Default
   private Integer totalCalificaciones = 0;
 
   @Column(name = "kilometros_recorridos")
+  @Builder.Default
   private Double kilometrosRecorridos = 0.0;
 
   // ========== HORARIOS ==========
 
-  @ElementCollection
+  @ElementCollection(fetch = FetchType.EAGER)
   @CollectionTable(
           name = "repartidor_horarios",
           joinColumns = @JoinColumn(name = "repartidor_id")
   )
   @Column(name = "dia_semana")
+  @Builder.Default
   private Set<String> diasLaborales = new HashSet<>();
 
   @Column(name = "hora_inicio_turno")
@@ -134,6 +141,7 @@ public class Repartidor {
   // ========== AUDITORÍA ==========
 
   @Column(name = "activo")
+  @Builder.Default
   private Boolean activo = true;
 
   @CreatedDate

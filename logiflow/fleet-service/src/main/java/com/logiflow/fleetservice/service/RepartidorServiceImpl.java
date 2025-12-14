@@ -1,10 +1,16 @@
 package com.logiflow.fleetservice.service;
 
 
+import com.logiflow.fleetservice.dto.mapper.RepartidorMapper;
 import com.logiflow.fleetservice.dto.request.RepartidorCreateRequest;
 import com.logiflow.fleetservice.dto.request.RepartidorUpdateRequest;
 import com.logiflow.fleetservice.dto.response.RepartidorResponse;
+import com.logiflow.fleetservice.exception.BusinessException;
+import com.logiflow.fleetservice.exception.DuplicateResourceException;
+import com.logiflow.fleetservice.exception.ResourceNotFoundException;
+import com.logiflow.fleetservice.model.entity.enums.EstadoRepartidor;
 import com.logiflow.fleetservice.model.entity.repartidor.Repartidor;
+import com.logiflow.fleetservice.model.entity.vehiculo.Coordenada;
 import com.logiflow.fleetservice.model.entity.vehiculo.VehiculoEntrega;
 import com.logiflow.fleetservice.repository.RepartidorRepository;
 import com.logiflow.fleetservice.repository.VehiculoRepository;
@@ -20,7 +26,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 @Transactional(readOnly = true)
-public class RepartidorService {
+public class RepartidorServiceImpl {
 
   private final RepartidorRepository repartidorRepository;
   private final VehiculoRepository vehiculoRepository;
@@ -59,27 +65,6 @@ public class RepartidorService {
 
   public List<RepartidorResponse> obtenerTodosLosRepartidores() {
     return repartidorRepository.findAll()
-            .stream()
-            .map(repartidorMapper::toResponse)
-            .collect(Collectors.toList());
-  }
-
-  public List<RepartidorResponse> obtenerRepartidoresPorEstado(EstadoRepartidor estado) {
-    return repartidorRepository.findByEstado(estado)
-            .stream()
-            .map(repartidorMapper::toResponse)
-            .collect(Collectors.toList());
-  }
-
-  public List<RepartidorResponse> obtenerRepartidoresDisponibles() {
-    return repartidorRepository.findRepartidoresDisponiblesConVehiculo()
-            .stream()
-            .map(repartidorMapper::toResponse)
-            .collect(Collectors.toList());
-  }
-
-  public List<RepartidorResponse> obtenerRepartidoresPorZona(String zona) {
-    return repartidorRepository.findRepartidoresDisponiblesPorZona(zona)
             .stream()
             .map(repartidorMapper::toResponse)
             .collect(Collectors.toList());

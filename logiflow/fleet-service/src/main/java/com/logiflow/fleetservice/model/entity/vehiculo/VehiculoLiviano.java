@@ -1,7 +1,10 @@
 package com.logiflow.fleetservice.model.entity.vehiculo;
 
+import com.logiflow.fleetservice.model.entity.enums.TipoVehiculo;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
+import jakarta.persistence.PostLoad;
+import jakarta.persistence.PostPersist;
 
 /**
  * Vehículo tipo Vehículo Liviano - Para entregas intermunicipales y suburbanas
@@ -13,6 +16,12 @@ public class VehiculoLiviano extends VehiculoEntrega {
   private static final double VELOCIDAD_PROMEDIO = 60.0; // km/h en carretera
   private static final double RANGO_MAXIMO = 300.0; // km
   private static final double COSTO_BASE_POR_KM = 0.80; // USD
+
+  @PostLoad
+  @PostPersist
+  private void initTipo() {
+    setTipo(TipoVehiculo.VEHICULO_LIVIANO);
+  }
 
   @Override
   protected double calcularCostoBase(double distanciaKm) {

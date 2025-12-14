@@ -43,8 +43,7 @@ public abstract class VehiculoEntrega implements IRuteable, IRegistrableGPS {
   @Column(name = "kilometraje")
   private Integer kilometraje;
 
-  @Enumerated(EnumType.STRING)
-  @Column(name = "tipo", nullable = false, insertable = false, updatable = false)
+  @Transient
   private TipoVehiculo tipo;
 
   @Embedded

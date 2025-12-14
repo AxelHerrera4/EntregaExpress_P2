@@ -1,8 +1,11 @@
 package com.logiflow.fleetservice.model.entity.vehiculo;
 
 
+import com.logiflow.fleetservice.model.entity.enums.TipoVehiculo;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
+import jakarta.persistence.PostLoad;
+import jakarta.persistence.PostPersist;
 
 /**
  * Vehículo tipo Motorizado - Para entregas urbanas rápidas (última milla)
@@ -14,6 +17,12 @@ public class Motorizado extends VehiculoEntrega {
   private static final double VELOCIDAD_PROMEDIO = 35.0; // km/h en ciudad
   private static final double RANGO_MAXIMO = 100.0; // km
   private static final double COSTO_BASE_POR_KM = 0.50; // USD
+
+  @PostLoad
+  @PostPersist
+  private void initTipo() {
+    setTipo(TipoVehiculo.MOTORIZADO);
+  }
 
   @Override
   protected double calcularCostoBase(double distanciaKm) {

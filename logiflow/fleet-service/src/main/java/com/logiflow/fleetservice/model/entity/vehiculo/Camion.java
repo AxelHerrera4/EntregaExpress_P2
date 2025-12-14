@@ -1,9 +1,12 @@
 package com.logiflow.fleetservice.model.entity.vehiculo;
 
 
+import com.logiflow.fleetservice.model.entity.enums.TipoVehiculo;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
+import jakarta.persistence.PostLoad;
+import jakarta.persistence.PostPersist;
 
 /**
  * Camión - Para entregas nacionales (furgonetas o camiones medianos/grandes)
@@ -18,6 +21,12 @@ public class Camion extends VehiculoEntrega {
 
   @Column(name = "numero_ejes")
   private Integer numeroEjes;
+
+  @PostLoad
+  @PostPersist
+  private void initTipo() {
+    setTipo(TipoVehiculo.CAMION);
+  }
 
   @Column(name = "requiere_rampa")
   private Boolean requiereRampa = false;
