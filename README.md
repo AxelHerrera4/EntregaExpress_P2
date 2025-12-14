@@ -184,10 +184,126 @@ public class TarifaStrategyFactory {
 
 </details>
 
-### 📖 Guía de Uso Paso a Paso
+### � Ejecución con Docker Compose
+
+El Billing Service incluye un `docker-compose.yaml` que automatiza el levantamiento del servicio y su base de datos PostgreSQL.
+
+#### 📋 Requisitos Previos
+
+Antes de ejecutar el docker-compose, asegúrate de tener:
+- ✅ **Docker** instalado y ejecutándose
+- ✅ **Docker Compose** instalado (generalmente viene con Docker Desktop)
+- ✅ **Puertos disponibles:** 8082 (aplicación) y 5433 (base de datos)
+
+#### 🚀 Pasos para Ejecutar Docker Compose
 
 <details>
-<summary><strong>Paso 1️: Verificar Conexión a Base de Datos</strong></summary>
+<summary><strong>Paso 0️: Navegar al Directorio del Billing Service</strong></summary>
+
+Abre una terminal (PowerShell, CMD, o Bash) y navega a la carpeta del billing-service:
+
+```bash
+cd logiflow/billing-service
+```
+
+Verifica que ves el archivo `docker-compose.yaml`:
+
+```bash
+# En Windows (PowerShell)
+Get-ChildItem | Select-Object Name
+
+# O en CMD/Bash
+dir  # CMD
+ls   # Bash/PowerShell
+```
+
+Deberías ver:
+```
+docker-compose.yaml
+Dockerfile
+pom.xml
+src/
+...
+```
+
+</details>
+
+<details>
+<summary><strong>Paso 1️: Construir la Imagen Docker</strong></summary>
+
+Primero, construye la imagen Docker del servicio:
+
+```bash
+docker-compose build
+```
+
+**Salida esperada:**
+```
+[+] Building 45.2s (14/14) FINISHED
+ => [postgres internal] load build definition from Dockerfile
+ => [billing-service] writing image sha256:abc123...
+```
+
+> ⏱️ **Nota:** La primera construcción puede tardar 2-5 minutos mientras descarga dependencias de Maven.
+
+**Solución de problemas:**
+- Si falla: Asegúrate de tener Docker ejecutándose
+- Si falla por puerto en uso: Cambia los puertos en `docker-compose.yaml`
+
+</details>
+
+<details>
+<summary><strong>Paso 2️: Iniciar los Contenedores</strong></summary>
+
+Levanta tanto la base de datos como el servicio con un solo comando:
+
+```bash
+docker-compose up -d
+```
+
+**Parámetros:**
+- `up` - Inicia los servicios definidos
+- `-d` - Ejecuta en modo "detached" (background)
+
+**Salida esperada:**
+```
+[+] Running 2/2
+ ✔ Container billing_db    Started
+ ✔ Container billing_app   Started
+```
+
+#### ✅ Verificar que los Contenedores Están Corriendo
+
+```bash
+docker ps
+```
+
+Deberías ver dos contenedores:
+```
+CONTAINER ID   IMAGE                    PORTS                    NAMES
+abc123def456   billing-service:latest   0.0.0.0:8082->8082/tcp   billing_app
+def789ghi012   postgres:16-alpine       0.0.0.0:5433->5432/tcp   billing_db
+```
+
+#### ⏳ Esperar a que PostgreSQL Esté Listo
+
+A veces PostgreSQL tarda unos segundos en estar completamente disponible. Verifica los logs:
+
+```bash
+docker-compose logs -f postgres
+```
+
+Espera hasta ver este mensaje:
+```
+database system is ready to accept connections
+```
+
+Presiona `Ctrl+C` para salir de los logs.
+
+</details>
+
+<details>
+<summary><strong>Paso 3️: Verificar Conexión a PostgreSQL</strong></summary>
 
 Asegúrate de que PostgreSQL está corriendo correctamente:
 
@@ -205,10 +321,73 @@ Contraseña: qwerty123
 Base de datos: db_billing_users
 ```
 
+**Si tienes `psql` instalado:**
+```sql
+-- Una vez conectado, ejecuta:
+\dt  -- Mostrar todas las tablas creadas
+\q   -- Salir
+```
+
+**Si no tienes `psql`, verifica con Docker:**
+```bash
+docker exec -it billing_db psql -U billing -d db_billing_users -c "\dt"
+```
+
+Deberías ver las tablas creadas automáticamente por Spring Boot:
+```
+ public | factura        | table | billing
+ public | tarifa_base    | table | billing
+ public | flyway_...     | table | billing
+```
+
 </details>
 
 <details>
-<summary><strong>Paso 2️: Iniciar el Servicio</strong></summary>
+<summary><strong>Paso 4️: Verificar que la Aplicación Está Corriendo</strong></summary>
+
+Consulta los logs del servicio:
+
+```bash
+docker logs -f billing_app
+```
+
+**Salida esperada:**
+```
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_|\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+Started BillingServiceApplication in 8.234 seconds
+```
+
+Presiona `Ctrl+C` para salir de los logs.
+
+#### ✅ Verificación Rápida
+
+Abre tu navegador o usa `curl` para verificar que el servicio responde:
+
+```bash
+curl http://localhost:8082/swagger-ui.html
+```
+
+O simplemente abre: **http://localhost:8082/swagger-ui.html** en tu navegador.
+
+Deberías ver la documentación Swagger del Billing Service.
+
+</details>
+
+### 📖 Guía de Uso Paso a Paso
+
+<details>
+<summary><strong>Paso 5️: Crear una Tarifa Base</strong></summary>
+
+<details>
+<summary><strong>Paso 6️: Iniciar el Servicio Manualmente (sin Docker)</strong></summary>
+
+Si prefieres no usar Docker, puedes iniciar el servicio directamente:
 
 Navega a la carpeta del billing-service:
 
@@ -236,7 +415,7 @@ Started BillingServiceApplication in X seconds
 </details>
 
 <details>
-<summary><strong>Paso 3️: Crear una Tarifa Base</strong></summary>
+<summary><strong>Paso 7️: Crear una Tarifa Base</strong></summary>
 
 Realiza una petición **POST** a `/api/tarifas-base`:
 
@@ -261,7 +440,7 @@ curl -X POST http://localhost:8082/api/tarifas-base \
 </details>
 
 <details>
-<summary><strong>Paso 4️: Crear una Factura</strong></summary>
+<summary><strong>Paso 8️: Crear una Factura</strong></summary>
 
 Realiza una petición **POST** a `/api/facturas`:
 
@@ -297,7 +476,7 @@ curl -X POST http://localhost:8082/api/facturas \
 </details>
 
 <details>
-<summary><strong>Paso 5️: Obtener una Factura</strong></summary>
+<summary><strong>Paso 9️: Obtener una Factura</strong></summary>
 
 Para obtener los detalles de una factura específica:
 
@@ -321,7 +500,7 @@ curl -X GET http://localhost:8082/api/facturas/b575a85f-ad0b-4369-a639-d9172c851
 </details>
 
 <details>
-<summary><strong>Paso 6️: Actualizar Estado de Factura</strong></summary>
+<summary><strong>Paso 10️: Actualizar Estado de Factura</strong></summary>
 
 Para cambiar el estado de una factura, realiza una petición **PATCH**:
 
@@ -360,7 +539,7 @@ curl -X PATCH "http://localhost:8082/api/facturas/b575a85f-ad0b-4369-a639-d9172c
 </details>
 
 <details>
-<summary><strong>Paso 7️: Acceder a Documentación Swagger/OpenAPI</strong></summary>
+<summary><strong>Paso 11️: Acceder a Documentación Swagger/OpenAPI</strong></summary>
 
 Una vez iniciado el servicio, accede a la documentación interactiva:
 
@@ -413,50 +592,232 @@ billing-service/
 └── mvnw / mvnw.cmd                        # Wrapper Maven
 ```
 
-### 🐛 Troubleshooting
+### � Detener y Limpiar los Contenedores
+
+Cuando termines de trabajar, puedes detener los contenedores:
 
 <details>
-<summary><strong> Error: "Conexión rechazada a PostgreSQL"</strong></summary>
+<summary><strong>Opción 1: Detener los Contenedores (sin eliminarlos)</strong></summary>
 
-**Solución:**
-1. Verifica que PostgreSQL está corriendo
-2. Revisa que el puerto 5433 es correcto
-3. Confirma credenciales (usuario: `billing`, contraseña: `qwerty123`)
-4. Comprueba la URL de conexión en `application.yaml`
-
-```yaml
-spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5433/db_billing_users
-    username: billing
-    password: qwerty123
-```
-
-</details>
-
-<details>
-<summary><strong> Error: "Puerto 8082 ya está en uso"</strong></summary>
-
-**Solución:**
-Cambia el puerto en `application.yaml`:
-
-```yaml
-server:
-  port: 8085  # Cambiar a otro puerto disponible
-```
-
-</details>
-
-<details>
-<summary><strong> Error: "No se puede encontrar la clase TarifaStrategy"</strong></summary>
-
-**Solución:**
-Ejecuta:
 ```bash
-./mvnw clean compile
+docker-compose stop
 ```
 
-Esto reconstruirá el proyecto y descargará las dependencias necesarias.
+**Ventaja:** Los datos se mantienen, puedes reiniciar rápidamente con `docker-compose start`
+
+**Reiniciar:**
+```bash
+docker-compose start
+```
+
+</details>
+
+<details>
+<summary><strong>Opción 2: Eliminar los Contenedores (pero mantener datos)</strong></summary>
+
+```bash
+docker-compose down
+```
+
+**Ventaja:** Libera más recursos que `stop`
+**Nota:** Los datos persisten en el volumen `postgres_users_data_new`
+
+**Reiniciar:**
+```bash
+docker-compose up -d
+```
+
+</details>
+
+<details>
+<summary><strong>Opción 3: Eliminar Todo (contenedores, volúmenes y datos)</strong></summary>
+
+```bash
+docker-compose down -v
+```
+
+**Advertencia ⚠️:** Esto elimina la base de datos. Solo usa si quieres empezar de cero.
+
+**Resultado:**
+- ✓ Contenedores eliminados
+- ✓ Volúmenes (datos) eliminados
+- ✓ Redes eliminadas
+
+</details>
+
+### 📊 Monitoreo y Logs
+
+<details>
+<summary><strong>Ver Logs en Tiempo Real</strong></summary>
+
+**Todos los servicios:**
+```bash
+docker-compose logs -f
+```
+
+**Solo PostgreSQL:**
+```bash
+docker-compose logs -f postgres
+```
+
+**Solo Billing Service:**
+```bash
+docker-compose logs -f billing-service
+```
+
+**Últimas 50 líneas sin seguir:**
+```bash
+docker-compose logs --tail=50
+```
+
+</details>
+
+<details>
+<summary><strong>Verificar Estado de los Servicios</strong></summary>
+
+```bash
+docker-compose ps
+```
+
+**Salida esperada:**
+```
+NAME                COMMAND                  SERVICE             STATUS              PORTS
+billing_app         "java -jar /app/b..."    billing-service     Up About a minute   0.0.0.0:8082->8082/tcp
+billing_db          "docker-entrypoint..."   postgres            Up About a minute   0.0.0.0:5433->5432/tcp
+```
+
+</details>
+
+### 🔧 Troubleshooting Docker
+
+<details>
+<summary><strong>❌ Error: "Port 8082 is already allocated"</strong></summary>
+
+**Problema:** Otro proceso está usando el puerto 8082.
+
+**Soluciones:**
+
+1. **Opción A: Usar otro puerto**
+   
+   Edita `docker-compose.yaml` y cambia:
+   ```yaml
+   services:
+     billing-service:
+       ports:
+         - "8085:8082"  # Puerto local: 8085, puerto contenedor: 8082
+   ```
+   
+   Luego accede a `http://localhost:8085`
+
+2. **Opción B: Encontrar y detener el proceso**
+   
+   ```bash
+   # En Windows (PowerShell)
+   netstat -ano | findstr :8082
+   
+   # En Linux/Mac
+   lsof -i :8082
+   ```
+
+</details>
+
+<details>
+<summary><strong>❌ Error: "Cannot connect to the Docker daemon"</strong></summary>
+
+**Problema:** Docker no está ejecutándose.
+
+**Solución:** 
+1. Abre **Docker Desktop** (Windows/Mac)
+2. En Linux, ejecuta: `sudo systemctl start docker`
+3. Espera 30 segundos a que Docker inicie completamente
+4. Intenta nuevamente con `docker ps`
+
+</details>
+
+<details>
+<summary><strong>❌ Error: "No such file or directory: 'docker-compose.yaml'"</strong></summary>
+
+**Problema:** No estás en la carpeta correcta.
+
+**Solución:**
+```bash
+# Asegúrate de estar en la carpeta del billing-service
+cd logiflow/billing-service
+
+# Verifica que ves el archivo
+dir | findstr docker-compose.yaml
+```
+
+</details>
+
+<details>
+<summary><strong>❌ Error: "PostgreSQL connection refused"</strong></summary>
+
+**Problema:** PostgreSQL está iniciando pero aún no está listo.
+
+**Solución:**
+```bash
+# Espera a que PostgreSQL esté listo
+docker-compose logs postgres
+
+# Deberías ver: "database system is ready to accept connections"
+
+# Si tarda mucho, reinicia:
+docker-compose restart postgres
+```
+
+</details>
+
+### 📋 Configuración de `docker-compose.yaml`
+
+La configuración completa del `docker-compose.yaml` para el Billing Service:
+
+```yaml
+version: '3.8'
+services:
+  # Base de datos PostgreSQL
+  postgres:
+    image: postgres:16-alpine          # Imagen oficial de PostgreSQL 16
+    container_name: billing_db
+    environment:
+      POSTGRES_DB: db_billing_users    # Nombre de la base de datos
+      POSTGRES_USER: billing           # Usuario
+      POSTGRES_PASSWORD: qwerty123     # Contraseña
+    ports:
+      - "5433:5432"                    # Puerto externo:puerto interno
+    volumes:
+      - postgres_users_data_new:/var/lib/postgresql/data  # Persistencia de datos
+
+  # Aplicación Spring Boot
+  billing-service:
+    build: .                            # Construir desde el Dockerfile local
+    container_name: billing_app
+    ports:
+      - "8082:8082"                    # Puerto externo:puerto interno
+    depends_on:
+      - postgres                        # Espera a que postgres esté listo
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/db_billing_users
+      SPRING_DATASOURCE_USERNAME: billing
+      SPRING_DATASOURCE_PASSWORD: qwerty123
+
+# Volúmenes persistentes
+volumes:
+  postgres_users_data_new:              # Nombre del volumen para datos de PostgreSQL
+```
+
+**Explicación de configuraciones clave:**
+
+| Propiedad | Significado |
+|-----------|------------|
+| `version: '3.8'` | Versión del formato de Docker Compose |
+| `services` | Define los servicios (contenedores) a ejecutar |
+| `image` | Imagen Docker a usar (descargada de Docker Hub) |
+| `container_name` | Nombre del contenedor para identificarlo fácilmente |
+| `ports` | Mapeo de puertos `externo:interno` |
+| `volumes` | Mapeo de volúmenes para persistencia de datos |
+| `depends_on` | Asegura el orden de inicio (postgres antes que app) |
+| `environment` | Variables de entorno dentro del contenedor |
 
 </details>
 

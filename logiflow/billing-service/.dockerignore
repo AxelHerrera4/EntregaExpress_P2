@@ -1,0 +1,15 @@
+target/
+.git/
+.gitignore
+.classpath
+.project
+.settings/
+.vscode/
+*.md
+*.log
+.DS_Store
+.env
+node_modules/
+.mvn/
+mvnw
+mvnw.cmd

@@ -12,5 +12,17 @@ services:
     volumes:
       - postgres_users_data_new:/var/lib/postgresql/data
 
+  billing-service:
+    build: .
+    container_name: billing_app
+    ports:
+      - "8082:8082"
+    depends_on:
+      - postgres
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/db_billing_users
+      SPRING_DATASOURCE_USERNAME: billing
+      SPRING_DATASOURCE_PASSWORD: qwerty123
+
 volumes:
   postgres_users_data_new:
