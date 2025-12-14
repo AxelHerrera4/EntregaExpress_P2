@@ -50,7 +50,7 @@ class FacturaControllerTest {
             public FacturaResponseDTO obtenerFacturaPorId(UUID facturaId) {
                 return FacturaResponseDTO.builder()
                         .id(facturaId)
-                        .pedidoId(1L)
+                        .pedidoId("PED-001")
                         .tipoEntrega("URBANA")
                         .montoTotal(BigDecimal.valueOf(15.00))
                         .estado(EstadoFactura.BORRADOR)
@@ -60,7 +60,7 @@ class FacturaControllerTest {
             }
 
             @Override
-            public FacturaResponseDTO obtenerFacturaPorPedidoId(Long pedidoId) {
+            public FacturaResponseDTO obtenerFacturaPorPedidoId(String pedidoId) {
                 return FacturaResponseDTO.builder()
                         .id(UUID.randomUUID())
                         .pedidoId(pedidoId)
@@ -76,7 +76,7 @@ class FacturaControllerTest {
             public FacturaResponseDTO actualizarEstado(UUID facturaId, EstadoFactura estado) {
                 return FacturaResponseDTO.builder()
                         .id(facturaId)
-                        .pedidoId(10L)
+                        .pedidoId("PED-010")
                         .tipoEntrega("URBANA")
                         .montoTotal(BigDecimal.valueOf(12.00))
                         .estado(estado)
@@ -102,7 +102,7 @@ class FacturaControllerTest {
     void crearFactura_ok() throws Exception {
 
         FacturaRequestDTO request = FacturaRequestDTO.builder()
-                .pedidoId(1L)
+                .pedidoId("PED-001")
                 .tipoEntrega("URBANA")
                 .distanciaKm(10.0)
                 .build();
@@ -133,7 +133,7 @@ class FacturaControllerTest {
     @Test
     void obtenerFacturaPorPedidoId_ok() throws Exception {
 
-        Long pedidoId = 5L;
+        String pedidoId = "PED-005";
 
         mockMvc.perform(get("/api/facturas/pedido/{pedidoId}", pedidoId))
                 .andExpect(status().isOk())

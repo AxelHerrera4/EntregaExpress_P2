@@ -48,7 +48,7 @@ class FacturaServiceImplTest {
     @BeforeEach
     void setup() {
         request = FacturaRequestDTO.builder()
-                .pedidoId(1L)
+                .pedidoId("PED-001")
                 .tipoEntrega("URBANA")
                 .distanciaKm(10.0)
                 .build();
@@ -64,7 +64,7 @@ class FacturaServiceImplTest {
                 .tarifaBase(BigDecimal.valueOf(5.0))
                 .build();
 
-        when(facturaRepository.existsByPedidoId(1L)).thenReturn(false);
+        when(facturaRepository.existsByPedidoId("PED-001")).thenReturn(false);
         when(tarifaBaseService.obtenerEntidadPorTipoEntrega("URBANA")).thenReturn(tarifaBase);
         when(tarifaStrategyFactory.obtenerStrategy("URBANA")).thenReturn(tarifaStrategy);
         when(tarifaStrategy.calcularTarifa(tarifaBase, 10.0))
@@ -88,7 +88,7 @@ class FacturaServiceImplTest {
     @Test
     void crearFactura_pedidoDuplicado_lanzaExcepcion() {
 
-        when(facturaRepository.existsByPedidoId(1L)).thenReturn(true);
+        when(facturaRepository.existsByPedidoId("PED-001")).thenReturn(true);
 
         IllegalStateException ex = assertThrows(
                 IllegalStateException.class,
@@ -107,7 +107,7 @@ class FacturaServiceImplTest {
 
         Factura factura = Factura.builder()
                 .id(id)
-                .pedidoId(1L)
+                .pedidoId("PED-001")
                 .tipoEntrega("URBANA")
                 .montoTotal(BigDecimal.TEN)
                 .estado(EstadoFactura.BORRADOR)
@@ -146,7 +146,7 @@ class FacturaServiceImplTest {
 
         Factura factura = Factura.builder()
                 .id(UUID.randomUUID())
-                .pedidoId(5L)
+                .pedidoId("PED-005")
                 .tipoEntrega("URBANA")
                 .montoTotal(BigDecimal.TEN)
                 .estado(EstadoFactura.BORRADOR)
@@ -154,24 +154,24 @@ class FacturaServiceImplTest {
                 .distanciaKm(10.0)
                 .build();
 
-        when(facturaRepository.findByPedidoId(5L))
+        when(facturaRepository.findByPedidoId("PED-005"))
                 .thenReturn(Optional.of(factura));
 
         FacturaResponseDTO response =
-                facturaService.obtenerFacturaPorPedidoId(5L);
+                facturaService.obtenerFacturaPorPedidoId("PED-005");
 
-        assertEquals(5L, response.getPedidoId());
+        assertEquals("PED-005", response.getPedidoId());
     }
 
     @Test
     void obtenerFacturaPorPedidoId_noExiste_lanzaExcepcion() {
 
-        when(facturaRepository.findByPedidoId(99L))
+        when(facturaRepository.findByPedidoId("PED-099"))
                 .thenReturn(Optional.empty());
 
         RuntimeException ex = assertThrows(
                 RuntimeException.class,
-                () -> facturaService.obtenerFacturaPorPedidoId(99L)
+                () -> facturaService.obtenerFacturaPorPedidoId("PED-099")
         );
 
         assertTrue(ex.getMessage().contains("Factura no encontrada"));
@@ -186,7 +186,7 @@ class FacturaServiceImplTest {
 
         Factura factura = Factura.builder()
                 .id(id)
-                .pedidoId(1L)
+                .pedidoId("PED-001")
                 .estado(EstadoFactura.BORRADOR)
                 .build();
 

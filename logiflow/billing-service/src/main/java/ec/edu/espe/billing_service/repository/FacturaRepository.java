@@ -9,6 +9,6 @@ import java.util.UUID;
 
 @Repository
 public interface FacturaRepository extends JpaRepository<Factura, UUID> {
-    Optional<Factura> findByPedidoId(Long pedidoId);
-    boolean existsByPedidoId(Long pedidoId);
+    Optional<Factura> findByPedidoId(String pedidoId); // UUID como String
+    boolean existsByPedidoId(String pedidoId); // UUID como String
 }

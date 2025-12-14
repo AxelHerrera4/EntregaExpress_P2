@@ -26,6 +26,20 @@ springdoc:
   swagger-ui:
     enabled: true
 
+# Configuración de integración con otros microservicios
+services:
+  billing:
+    url: ${BILLING_SERVICE_URL:http://localhost:8082}
+  fleet:
+    url: ${FLEET_SERVICE_URL:http://localhost:8083}
+
+# Habilitar/deshabilitar integraciones
+integration:
+  billing:
+    enabled: ${BILLING_INTEGRATION_ENABLED:true}
+  fleet:
+    enabled: ${FLEET_INTEGRATION_ENABLED:true}
+
 # Logging mínimo
 logging:
   level:

@@ -14,7 +14,7 @@ public interface FacturaService {
 
     FacturaResponseDTO obtenerFacturaPorId(UUID facturaId);
 
-    FacturaResponseDTO obtenerFacturaPorPedidoId(Long pedidoId);
+    FacturaResponseDTO obtenerFacturaPorPedidoId(String pedidoId); // UUID como String
     FacturaResponseDTO actualizarEstado(UUID facturaId, EstadoFactura estado);
 
 }
