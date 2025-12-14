@@ -11,5 +11,17 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  fleet-service:
+    build: .
+    container_name: fleet_service
+    depends_on:
+      - postgres
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/fleet_db
+      SPRING_DATASOURCE_USERNAME: fleet_user
+      SPRING_DATASOURCE_PASSWORD: fleet_password
+    ports:
+      - "8083:8083"
+
 volumes:
   postgres_data:
