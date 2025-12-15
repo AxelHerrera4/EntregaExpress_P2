@@ -2,6 +2,11 @@
 
 Este proyecto proporciona endpoints de autenticación y recursos protegidos.
 
+## Levantar DB
+```bash
+docker run --name postgres-jwt -e POSTGRES_USER=admin -e POSTGRES_PASSWORD=admin -e POSTGRES_DB=jwt_demo -p 5432:5432 -d postgres:latest
+```
+
 ## Swagger UI
 
 Una vez levantada la aplicación, accede a:
