@@ -1,13 +1,13 @@
 services:
   postgres:
-    image: postgres:13
+    image: postgres:16-alpine
     container_name: fleet_postgres
     environment:
+      POSTGRES_DB: fleet_db
       POSTGRES_USER: fleet_user
       POSTGRES_PASSWORD: fleet_password
-      POSTGRES_DB: fleet_db
     ports:
-      - "5432:5432"
+      - "55432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
