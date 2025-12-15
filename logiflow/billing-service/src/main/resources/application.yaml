@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5434/db_billing_users
+    url: jdbc:postgresql://localhost:5433/db_billing_users
     username: billing
     password: qwerty123
     driver-class-name: org.postgresql.Driver
@@ -16,3 +16,5 @@ spring:
 
 server:
   port: 8082
+
+
