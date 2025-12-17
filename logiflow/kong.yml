@@ -1,0 +1,72 @@
+_format_version: "3.0"
+
+services:
+  - name: authservice
+    url: http://authservice:8081
+    routes:
+      - name: authservice-route
+        paths:
+          - /auth
+        strip_path: true
+        methods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - PATCH
+
+  - name: billing-service
+    url: http://billing-service:8082
+    routes:
+      - name: billing-route
+        paths:
+          - /billing
+        strip_path: true
+        methods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - PATCH
+
+  - name: fleet-service
+    url: http://fleet-service:8083
+    routes:
+      - name: fleet-route
+        paths:
+          - /fleet
+        strip_path: true
+        methods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - PATCH
+
+  - name: pedido-service
+    url: http://pedido-service:8084
+    routes:
+      - name: pedido-route
+        paths:
+          - /pedido
+        strip_path: true
+        methods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - PATCH
+
+# Plugin global para logging (opcional)
+plugins:
+  - name: correlation-id
+    config:
+      header_name: X-Correlation-ID
+      generator: uuid
+      echo_downstream: true
+
+  - name: request-transformer
+    config:
+      add:
+        headers:
+          - X-Gateway:Kong
