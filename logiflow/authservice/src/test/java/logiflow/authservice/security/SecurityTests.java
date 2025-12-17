@@ -1,5 +1,8 @@
 package logiflow.authservice.security;
 
+import logiflow.authservice.model.Role;
+import logiflow.authservice.model.RoleName;
+import logiflow.authservice.model.User;
 import logiflow.authservice.utils.JwtUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -7,6 +10,10 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -16,37 +23,66 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class SecurityTests {
 
     @Autowired
-    MockMvc mockMvc;
+    private MockMvc mockMvc;
 
     @Autowired
-    JwtUtils jwtUtils;
+    private JwtUtils jwtUtils;
 
     @Test
     void unauthenticatedRequestShouldBe401() throws Exception {
-        mockMvc.perform(get("/api/protected/me").accept(MediaType.APPLICATION_JSON))
+        mockMvc.perform(get("/api/protected/me")
+                        .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
+    void authenticatedRequestShouldBe200() throws Exception {
+        String token = buildTokenWithRoles("user1", List.of("CLIENTE"));
+        mockMvc.perform(get("/api/protected/me")
+                        .header("Authorization", "Bearer " + token)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     void forbiddenWhenMissingRole() throws Exception {
-        // Build a token without ADMINISTRADOR_SISTEMA role
-        var token = buildTokenWithRoles("user1", java.util.List.of("CLIENTE"));
+        String token = buildTokenWithRoles("user1", List.of("CLIENTE"));
         mockMvc.perform(get("/api/protected/admin-only")
                         .header("Authorization", "Bearer " + token)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isForbidden());
     }
 
-    private String buildTokenWithRoles(String username, java.util.List<String> roles) {
-        java.util.Set<logiflow.authservice.model.Role> roleSet = roles.stream()
-                .map(r -> logiflow.authservice.model.Role.builder()
-                        .name(logiflow.authservice.model.RoleName.valueOf(r))
+    @Test
+    void adminEndpointWithAdminRoleShouldBe200() throws Exception {
+        String token = buildTokenWithRoles("admin", List.of("ADMINISTRADOR_SISTEMA"));
+        mockMvc.perform(get("/api/protected/admin-only")
+                        .header("Authorization", "Bearer " + token)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void invalidTokenShouldBe401() throws Exception {
+        mockMvc.perform(get("/api/protected/me")
+                        .header("Authorization", "Bearer invalid.token.here")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isUnauthorized());
+    }
+
+    private String buildTokenWithRoles(String username, List<String> roles) {
+        Set<Role> roleSet = roles.stream()
+                .map(r -> Role.builder()
+                        .name(RoleName.valueOf(r))
                         .build())
-                .collect(java.util.stream.Collectors.toSet());
-        logiflow.authservice.model.User u = logiflow.authservice.model.User.builder()
+                .collect(Collectors.toSet());
+        
+        User user = User.builder()
                 .username(username)
+                .email(username + "@test.com")
                 .roles(roleSet)
                 .build();
-        return jwtUtils.generateAccessToken(u);
+        
+        return jwtUtils.generateAccessToken(user);
     }
 }
