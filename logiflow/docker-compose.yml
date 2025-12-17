@@ -217,17 +217,13 @@ services:
     image: kong:3.5
     container_name: kong
     environment:
-      KONG_DATABASE: postgres
-      KONG_PG_HOST: kong-database
-      KONG_PG_DATABASE: kong
-      KONG_PG_USER: kong
-      KONG_PG_PASSWORD: kong
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /usr/local/kong/declarative/kong.yml
       KONG_PROXY_ACCESS_LOG: /dev/stdout
       KONG_ADMIN_ACCESS_LOG: /dev/stdout
       KONG_PROXY_ERROR_LOG: /dev/stderr
       KONG_ADMIN_ERROR_LOG: /dev/stderr
       KONG_ADMIN_LISTEN: 0.0.0.0:8001
-      KONG_DECLARATIVE_CONFIG: /usr/local/kong/declarative/kong.yml
     ports:
       - "8080:8000"  # Proxy
       - "8443:8443"  # Proxy SSL
@@ -236,8 +232,6 @@ services:
     volumes:
       - ./kong.yml:/usr/local/kong/declarative/kong.yml
     depends_on:
-      kong-migration:
-        condition: service_completed_successfully
       authservice:
         condition: service_started
       billing-service:
