@@ -51,6 +51,9 @@ public interface PedidoRepository extends JpaRepository<Pedido, String> {
     // Pedidos de alta prioridad pendientes
     @Query("SELECT p FROM Pedido p WHERE p.prioridad IN ('ALTA', 'URGENTE') AND p.estado IN ('PENDIENTE', 'ASIGNADO')")
     List<Pedido> findPedidosAltaPrioridadPendientes();
+
+    // Contar pedidos por estado
+    long countByEstado(EstadoPedido estado);
 }
 
 

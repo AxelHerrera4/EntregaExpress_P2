@@ -41,8 +41,9 @@ public class CoberturaValidationServiceImpl implements CoberturaValidationServic
                 TipoEntrega.PROGRAMADA
         ));
 
-        // Cobertura nacional: solo normal y programada
+        // Cobertura nacional: incluir EXPRESS además de normal y programada
         TIPOS_POR_PATRON.put("NACIONAL", Arrays.asList(
+                TipoEntrega.EXPRESS,
                 TipoEntrega.NORMAL,
                 TipoEntrega.PROGRAMADA
         ));

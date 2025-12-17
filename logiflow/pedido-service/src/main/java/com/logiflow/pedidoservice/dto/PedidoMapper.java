@@ -59,6 +59,8 @@ public class PedidoMapper {
                 .telefonoContacto(pedido.getTelefonoContacto())
                 .nombreDestinatario(pedido.getNombreDestinatario())
                 .fechaCreacion(pedido.getFechaCreacion())
+                .fechaActualizacion(pedido.getFechaActualizacion())
+                .cobertura(pedido.getCobertura())
                 .build();
     }
 

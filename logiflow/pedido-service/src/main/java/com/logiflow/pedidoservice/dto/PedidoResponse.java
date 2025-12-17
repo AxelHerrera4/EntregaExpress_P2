@@ -32,5 +32,6 @@ public class PedidoResponse {
     private String nombreDestinatario;
 
     private LocalDateTime fechaCreacion;
+    private LocalDateTime fechaActualizacion;
+    private String cobertura;
 }
-
