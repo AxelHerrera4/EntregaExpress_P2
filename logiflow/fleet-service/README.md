@@ -1,10 +1,8 @@
-# Fleet Service - Sistema de Gestión de Flota
+# 🚗 Fleet Service (Puerto 8083)
 
-Microservicio de gestión de vehículos y repartidores para el sistema LogiFlow EntregaExpress.
+**Servicio de Gestión de Flota**
 
-## 📋 Descripción
-
-El Fleet Service es responsable de gestionar la flota de vehículos y repartidores, proporcionando funcionalidades CRUD completas, métricas de rendimiento y estadísticas operacionales.
+Servicio encargado de la **gestión de flota**, incluyendo vehículos, repartidores y asignación de entregas. Controla la disponibilidad de recursos y optimiza la distribución de pedidos.
 
 ## 🚀 Funcionalidades Implementadas - Fase 1
 
