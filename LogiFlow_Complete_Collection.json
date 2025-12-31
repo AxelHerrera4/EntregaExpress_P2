@@ -1,0 +1,1460 @@
+{
+	"info": {
+		"_postman_id": "e8b6a9c2-4567-8910-abcd-123456789abc",
+		"name": "LogiFlow Microservices - Complete Collection",
+		"description": "Colección completa de APIs para todos los microservicios de LogiFlow\n\n🔐 **Autenticación JWT Requerida**\n- Login primero para obtener ACCESS_TOKEN\n- El token se guarda automáticamente para otros requests\n\n🌐 **Servicios incluidos:**\n- Auth Service (8081)\n- Pedido Service (8084) \n- Billing Service (8082)\n- Fleet Service (8083)\n- Kong Gateway (8080)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "🔐 Auth Service",
+			"item": [
+				{
+					"name": "Register User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200 or 201\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+									"});",
+									"",
+									"if (pm.response.code === 200 || pm.response.code === 201) {",
+									"    const response = pm.response.json();",
+									"    if (response.accessToken) {",
+									"        pm.environment.set(\"ACCESS_TOKEN\", response.accessToken);",
+									"        console.log(\"ACCESS_TOKEN guardado:\", response.accessToken);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"admin\",\n  \"email\": \"admin@logiflow.com\",\n  \"password\": \"admin123\",\n  \"roles\": [\"ADMINISTRADOR_SISTEMA\"]\n}"
+						},
+						"url": {
+							"raw": "{{AUTH_URL}}/api/auth/register",
+							"host": [
+								"{{AUTH_URL}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"register"
+							]
+						}
+					}
+				},
+				{
+					"name": "Login User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has access token\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response).to.have.property('accessToken');",
+									"    pm.expect(response).to.have.property('refreshToken');",
+									"});",
+									"",
+									"// Guardar tokens en variables de entorno",
+									"const response = pm.response.json();",
+									"if (response.accessToken) {",
+									"    pm.environment.set(\"ACCESS_TOKEN\", response.accessToken);",
+									"    console.log(\"✅ ACCESS_TOKEN guardado exitosamente\");",
+									"}",
+									"if (response.refreshToken) {",
+									"    pm.environment.set(\"REFRESH_TOKEN\", response.refreshToken);",
+									"    console.log(\"✅ REFRESH_TOKEN guardado exitosamente\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"admin\",\n  \"password\": \"admin123\"\n}"
+						},
+						"url": {
+							"raw": "{{AUTH_URL}}/api/auth/login",
+							"host": [
+								"{{AUTH_URL}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"login"
+							]
+						}
+					}
+				},
+				{
+					"name": "Refresh Token",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "\"{{REFRESH_TOKEN}}\""
+						},
+						"url": {
+							"raw": "{{AUTH_URL}}/api/auth/token/refresh",
+							"host": [
+								"{{AUTH_URL}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"token",
+								"refresh"
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Protected Endpoint",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{AUTH_URL}}/api/protected/me",
+							"host": [
+								"{{AUTH_URL}}"
+							],
+							"path": [
+								"api",
+								"protected",
+								"me"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "📦 Pedido Service",
+			"item": [
+				{
+					"name": "Create Pedido",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"clienteId\": \"CLIENTE-001\",\n  \"modalidadServicio\": \"URBANA_RAPIDA\",\n  \"tipoEntrega\": \"DOCUMENTO\",\n  \"peso\": 0.5,\n  \"prioridad\": \"NORMAL\",\n  \"direccionOrigen\": {\n    \"calle\": \"Av. Amazonas 123\",\n    \"ciudad\": \"Quito\",\n    \"provincia\": \"Pichincha\",\n    \"codigoPostal\": \"170501\",\n    \"referencia\": \"Frente al parque\"\n  },\n  \"direccionDestino\": {\n    \"calle\": \"Calle Venezuela 456\",\n    \"ciudad\": \"Quito\",\n    \"provincia\": \"Pichincha\",\n    \"codigoPostal\": \"170502\",\n    \"referencia\": \"Edificio azul, segundo piso\"\n  },\n  \"descripcionContenido\": \"Documentos legales importantes\",\n  \"valorDeclarado\": 100.00\n}"
+						},
+						"url": {
+							"raw": "{{PEDIDO_URL}}/api/pedidos",
+							"host": [
+								"{{PEDIDO_URL}}"
+							],
+							"path": [
+								"api",
+								"pedidos"
+							]
+						}
+					}
+				},
+				{
+					"name": "Get All Pedidos",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{PEDIDO_URL}}/api/pedidos",
+							"host": [
+								"{{PEDIDO_URL}}"
+							],
+							"path": [
+								"api",
+								"pedidos"
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Pedido by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{PEDIDO_URL}}/api/pedidos/{{PEDIDO_ID}}",
+							"host": [
+								"{{PEDIDO_URL}}"
+							],
+							"path": [
+								"api",
+								"pedidos",
+								"{{PEDIDO_ID}}"
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Pedidos by Cliente",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{PEDIDO_URL}}/api/pedidos/cliente/CLIENTE-001",
+							"host": [
+								"{{PEDIDO_URL}}"
+							],
+							"path": [
+								"api",
+								"pedidos",
+								"cliente",
+								"CLIENTE-001"
+							]
+						}
+					}
+				},
+				{
+					"name": "Update Pedido (PATCH)",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"prioridad\": \"ALTA\",\n  \"descripcionContenido\": \"Documentos legales - URGENTE\"\n}"
+						},
+						"url": {
+							"raw": "{{PEDIDO_URL}}/api/pedidos/{{PEDIDO_ID}}",
+							"host": [
+								"{{PEDIDO_URL}}"
+							],
+							"path": [
+								"api",
+								"pedidos",
+								"{{PEDIDO_ID}}"
+							]
+						}
+					}
+				},
+				{
+					"name": "Cancel Pedido",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{PEDIDO_URL}}/api/pedidos/{{PEDIDO_ID}}/cancelar",
+							"host": [
+								"{{PEDIDO_URL}}"
+							],
+							"path": [
+								"api",
+								"pedidos",
+								"{{PEDIDO_ID}}",
+								"cancelar"
+							]
+						}
+					}
+				},
+				{
+					"name": "Asignar Repartidor y Vehiculo",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{PEDIDO_URL}}/api/pedidos/{{PEDIDO_ID}}/asignar?repartidorId={{REPARTIDOR_ID}}&vehiculoId={{VEHICULO_ID}}",
+							"host": [
+								"{{PEDIDO_URL}}"
+							],
+							"path": [
+								"api",
+								"pedidos",
+								"{{PEDIDO_ID}}",
+								"asignar"
+							],
+							"query": [
+								{
+									"key": "repartidorId",
+									"value": "{{REPARTIDOR_ID}}"
+								},
+								{
+									"key": "vehiculoId",
+									"value": "{{VEHICULO_ID}}"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Pedidos Pendientes Asignacion",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{PEDIDO_URL}}/api/pedidos/pendientes-asignacion",
+							"host": [
+								"{{PEDIDO_URL}}"
+							],
+							"path": [
+								"api",
+								"pedidos",
+								"pendientes-asignacion"
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Pedidos by Repartidor",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{PEDIDO_URL}}/api/pedidos/repartidor/{{REPARTIDOR_ID}}",
+							"host": [
+								"{{PEDIDO_URL}}"
+							],
+							"path": [
+								"api",
+								"pedidos",
+								"repartidor",
+								"{{REPARTIDOR_ID}}"
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Pedidos by Modalidad",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{PEDIDO_URL}}/api/pedidos/modalidad/URBANA_RAPIDA",
+							"host": [
+								"{{PEDIDO_URL}}"
+							],
+							"path": [
+								"api",
+								"pedidos",
+								"modalidad",
+								"URBANA_RAPIDA"
+							]
+						}
+					}
+				},
+				{
+					"name": "Asociar Factura",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{PEDIDO_URL}}/api/pedidos/{{PEDIDO_ID}}/factura?facturaId={{FACTURA_ID}}&tarifa=15.50",
+							"host": [
+								"{{PEDIDO_URL}}"
+							],
+							"path": [
+								"api",
+								"pedidos",
+								"{{PEDIDO_ID}}",
+								"factura"
+							],
+							"query": [
+								{
+									"key": "facturaId",
+									"value": "{{FACTURA_ID}}"
+								},
+								{
+									"key": "tarifa",
+									"value": "15.50"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Pedidos Sin Factura",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{PEDIDO_URL}}/api/pedidos/sin-factura",
+							"host": [
+								"{{PEDIDO_URL}}"
+							],
+							"path": [
+								"api",
+								"pedidos",
+								"sin-factura"
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Pedidos Alta Prioridad",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{PEDIDO_URL}}/api/pedidos/alta-prioridad",
+							"host": [
+								"{{PEDIDO_URL}}"
+							],
+							"path": [
+								"api",
+								"pedidos",
+								"alta-prioridad"
+							]
+						}
+					}
+				},
+				{
+					"name": "Delete Pedido",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{PEDIDO_URL}}/api/pedidos/{{PEDIDO_ID}}",
+							"host": [
+								"{{PEDIDO_URL}}"
+							],
+							"path": [
+								"api",
+								"pedidos",
+								"{{PEDIDO_ID}}"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "💰 Billing Service",
+			"item": [
+				{
+					"name": "Create Factura",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const response = pm.response.json();",
+									"    if (response.id) {",
+									"        pm.environment.set(\"FACTURA_ID\", response.id);",
+									"        console.log(\"FACTURA_ID guardado:\", response.id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"pedidoId\": \"{{PEDIDO_ID}}\",\n  \"tipoEntrega\": \"DOCUMENTO\",\n  \"peso\": 0.5,\n  \"distanciaKm\": 5.2,\n  \"valorDeclarado\": 100.00\n}"
+						},
+						"url": {
+							"raw": "{{BILLING_URL}}/api/facturas",
+							"host": [
+								"{{BILLING_URL}}"
+							],
+							"path": [
+								"api",
+								"facturas"
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Factura by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BILLING_URL}}/api/facturas/{{FACTURA_ID}}",
+							"host": [
+								"{{BILLING_URL}}"
+							],
+							"path": [
+								"api",
+								"facturas",
+								"{{FACTURA_ID}}"
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Factura by Pedido ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BILLING_URL}}/api/facturas/pedido/{{PEDIDO_ID}}",
+							"host": [
+								"{{BILLING_URL}}"
+							],
+							"path": [
+								"api",
+								"facturas",
+								"pedido",
+								"{{PEDIDO_ID}}"
+							]
+						}
+					}
+				},
+				{
+					"name": "Update Factura Estado",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BILLING_URL}}/api/facturas/{{FACTURA_ID}}/estado?estado=PAGADA",
+							"host": [
+								"{{BILLING_URL}}"
+							],
+							"path": [
+								"api",
+								"facturas",
+								"{{FACTURA_ID}}",
+								"estado"
+							],
+							"query": [
+								{
+									"key": "estado",
+									"value": "PAGADA"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Create Tarifa Base",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"tipoEntrega\": \"DOCUMENTO\",\n  \"tarifaBase\": 5.00,\n  \"tarifaPorKg\": 2.50,\n  \"tarifaPorKm\": 0.80\n}"
+						},
+						"url": {
+							"raw": "{{BILLING_URL}}/api/tarifas",
+							"host": [
+								"{{BILLING_URL}}"
+							],
+							"path": [
+								"api",
+								"tarifas"
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Tarifa by Tipo Entrega",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BILLING_URL}}/api/tarifas/DOCUMENTO",
+							"host": [
+								"{{BILLING_URL}}"
+							],
+							"path": [
+								"api",
+								"tarifas",
+								"DOCUMENTO"
+							]
+						}
+					}
+				},
+				{
+					"name": "Update Tarifa",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"tipoEntrega\": \"DOCUMENTO\",\n  \"tarifaBase\": 6.00,\n  \"tarifaPorKg\": 3.00,\n  \"tarifaPorKm\": 1.00\n}"
+						},
+						"url": {
+							"raw": "{{BILLING_URL}}/api/tarifas/DOCUMENTO",
+							"host": [
+								"{{BILLING_URL}}"
+							],
+							"path": [
+								"api",
+								"tarifas",
+								"DOCUMENTO"
+							]
+						}
+					}
+				},
+				{
+					"name": "Get All Tarifas",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BILLING_URL}}/api/tarifas/tarifas",
+							"host": [
+								"{{BILLING_URL}}"
+							],
+							"path": [
+								"api",
+								"tarifas",
+								"tarifas"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "🚚 Fleet Service",
+			"item": [
+				{
+					"name": "Create Repartidor",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const response = pm.response.json();",
+									"    if (response.id) {",
+									"        pm.environment.set(\"REPARTIDOR_ID\", response.id);",
+									"        console.log(\"REPARTIDOR_ID guardado:\", response.id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"cedula\": \"1234567890\",\n  \"nombreCompleto\": \"Juan Pérez Repartidor\",\n  \"email\": \"juan.perez@logiflow.com\",\n  \"telefono\": \"+593987654321\",\n  \"licencia\": {\n    \"numero\": \"LIC123456789\",\n    \"categoria\": \"B\",\n    \"fechaVencimiento\": \"2026-12-31\"\n  },\n  \"tipoRepartidor\": \"REPARTIDOR_MOTORIZADO\"\n}"
+						},
+						"url": {
+							"raw": "{{FLEET_URL}}/api/repartidores",
+							"host": [
+								"{{FLEET_URL}}"
+							],
+							"path": [
+								"api",
+								"repartidores"
+							]
+						}
+					}
+				},
+				{
+					"name": "Get All Repartidores",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{FLEET_URL}}/repartidores",
+							"host": [
+								"{{FLEET_URL}}"
+							],
+							"path": [
+								"repartidores"
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Repartidor by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{FLEET_URL}}/repartidores/{{REPARTIDOR_ID}}",
+							"host": [
+								"{{FLEET_URL}}"
+							],
+							"path": [
+								"repartidores",
+								"{{REPARTIDOR_ID}}"
+							]
+						}
+					}
+				},
+				{
+					"name": "Update Repartidor",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"telefono\": \"+593999888777\",\n  \"email\": \"juan.perez.updated@logiflow.com\"\n}"
+						},
+						"url": {
+							"raw": "{{FLEET_URL}}/repartidores/{{REPARTIDOR_ID}}",
+							"host": [
+								"{{FLEET_URL}}"
+							],
+							"path": [
+								"repartidores",
+								"{{REPARTIDOR_ID}}"
+							]
+						}
+					}
+				},
+				{
+					"name": "Change Repartidor Estado",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{FLEET_URL}}/repartidores/{{REPARTIDOR_ID}}/estado?estado=EN_RUTA",
+							"host": [
+								"{{FLEET_URL}}"
+							],
+							"path": [
+								"repartidores",
+								"{{REPARTIDOR_ID}}",
+								"estado"
+							],
+							"query": [
+								{
+									"key": "estado",
+									"value": "EN_RUTA"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Create Vehiculo",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const response = pm.response.json();",
+									"    if (response.id) {",
+									"        pm.environment.set(\"VEHICULO_ID\", response.id);",
+									"        console.log(\"VEHICULO_ID guardado:\", response.id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"placa\": \"ABC-1234\",\n  \"marca\": \"Honda\",\n  \"modelo\": \"CBR150\",\n  \"anio\": 2023,\n  \"tipoVehiculo\": \"MOTOCICLETA\",\n  \"capacidadCarga\": 15.0,\n  \"color\": \"Rojo\"\n}"
+						},
+						"url": {
+							"raw": "{{FLEET_URL}}/vehiculos",
+							"host": [
+								"{{FLEET_URL}}"
+							],
+							"path": [
+								"vehiculos"
+							]
+						}
+					}
+				},
+				{
+					"name": "Get All Vehiculos",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{FLEET_URL}}/vehiculos",
+							"host": [
+								"{{FLEET_URL}}"
+							],
+							"path": [
+								"vehiculos"
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Vehiculo by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{FLEET_URL}}/vehiculos/{{VEHICULO_ID}}",
+							"host": [
+								"{{FLEET_URL}}"
+							],
+							"path": [
+								"vehiculos",
+								"{{VEHICULO_ID}}"
+							]
+						}
+					}
+				},
+				{
+					"name": "Update Vehiculo",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"color\": \"Azul\",\n  \"capacidadCarga\": 20.0\n}"
+						},
+						"url": {
+							"raw": "{{FLEET_URL}}/vehiculos/{{VEHICULO_ID}}",
+							"host": [
+								"{{FLEET_URL}}"
+							],
+							"path": [
+								"vehiculos",
+								"{{VEHICULO_ID}}"
+							]
+						}
+					}
+				},
+				{
+					"name": "Change Vehiculo Estado",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{FLEET_URL}}/vehiculos/{{VEHICULO_ID}}/estado?estado=EN_USO",
+							"host": [
+								"{{FLEET_URL}}"
+							],
+							"path": [
+								"vehiculos",
+								"{{VEHICULO_ID}}",
+								"estado"
+							],
+							"query": [
+								{
+									"key": "estado",
+									"value": "EN_USO"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Asignar Vehiculo a Repartidor",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{FLEET_URL}}/repartidores/{{REPARTIDOR_ID}}/asignar-vehiculo?vehiculoId={{VEHICULO_ID}}",
+							"host": [
+								"{{FLEET_URL}}"
+							],
+							"path": [
+								"repartidores",
+								"{{REPARTIDOR_ID}}",
+								"asignar-vehiculo"
+							],
+							"query": [
+								{
+									"key": "vehiculoId",
+									"value": "{{VEHICULO_ID}}"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Vehiculo Asignado a Repartidor",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{FLEET_URL}}/repartidores/{{REPARTIDOR_ID}}/vehiculo",
+							"host": [
+								"{{FLEET_URL}}"
+							],
+							"path": [
+								"repartidores",
+								"{{REPARTIDOR_ID}}",
+								"vehiculo"
+							]
+						}
+					}
+				},
+				{
+					"name": "Remove Vehiculo from Repartidor",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{FLEET_URL}}/repartidores/{{REPARTIDOR_ID}}/vehiculo",
+							"host": [
+								"{{FLEET_URL}}"
+							],
+							"path": [
+								"repartidores",
+								"{{REPARTIDOR_ID}}",
+								"vehiculo"
+							]
+						}
+					}
+				},
+				{
+					"name": "Fleet Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{FLEET_URL}}/health",
+							"host": [
+								"{{FLEET_URL}}"
+							],
+							"path": [
+								"health"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "🌐 Kong Gateway (All Services)",
+			"item": [
+				{
+					"name": "Auth via Kong - Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    if (response.accessToken) {",
+									"        pm.environment.set(\"ACCESS_TOKEN\", response.accessToken);",
+									"        console.log(\"✅ ACCESS_TOKEN guardado via Kong\");",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"admin\",\n  \"password\": \"admin123\"\n}"
+						},
+						"url": {
+							"raw": "{{KONG_URL}}/api/auth/login",
+							"host": [
+								"{{KONG_URL}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"login"
+							]
+						}
+					}
+				},
+				{
+					"name": "Pedidos via Kong - Get All",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{KONG_URL}}/api/pedidos",
+							"host": [
+								"{{KONG_URL}}"
+							],
+							"path": [
+								"api",
+								"pedidos"
+							]
+						}
+					}
+				},
+				{
+					"name": "Fleet via Kong - Get All Repartidores",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{KONG_URL}}/repartidores",
+							"host": [
+								"{{KONG_URL}}"
+							],
+							"path": [
+								"repartidores"
+							]
+						}
+					}
+				},
+				{
+					"name": "Fleet via Kong - Get All Vehiculos",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{KONG_URL}}/vehiculos",
+							"host": [
+								"{{KONG_URL}}"
+							],
+							"path": [
+								"vehiculos"
+							]
+						}
+					}
+				},
+				{
+					"name": "Billing via Kong - Get All Tarifas",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{ACCESS_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{KONG_URL}}/api/tarifas/tarifas",
+							"host": [
+								"{{KONG_URL}}"
+							],
+							"path": [
+								"api",
+								"tarifas",
+								"tarifas"
+							]
+						}
+					}
+				},
+				{
+					"name": "Fleet Health via Kong",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{KONG_URL}}/health",
+							"host": [
+								"{{KONG_URL}}"
+							],
+							"path": [
+								"health"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "🔧 Health & Debug",
+			"item": [
+				{
+					"name": "Auth Service Health",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{AUTH_URL}}/actuator/health",
+							"host": [
+								"{{AUTH_URL}}"
+							],
+							"path": [
+								"actuator",
+								"health"
+							]
+						}
+					}
+				},
+				{
+					"name": "Pedido Service Health",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{PEDIDO_URL}}/actuator/health",
+							"host": [
+								"{{PEDIDO_URL}}"
+							],
+							"path": [
+								"actuator",
+								"health"
+							]
+						}
+					}
+				},
+				{
+					"name": "Billing Service Health",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{BILLING_URL}}/actuator/health",
+							"host": [
+								"{{BILLING_URL}}"
+							],
+							"path": [
+								"actuator",
+								"health"
+							]
+						}
+					}
+				},
+				{
+					"name": "Fleet Service Health",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{FLEET_URL}}/health",
+							"host": [
+								"{{FLEET_URL}}"
+							],
+							"path": [
+								"health"
+							]
+						}
+					}
+				},
+				{
+					"name": "Kong Admin - Services",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8001/services",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8001",
+							"path": [
+								"services"
+							]
+						}
+					}
+				},
+				{
+					"name": "Kong Admin - Routes",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8001/routes",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8001",
+							"path": [
+								"routes"
+							]
+						}
+					}
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "ACCESS_TOKEN",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "REFRESH_TOKEN",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "PEDIDO_ID",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "REPARTIDOR_ID",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "VEHICULO_ID",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "FACTURA_ID",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
+

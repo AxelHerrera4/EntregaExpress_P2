@@ -33,7 +33,7 @@ public class RepartidorController {
   private final RepartidorServiceImpl repartidorService;
 
   @PostMapping
-  @PreAuthorize("hasAnyRole('SUPERVISOR', 'GERENTE', 'ADMINISTRADOR')")
+  @PreAuthorize("hasAnyRole('SUPERVISOR', 'GERENTE', 'ADMINISTRADOR_SISTEMA')")
   @Operation(summary = "Crear nuevo repartidor",
           description = "Registra un nuevo repartidor en el sistema")
   @ApiResponses(value = {
@@ -50,7 +50,7 @@ public class RepartidorController {
   }
 
   @GetMapping("/{id}")
-  @PreAuthorize("hasAnyRole('REPARTIDOR', 'SUPERVISOR', 'GERENTE', 'ADMINISTRADOR')")
+  @PreAuthorize("hasAnyRole('REPARTIDOR_MOTORIZADO', 'REPARTIDOR_VEHICULO', 'REPARTIDOR_CAMION', 'SUPERVISOR', 'GERENTE', 'ADMINISTRADOR_SISTEMA')")
   @Operation(summary = "Obtener repartidor por ID")
   @ApiResponses(value = {
           @ApiResponse(responseCode = "200", description = "Repartidor encontrado"),
@@ -66,7 +66,7 @@ public class RepartidorController {
   }
 
   @GetMapping
-  @PreAuthorize("hasAnyRole('SUPERVISOR', 'GERENTE', 'ADMINISTRADOR')")
+  @PreAuthorize("hasAnyRole('SUPERVISOR', 'GERENTE', 'ADMINISTRADOR_SISTEMA')")
   @Operation(summary = "Listar todos los repartidores")
   @ApiResponse(responseCode = "200", description = "Lista obtenida")
   public ResponseEntity<List<RepartidorResponse>> listarRepartidores() {
@@ -76,7 +76,7 @@ public class RepartidorController {
   }
 
   @PatchMapping("/{id}")
-  @PreAuthorize("hasAnyRole('REPARTIDOR', 'SUPERVISOR', 'GERENTE', 'ADMINISTRADOR')")
+  @PreAuthorize("hasAnyRole('REPARTIDOR_MOTORIZADO', 'REPARTIDOR_VEHICULO', 'REPARTIDOR_CAMION', 'SUPERVISOR', 'GERENTE', 'ADMINISTRADOR_SISTEMA')")
   @Operation(summary = "Actualizar repartidor",
           description = "Actualización parcial de datos del repartidor")
   @ApiResponses(value = {
@@ -93,7 +93,7 @@ public class RepartidorController {
   }
 
   @PatchMapping("/{id}/estado")
-  @PreAuthorize("hasAnyRole('SUPERVISOR', 'GERENTE', 'ADMINISTRADOR')")
+  @PreAuthorize("hasAnyRole('SUPERVISOR', 'GERENTE', 'ADMINISTRADOR_SISTEMA')")
   @Operation(summary = "Cambiar estado del repartidor",
           description = "Cambia entre DISPONIBLE, EN_RUTA, MANTENIMIENTO, etc.")
   @ApiResponse(responseCode = "200", description = "Estado actualizado")
@@ -107,7 +107,7 @@ public class RepartidorController {
   }
 
   @DeleteMapping("/{id}")
-  @PreAuthorize("hasAnyRole('GERENTE', 'ADMINISTRADOR')")
+  @PreAuthorize("hasAnyRole('GERENTE', 'ADMINISTRADOR_SISTEMA')")
   @Operation(summary = "Eliminar repartidor",
           description = "Eliminación lógica - marca como inactivo")
   @ApiResponses(value = {
@@ -124,7 +124,7 @@ public class RepartidorController {
   }
 
   @PostMapping("/{id}/asignar-vehiculo")
-  @PreAuthorize("hasAnyRole('SUPERVISOR', 'GERENTE', 'ADMINISTRADOR')")
+  @PreAuthorize("hasAnyRole('SUPERVISOR', 'GERENTE', 'ADMINISTRADOR_SISTEMA')")
   @Operation(summary = "Asignar vehículo a repartidor",
           description = "Valida licencia y tipo de vehículo antes de asignar")
   @ApiResponse(responseCode = "200", description = "Vehículo asignado")
@@ -138,7 +138,7 @@ public class RepartidorController {
   }
 
   @DeleteMapping("/{id}/vehiculo")
-  @PreAuthorize("hasAnyRole('SUPERVISOR', 'GERENTE', 'ADMINISTRADOR')")
+  @PreAuthorize("hasAnyRole('SUPERVISOR', 'GERENTE', 'ADMINISTRADOR_SISTEMA')")
   @Operation(summary = "Remover vehículo del repartidor")
   @ApiResponse(responseCode = "204", description = "Vehículo removido")
   public ResponseEntity<Void> removerVehiculo(

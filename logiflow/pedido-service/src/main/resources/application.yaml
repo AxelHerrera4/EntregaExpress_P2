@@ -7,7 +7,7 @@ spring:
 
   datasource:
     # Leer desde variables de entorno con valores por defecto
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5433/pedidos_db}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5434/pedidos_db}
     username: ${SPRING_DATASOURCE_USERNAME:pedido_user}
     password: ${SPRING_DATASOURCE_PASSWORD:pedido_pass}
     driver-class-name: org.postgresql.Driver
@@ -39,6 +39,12 @@ integration:
     enabled: ${BILLING_INTEGRATION_ENABLED:true}
   fleet:
     enabled: ${FLEET_INTEGRATION_ENABLED:true}
+
+# JWT Configuration
+jwt:
+  secret: ${JWT_SECRET:VGhpcy1pcy1hLXNlY3JldC1rZXktZm9y-LWRlbW8tYXBwLWp3dC0yMDI1}
+  expiration: 3600000 # 1 hour in milliseconds
+  issuer: auth-service
 
 # Logging mínimo
 logging:

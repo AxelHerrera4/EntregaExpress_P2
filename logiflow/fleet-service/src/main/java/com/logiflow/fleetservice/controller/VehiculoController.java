@@ -52,7 +52,7 @@ public class VehiculoController {
   }
 
   @GetMapping("/{id}")
-  @PreAuthorize("hasAnyRole('REPARTIDOR', 'SUPERVISOR', 'GERENTE', 'ADMINISTRADOR')")
+  @PreAuthorize("hasAnyRole('REPARTIDOR_MOTORIZADO', 'REPARTIDOR_VEHICULO', 'REPARTIDOR_CAMION', 'SUPERVISOR', 'GERENTE', 'ADMINISTRADOR_SISTEMA')")
   @Operation(summary = "Obtener vehículo por ID",
           description = "Consulta los detalles de un vehículo específico")
   @ApiResponses(value = {
@@ -70,7 +70,7 @@ public class VehiculoController {
   }
 
   @GetMapping
-  @PreAuthorize("hasAnyRole('SUPERVISOR', 'GERENTE', 'ADMINISTRADOR')")
+  @PreAuthorize("hasAnyRole('SUPERVISOR', 'GERENTE', 'ADMINISTRADOR_SISTEMA')")
   @Operation(summary = "Listar todos los vehículos",
           description = "Obtiene la lista completa de vehículos de la flota")
   @ApiResponse(responseCode = "200", description = "Lista de vehículos obtenida")
@@ -81,7 +81,7 @@ public class VehiculoController {
   }
 
   @PatchMapping("/{id}")
-  @PreAuthorize("hasAnyRole('SUPERVISOR', 'GERENTE', 'ADMINISTRADOR')")
+  @PreAuthorize("hasAnyRole('SUPERVISOR', 'GERENTE', 'ADMINISTRADOR_SISTEMA')")
   @Operation(summary = "Actualizar vehículo parcialmente",
           description = "Actualiza campos específicos de un vehículo (PATCH)")
   @ApiResponses(value = {
@@ -100,7 +100,7 @@ public class VehiculoController {
   }
 
   @PatchMapping("/{id}/estado")
-  @PreAuthorize("hasAnyRole('SUPERVISOR', 'GERENTE', 'ADMINISTRADOR')")
+  @PreAuthorize("hasAnyRole('SUPERVISOR', 'GERENTE', 'ADMINISTRADOR_SISTEMA')")
   @Operation(summary = "Cambiar estado del vehículo",
           description = "Activa o desactiva un vehículo")
   @ApiResponse(responseCode = "200", description = "Estado actualizado")
@@ -114,7 +114,7 @@ public class VehiculoController {
   }
 
   @DeleteMapping("/{id}")
-  @PreAuthorize("hasAnyRole('GERENTE', 'ADMINISTRADOR')")
+  @PreAuthorize("hasAnyRole('GERENTE', 'ADMINISTRADOR_SISTEMA')")
   @Operation(summary = "Eliminar vehículo",
           description = "Eliminación lógica del vehículo (marca como inactivo)")
   @ApiResponses(value = {

@@ -1,27 +1,46 @@
 _format_version: "3.0"
 
 services:
+  # Auth Service
   - name: authservice
     url: http://authservice:8081
     routes:
-      - name: authservice-route
+      - name: auth-api-route
         paths:
-          - /auth
-        strip_path: true
+          - /api/auth
+        strip_path: false
         methods:
           - GET
           - POST
           - PUT
           - DELETE
           - PATCH
+      - name: auth-protected-route
+        paths:
+          - /api/protected
+        strip_path: false
+        methods:
+          - GET
+          - POST
 
+  # Billing Service
   - name: billing-service
     url: http://billing-service:8082
     routes:
-      - name: billing-route
+      - name: billing-facturas-route
         paths:
-          - /billing
-        strip_path: true
+          - /api/facturas
+        strip_path: false
+        methods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - PATCH
+      - name: billing-tarifas-route
+        paths:
+          - /api/tarifas
+        strip_path: false
         methods:
           - GET
           - POST
@@ -29,27 +48,55 @@ services:
           - DELETE
           - PATCH
 
+  # Fleet Service
   - name: fleet-service
     url: http://fleet-service:8083
     routes:
-      - name: fleet-route
+      - name: fleet-repartidores-route
         paths:
-          - /fleet
-        strip_path: true
+          - /api/repartidores
+        strip_path: false
         methods:
           - GET
           - POST
           - PUT
           - DELETE
           - PATCH
+      - name: fleet-vehiculos-route
+        paths:
+          - /api/vehiculos
+        strip_path: false
+        methods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - PATCH
+      - name: fleet-asignaciones-route
+        paths:
+          - /api/asignaciones
+        strip_path: false
+        methods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - PATCH
+      - name: fleet-health-route
+        paths:
+          - /api/health
+        strip_path: false
+        methods:
+          - GET
 
+  # Pedido Service
   - name: pedido-service
     url: http://pedido-service:8084
     routes:
-      - name: pedido-route
+      - name: pedido-api-route
         paths:
-          - /pedido
-        strip_path: true
+          - /api/pedidos
+        strip_path: false
         methods:
           - GET
           - POST
@@ -57,7 +104,7 @@ services:
           - DELETE
           - PATCH
 
-# Plugin global para logging (opcional)
+# Plugin global para logging y JWT
 plugins:
   - name: correlation-id
     config:
@@ -70,3 +117,11 @@ plugins:
       add:
         headers:
           - X-Gateway:Kong
+          - X-Forwarded-Proto:http
+
+# Plugin JWT global (opcional - los servicios ya manejan JWT internamente)
+# consumers:
+#   - username: jwt-consumer
+#     jwt_secrets:
+#       - key: VGhpcy1pcy1hLXNlY3JldC1rZXktZm9y-LWRlbW8tYXBwLWp3dC0yMDI1
+#         algorithm: HS256

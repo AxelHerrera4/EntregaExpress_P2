@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -25,6 +26,7 @@ public class FacturaController {
             description = "Genera una factura en estado BORRADOR según el tipo de entrega")
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('SUPERVISOR', 'GERENTE', 'ADMINISTRADOR_SISTEMA')")
     public ResponseEntity<FacturaResponseDTO> crearFactura(@RequestBody FacturaRequestDTO request) {
         FacturaResponseDTO factura = facturaService.crearFactura(request);
         return new ResponseEntity<>(factura, HttpStatus.CREATED);
@@ -33,6 +35,7 @@ public class FacturaController {
     @Operation(summary = "Obtener factura por ID")
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('CLIENTE', 'SUPERVISOR', 'GERENTE', 'ADMINISTRADOR_SISTEMA')")
     public ResponseEntity<FacturaResponseDTO> obtenerFacturaPorId(@PathVariable UUID id) {
         FacturaResponseDTO factura = facturaService.obtenerFacturaPorId(id);
         return ResponseEntity.ok(factura);
@@ -40,6 +43,7 @@ public class FacturaController {
 
     @Operation(summary = "Obtener factura por ID de pedido")
     @GetMapping("/pedido/{pedidoId}")
+    @PreAuthorize("hasAnyRole('CLIENTE', 'SUPERVISOR', 'GERENTE', 'ADMINISTRADOR_SISTEMA')")
     public ResponseEntity<FacturaResponseDTO> obtenerFacturaPorPedidoId(@PathVariable String pedidoId) {
         FacturaResponseDTO factura = facturaService.obtenerFacturaPorPedidoId(pedidoId);
         return ResponseEntity.ok(factura);
@@ -47,6 +51,7 @@ public class FacturaController {
 
     @Operation(summary = "Actualizar estado de factura")
     @PatchMapping("/{id}/estado")
+    @PreAuthorize("hasAnyRole('SUPERVISOR', 'GERENTE', 'ADMINISTRADOR_SISTEMA')")
     public ResponseEntity<FacturaResponseDTO> actualizarEstado(
             @PathVariable UUID id,
             @RequestParam EstadoFactura estado

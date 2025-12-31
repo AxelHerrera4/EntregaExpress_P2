@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -50,6 +51,7 @@ public class PedidoController {
             @ApiResponse(responseCode = "500", description = "Error interno del servidor")
     })
     @PostMapping
+    @PreAuthorize("hasAnyRole('CLIENTE', 'SUPERVISOR', 'GERENTE', 'ADMINISTRADOR_SISTEMA')")
     public ResponseEntity<PedidoResponse> createPedido(
             @Valid @RequestBody PedidoRequest request) {
         log.info("POST /api/pedidos - Solicitud de creación de pedido recibida");
@@ -83,6 +85,7 @@ public class PedidoController {
             @ApiResponse(responseCode = "404", description = "Pedido no encontrado")
     })
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('CLIENTE', 'REPARTIDOR_MOTORIZADO', 'REPARTIDOR_VEHICULO', 'REPARTIDOR_CAMION', 'SUPERVISOR', 'GERENTE', 'ADMINISTRADOR_SISTEMA')")
     public ResponseEntity<PedidoResponse> getPedidoById(
             @Parameter(description = "ID del pedido", required = true)
             @PathVariable String id) {
@@ -104,6 +107,7 @@ public class PedidoController {
             )
     })
     @GetMapping
+    @PreAuthorize("hasAnyRole('SUPERVISOR', 'GERENTE', 'ADMINISTRADOR_SISTEMA')")
     public ResponseEntity<List<PedidoResponse>> getAllPedidos() {
         log.info("GET /api/pedidos - Consultando todos los pedidos");
 
@@ -123,6 +127,7 @@ public class PedidoController {
             )
     })
     @GetMapping("/cliente/{clienteId}")
+    @PreAuthorize("hasAnyRole('CLIENTE', 'SUPERVISOR', 'GERENTE', 'ADMINISTRADOR_SISTEMA')")
     public ResponseEntity<List<PedidoResponse>> getPedidosByCliente(
             @Parameter(description = "ID del cliente", required = true)
             @PathVariable String clienteId) {
@@ -150,7 +155,8 @@ public class PedidoController {
             @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos")
     })
     @PatchMapping("/{id}")
-    public ResponseEntity<PedidoResponse> patchPedido(
+    @PreAuthorize("hasAnyRole('CLIENTE', 'SUPERVISOR', 'GERENTE', 'ADMINISTRADOR_SISTEMA')")
+    public ResponseEntity<PedidoResponse> updatePedido(
             @Parameter(description = "ID del pedido", required = true)
             @PathVariable String id,
             @RequestBody PedidoPatchRequest patchRequest) {
@@ -178,7 +184,8 @@ public class PedidoController {
             @ApiResponse(responseCode = "400", description = "El pedido no puede ser cancelado")
     })
     @PatchMapping("/{id}/cancelar")
-    public ResponseEntity<PedidoResponse> cancelarPedido(
+    @PreAuthorize("hasAnyRole('CLIENTE', 'SUPERVISOR', 'GERENTE', 'ADMINISTRADOR_SISTEMA')")
+    public ResponseEntity<PedidoResponse> cancelPedido(
             @Parameter(description = "ID del pedido", required = true)
             @PathVariable String id) {
         log.info("PATCH /api/pedidos/{}/cancelar - Cancelando pedido", id);
@@ -197,6 +204,7 @@ public class PedidoController {
             @ApiResponse(responseCode = "404", description = "Pedido no encontrado")
     })
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('GERENTE', 'ADMINISTRADOR_SISTEMA')")
     public ResponseEntity<Void> deletePedido(
             @Parameter(description = "ID del pedido", required = true)
             @PathVariable String id) {
@@ -226,6 +234,7 @@ public class PedidoController {
             @ApiResponse(responseCode = "400", description = "El pedido no puede ser asignado")
     })
     @PatchMapping("/{pedidoId}/asignar")
+    @PreAuthorize("hasAnyRole('SUPERVISOR', 'GERENTE', 'ADMINISTRADOR_SISTEMA')")
     public ResponseEntity<PedidoResponse> asignarRepartidorYVehiculo(
             @Parameter(description = "ID del pedido", required = true)
             @PathVariable String pedidoId,
@@ -252,6 +261,7 @@ public class PedidoController {
             )
     })
     @GetMapping("/pendientes-asignacion")
+    @PreAuthorize("hasAnyRole('SUPERVISOR', 'GERENTE', 'ADMINISTRADOR_SISTEMA')")
     public ResponseEntity<List<PedidoResponse>> getPedidosPendientesAsignacion() {
         log.info("GET /api/pedidos/pendientes-asignacion - Consultando pedidos pendientes");
 
@@ -271,6 +281,7 @@ public class PedidoController {
             )
     })
     @GetMapping("/repartidor/{repartidorId}")
+    @PreAuthorize("hasAnyRole('REPARTIDOR_MOTORIZADO', 'REPARTIDOR_VEHICULO', 'REPARTIDOR_CAMION', 'SUPERVISOR', 'GERENTE', 'ADMINISTRADOR_SISTEMA')")
     public ResponseEntity<List<PedidoResponse>> getPedidosByRepartidor(
             @Parameter(description = "ID del repartidor", required = true)
             @PathVariable String repartidorId) {
@@ -292,6 +303,7 @@ public class PedidoController {
             )
     })
     @GetMapping("/modalidad/{modalidad}")
+    @PreAuthorize("hasAnyRole('SUPERVISOR', 'GERENTE', 'ADMINISTRADOR_SISTEMA')")
     public ResponseEntity<List<PedidoResponse>> getPedidosByModalidad(
             @Parameter(description = "Modalidad de servicio", required = true)
             @PathVariable com.logiflow.pedidoservice.model.ModalidadServicio modalidad) {
@@ -321,6 +333,7 @@ public class PedidoController {
             @ApiResponse(responseCode = "400", description = "El pedido ya tiene una factura asociada")
     })
     @PatchMapping("/{pedidoId}/factura")
+    @PreAuthorize("hasAnyRole('SUPERVISOR', 'GERENTE', 'ADMINISTRADOR_SISTEMA')")
     public ResponseEntity<PedidoResponse> asociarFactura(
             @Parameter(description = "ID del pedido", required = true)
             @PathVariable String pedidoId,
@@ -347,6 +360,7 @@ public class PedidoController {
             )
     })
     @GetMapping("/sin-factura")
+    @PreAuthorize("hasAnyRole('SUPERVISOR', 'GERENTE', 'ADMINISTRADOR_SISTEMA')")
     public ResponseEntity<List<PedidoResponse>> getPedidosSinFactura() {
         log.info("GET /api/pedidos/sin-factura - Consultando pedidos sin factura");
 
@@ -366,6 +380,7 @@ public class PedidoController {
             )
     })
     @GetMapping("/alta-prioridad")
+    @PreAuthorize("hasAnyRole('SUPERVISOR', 'GERENTE', 'ADMINISTRADOR_SISTEMA')")
     public ResponseEntity<List<PedidoResponse>> getPedidosAltaPrioridad() {
         log.info("GET /api/pedidos/alta-prioridad - Consultando pedidos de alta prioridad");
 

@@ -9,18 +9,12 @@ FROM maven:3.9.6-eclipse-temurin-21-alpine AS build
 # Establecer directorio de trabajo
 WORKDIR /app
 
-# Copiar archivos de configuración de Maven
-COPY pom.xml .
-COPY mvnw .
-COPY .mvn .mvn
+# Copiar archivos de configuración de Maven y descargar dependencias
+COPY pom.xml mvnw .mvn/ ./
+RUN mvn dependency:go-offline -B && rm -rf /root/.m2/repository
 
-# Descargar dependencias (cacheado si no cambia pom.xml)
-RUN mvn dependency:go-offline -B
-
-# Copiar código fuente
+# Copiar código fuente y compilar (sin ejecutar tests para acelerar el build)
 COPY src ./src
-
-# Compilar y empaquetar (sin ejecutar tests para acelerar el build)
 RUN mvn clean package -DskipTests
 
 # ==================================
@@ -30,11 +24,11 @@ RUN mvn clean package -DskipTests
 FROM eclipse-temurin:21-jre-alpine
 
 # Metadata del contenedor
-LABEL maintainer="LogiFlow Team"
-LABEL service="pedido-service"
-LABEL version="0.0.1-SNAPSHOT"
+LABEL maintainer="LogiFlow Team" \
+      service="pedido-service" \
+      version="0.0.1-SNAPSHOT"
 
-# Crear usuario no-root para mayor seguridad
+# Crear usuario no-root para mayor seguridad y establecer permisos
 RUN addgroup -S spring && adduser -S spring -G spring
 
 # Establecer directorio de trabajo
@@ -42,8 +36,6 @@ WORKDIR /app
 
 # Copiar el JAR compilado desde la etapa de build
 COPY --from=build /app/target/pedido-service-*.jar app.jar
-
-# Cambiar permisos al usuario spring
 RUN chown spring:spring app.jar
 
 # Cambiar a usuario no-root
@@ -53,8 +45,8 @@ USER spring:spring
 EXPOSE 8084
 
 # Variables de entorno por defecto (pueden sobreescribirse)
-ENV SPRING_PROFILES_ACTIVE=default
-ENV JAVA_OPTS="-Xms256m -Xmx512m"
+ENV SPRING_PROFILES_ACTIVE=default \
+    JAVA_OPTS="-Xms256m -Xmx512m"
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
@@ -62,4 +54,3 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
 
 # Comando para ejecutar la aplicación
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
-

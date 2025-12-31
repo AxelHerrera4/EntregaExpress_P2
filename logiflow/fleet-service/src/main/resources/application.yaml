@@ -37,8 +37,8 @@ spring:
     validate-on-migrate: true
 
 jwt:
-  secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
-  expiration: 86400000 # 24 hours
+  secret: ${JWT_SECRET:VGhpcy1pcy1hLXNlY3JldC1rZXktZm9y-LWRlbW8tYXBwLWp3dC0yMDI1}
+  expiration: 3600000 # 1 hour in milliseconds
   issuer: auth-service
 
 springdoc:

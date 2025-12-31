@@ -17,4 +17,10 @@ spring:
 server:
   port: 8082
 
+# JWT Configuration
+jwt:
+  secret: ${JWT_SECRET:VGhpcy1pcy1hLXNlY3JldC1rZXktZm9y-LWRlbW8tYXBwLWp3dC0yMDI1}
+  expiration: 3600000 # 1 hour in milliseconds
+  issuer: auth-service
+
 

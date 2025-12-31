@@ -1,4 +1,4 @@
-package com.logiflow.fleetservice.config;
+package ec.edu.espe.billing_service.config;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -23,9 +23,13 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Filtro JWT para autenticación en billing-service
+ * Sincronizado con auth-service, fleet-service y pedido-service
+ */
 @Component
-@Slf4j
 @RequiredArgsConstructor
+@Slf4j
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
   @Value("${jwt.secret}")
@@ -38,8 +42,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
   protected void doFilterInternal(
           HttpServletRequest request,
           HttpServletResponse response,
-          FilterChain filterChain
-  ) throws ServletException, IOException {
+          FilterChain filterChain) throws ServletException, IOException {
 
     try {
       String token = extractToken(request);
@@ -47,7 +50,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       if (token != null && validateToken(token)) {
         Claims claims = parseToken(token);
 
-        @SuppressWarnings("unchecked")
+        // Validar issuer
+        if (!jwtIssuer.equals(claims.getIssuer())) {
+          log.warn("Token JWT con issuer incorrecto: {}", claims.getIssuer());
+          SecurityContextHolder.clearContext();
+          filterChain.doFilter(request, response);
+          return;
+        }
+
+        // Extraer roles y agregar prefijo ROLE_
         List<String> roles = claims.get("roles", List.class);
 
         List<SimpleGrantedAuthority> authorities = roles.stream()
@@ -63,7 +74,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        log.debug("JWT validado para usuario: {}", username);
+        log.debug("JWT validado para usuario: {} con roles: {}", username, roles);
       }
     } catch (Exception e) {
       log.error("Error en autenticación JWT: {}", e.getMessage());
@@ -85,18 +96,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
   private boolean validateToken(String token) {
     try {
-      Claims claims = parseToken(token);
-
-      // Validar issuer
-      String issuer = claims.getIssuer();
-      if (!jwtIssuer.equals(issuer)) {
-        log.warn("JWT issuer inválido: {}", issuer);
-        return false;
-      }
-
+      parseToken(token);
       return true;
     } catch (Exception e) {
-      log.error("Token inválido: {}", e.getMessage());
+      log.error("Token JWT inválido: {}", e.getMessage());
       return false;
     }
   }

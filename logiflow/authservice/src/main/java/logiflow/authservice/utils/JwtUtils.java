@@ -23,6 +23,9 @@ public class JwtUtils {
     @Value("${jwt.refresh.expiration.ms:1209600000}") // 14 days
     private long refreshExpirationMs;
 
+    @Value("${jwt.issuer:auth-service}")
+    private String issuer;
+
     private byte[] secretKeyBytes() {
         // Try to base64-decode; if fails, use raw bytes
         try {
@@ -35,6 +38,7 @@ public class JwtUtils {
     public String generateAccessToken(User user) {
         Map<String, Object> payload = new HashMap<>();
         payload.put("sub", user.getUsername());
+        payload.put("iss", issuer);
         long now = System.currentTimeMillis();
         payload.put("iat", now / 1000);
         payload.put("exp", (now + jwtExpirationMs) / 1000);
@@ -45,6 +49,7 @@ public class JwtUtils {
     public String generateRefreshToken(User user) {
         Map<String, Object> payload = new HashMap<>();
         payload.put("sub", user.getUsername());
+        payload.put("iss", issuer);
         long now = System.currentTimeMillis();
         payload.put("iat", now / 1000);
         payload.put("exp", (now + refreshExpirationMs) / 1000);
