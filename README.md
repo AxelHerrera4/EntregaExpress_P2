@@ -20,7 +20,7 @@ Plataforma empresarial de gestión logística basada en **microservicios con Spr
                             ▼
         ┌─────────────────────────────────────────────┐
         │        🔀 API GATEWAY (8080)                │
-        │    (Spring Cloud Gateway / Zuul)            │
+        │    (Spring Cloud Gateway )            │
         │  - Enrutamiento de solicitudes             │
         │  - Balanceo de carga                       │
         │  - Rate limiting                           │

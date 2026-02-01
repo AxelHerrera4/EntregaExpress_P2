@@ -1,9 +1,8 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:16-alpine
     container_name: authservice-postgres
+    restart: unless-stopped
     environment:
       POSTGRES_DB: jwt_demo
       POSTGRES_USER: admin
@@ -12,34 +11,11 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    networks:
-      - authservice-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U admin -d jwt_demo"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  authservice:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: authservice-app
-    ports:
-      - "8081:8081"
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/jwt_demo
-      SPRING_DATASOURCE_USERNAME: admin
-      SPRING_DATASOURCE_PASSWORD: admin
-    depends_on:
-      postgres:
-        condition: service_healthy
-    networks:
-      - authservice-network
-
 volumes:
   postgres_data:
-
-networks:
-  authservice-network:
-    driver: bridge

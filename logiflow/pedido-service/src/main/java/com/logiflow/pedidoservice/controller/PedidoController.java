@@ -34,6 +34,16 @@ public class PedidoController {
 
     private final PedidoService pedidoService;
 
+    // ENDPOINT DE DEBUG TEMPORAL
+    @GetMapping("/debug-auth")
+    public ResponseEntity<?> debugAuth() {
+        var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        log.info("🔍 DEBUG AUTH - Authentication: {}", auth);
+        log.info("🔍 DEBUG AUTH - Principal: {}", auth != null ? auth.getPrincipal() : "NULL");
+        log.info("🔍 DEBUG AUTH - Authorities: {}", auth != null ? auth.getAuthorities() : "NULL");
+        return ResponseEntity.ok("Auth: " + (auth != null ? auth.toString() : "NULL"));
+    }
+
     @Operation(
             summary = "Crear un nuevo pedido",
             description = "Crea un nuevo pedido con validación de cobertura y tipo de entrega"

@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -29,6 +30,8 @@ public class AsignacionController {
     private final AsignacionService asignacionService;
 
     @PostMapping
+
+    @PreAuthorize("hasAnyRole('SUPERVISOR', 'GERENTE', 'ADMINISTRADOR_SISTEMA')")
     @Operation(
             summary = "Asignar repartidor y vehículo a un pedido",
             description = "Busca y asigna el mejor repartidor disponible con su vehículo para un pedido"
@@ -54,6 +57,7 @@ public class AsignacionController {
     }
 
     @DeleteMapping("/pedido/{pedidoId}/liberar")
+    @PreAuthorize("hasAnyRole('SUPERVISOR', 'GERENTE', 'ADMINISTRADOR_SISTEMA')")
     @Operation(
             summary = "Liberar asignación de un pedido",
             description = "Libera el repartidor asignado cuando un pedido es cancelado"

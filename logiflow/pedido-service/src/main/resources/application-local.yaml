@@ -53,10 +53,9 @@ integration:
 
 # JWT Configuration
 jwt:
-  secret: VGhpcy1pcy1hLXNlY3JldC1rZXktZm9y-LWRlbW8tYXBwLWp3dC0yMDI1
-  expiration: 3600000 # 1 hour
+  secret: MiSuperClaveSecretaMuyLarga123456789
+  expiration: 3600000
   issuer: auth-service
-
 # Logging detallado para desarrollo
 logging:
   level:

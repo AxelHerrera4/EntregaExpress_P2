@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 @Component
 public class JwtUtils {
 
-    @Value("${jwt.secret:VGhpcy1pcy1hLXNlY3JldC1rZXktZm9y-LWRlbW8tYXBwLWp3dC0yMDI1}")
+    @Value("${jwt.secret:VGhpcy1pcy1hLXNlY3JldC1rZXktZm9yLWRlbW8tYXBwLWp3dC0yMDI1}")
     private String secret;
 
     @Value("${jwt.expiration.ms:3600000}")
@@ -27,7 +27,6 @@ public class JwtUtils {
     private String issuer;
 
     private byte[] secretKeyBytes() {
-        // Try to base64-decode; if fails, use raw bytes
         try {
             return Base64.getDecoder().decode(secret);
         } catch (IllegalArgumentException e) {
@@ -35,14 +34,17 @@ public class JwtUtils {
         }
     }
 
+
     public String generateAccessToken(User user) {
         Map<String, Object> payload = new HashMap<>();
         payload.put("sub", user.getUsername());
-        payload.put("iss", issuer);
+        // Usar "jwt-client" como issuer para que Kong lo reconozca como válido
+        payload.put("iss", "jwt-client");
         long now = System.currentTimeMillis();
         payload.put("iat", now / 1000);
         payload.put("exp", (now + jwtExpirationMs) / 1000);
-        payload.put("roles", user.getRoles().stream().map(Role::getName).map(Enum::name).collect(Collectors.toList()));
+        // Roles como string separado por comas para compatibilidad con Kong header transformation
+        payload.put("roles", user.getRoles().stream().map(Role::getName).map(Enum::name).collect(Collectors.joining(",")));
         return buildToken(payload);
     }
 
@@ -203,24 +205,15 @@ public class JwtUtils {
     }
 
     private static List<String> extractStringListClaim(String json, String key) {
-        // naive parser for array of strings: "key":["A","B"]
-        String pattern = '"' + key + '"' + ":[";
+        // Parse roles como string separado por comas: "roles":"ADMIN,USER"
+        String pattern = '"' + key + '"' + ":\"";
         int idx = json.indexOf(pattern);
         if (idx < 0) return Collections.emptyList();
         int start = idx + pattern.length();
-        int end = json.indexOf(']', start);
+        int end = json.indexOf('"', start);
         if (end < 0) return Collections.emptyList();
-        String inside = json.substring(start, end);
-        if (inside.trim().isEmpty()) return Collections.emptyList();
-        String[] items = inside.split(",");
-        List<String> result = new ArrayList<>();
-        for (String it : items) {
-            String s = it.trim();
-            if (s.startsWith("\"") && s.endsWith("\"")) {
-                s = s.substring(1, s.length() - 1);
-            }
-            result.add(s);
-        }
-        return result;
+        String rolesStr = json.substring(start, end);
+        if (rolesStr.trim().isEmpty()) return Collections.emptyList();
+        return Arrays.asList(rolesStr.split(","));
     }
 }

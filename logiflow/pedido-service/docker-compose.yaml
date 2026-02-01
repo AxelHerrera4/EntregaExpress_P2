@@ -1,42 +1,16 @@
-version: '3.8'
 services:
   postgres:
     image: postgres:16-alpine
     container_name: pedido_db
+    restart: unless-stopped
     environment:
       POSTGRES_DB: pedidos_db
       POSTGRES_USER: pedido_user
       POSTGRES_PASSWORD: pedido_pass
     ports:
-      - "5433:5432"
+      - "5434:5432"
     volumes:
       - postgres_users_data_new:/var/lib/postgresql/data
-
-  pedido-service:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: logiflow/pedido-service:latest
-    container_name: pedido-service
-    depends_on:
-      - postgres
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/pedidos_db
-      SPRING_DATASOURCE_USERNAME: pedido_user
-      SPRING_DATASOURCE_PASSWORD: pedido_pass
-      BILLING_SERVICE_URL: http://billing-service:8082
-      FLEET_SERVICE_URL: http://fleet-service:8083
-      BILLING_INTEGRATION_ENABLED: "true"
-      FLEET_INTEGRATION_ENABLED: "true"
-    ports:
-      - "8084:8084"
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8084/actuator/health || exit 1"]
-      interval: 30s
-      timeout: 3s
-      retries: 5
-      start_period: 40s
 
 volumes:
   postgres_users_data_new:
