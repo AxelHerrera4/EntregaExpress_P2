@@ -25,6 +25,7 @@ public class BillingClient {
 
     /**
      * Crea una factura en el Billing Service
+     *
      * @param request datos del pedido para calcular la tarifa
      * @return respuesta con la factura creada
      */
@@ -53,6 +54,7 @@ public class BillingClient {
 
     /**
      * Obtiene una factura por ID del pedido
+     *
      * @param pedidoId ID del pedido (UUID como String)
      * @return respuesta con la factura
      */

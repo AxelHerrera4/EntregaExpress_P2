@@ -43,7 +43,7 @@ public class PedidoServiceImpl implements PedidoService {
     @Value("${integration.billing.enabled:true}")
     private boolean billingIntegrationEnabled;
 
-    @Value("${integration.fleet.enabled:false}")
+    @Value("${integration.fleet.enabled:true}")
     private boolean fleetIntegrationEnabled;
 
     @Override
@@ -81,7 +81,6 @@ public class PedidoServiceImpl implements PedidoService {
                         .pedidoId(savedPedido.getId())
                         .tipoEntrega(savedPedido.getTipoEntrega().name())
                         .distanciaKm(distanciaKm)
-                        .peso(savedPedido.getPeso())
                         .build();
 
                 // Llamar a Billing Service

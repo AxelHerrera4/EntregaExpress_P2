@@ -30,103 +30,103 @@ import java.util.List;
 @SecurityRequirement(name = "Bearer Authentication")
 public class VehiculoController {
 
-  private final VehiculoServiceImpl vehiculoService;
+    private final VehiculoServiceImpl vehiculoService;
 
-  @PostMapping
-  @PreAuthorize("hasAnyRole('SUPERVISOR', 'GERENTE', 'ADMINISTRADOR')")
-  @Operation(summary = "Crear un nuevo vehículo",
-          description = "Crea un nuevo vehículo en la flota usando Factory Pattern")
-  @ApiResponses(value = {
-          @ApiResponse(responseCode = "201", description = "Vehículo creado exitosamente"),
-          @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos"),
-          @ApiResponse(responseCode = "409", description = "Ya existe un vehículo con esa placa"),
-          @ApiResponse(responseCode = "401", description = "No autenticado"),
-          @ApiResponse(responseCode = "403", description = "Sin permisos suficientes")
-  })
-  public ResponseEntity<VehiculoResponse> crearVehiculo(
-          @Valid @RequestBody VehiculoCreateRequest request
-  ) {
-    log.info("POST /vehiculos - Creando vehículo");
-    VehiculoResponse response = vehiculoService.crearVehiculo(request);
-    return ResponseEntity.status(HttpStatus.CREATED).body(response);
-  }
+    @PostMapping
+    @PreAuthorize("hasAnyRole('SUPERVISOR', 'GERENTE', 'ADMINISTRADOR_SISTEMA')")
+    @Operation(summary = "Crear un nuevo vehículo",
+            description = "Crea un nuevo vehículo en la flota usando Factory Pattern")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Vehículo creado exitosamente"),
+            @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos"),
+            @ApiResponse(responseCode = "409", description = "Ya existe un vehículo con esa placa"),
+            @ApiResponse(responseCode = "401", description = "No autenticado"),
+            @ApiResponse(responseCode = "403", description = "Sin permisos suficientes")
+    })
+    public ResponseEntity<VehiculoResponse> crearVehiculo(
+            @Valid @RequestBody VehiculoCreateRequest request
+    ) {
+        log.info("POST /vehiculos - Creando vehículo");
+        VehiculoResponse response = vehiculoService.crearVehiculo(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
 
-  @GetMapping("/{id}")
-  @PreAuthorize("hasAnyRole('REPARTIDOR_MOTORIZADO', 'REPARTIDOR_VEHICULO', 'REPARTIDOR_CAMION', 'SUPERVISOR', 'GERENTE', 'ADMINISTRADOR_SISTEMA')")
-  @Operation(summary = "Obtener vehículo por ID",
-          description = "Consulta los detalles de un vehículo específico")
-  @ApiResponses(value = {
-          @ApiResponse(responseCode = "200", description = "Vehículo encontrado"),
-          @ApiResponse(responseCode = "404", description = "Vehículo no encontrado"),
-          @ApiResponse(responseCode = "401", description = "No autenticado")
-  })
-  public ResponseEntity<VehiculoResponse> obtenerVehiculoPorId(
-          @Parameter(description = "ID del vehículo", required = true)
-          @PathVariable Long id
-  ) {
-    log.info("GET /vehiculos/{} - Consultando vehículo", id);
-    VehiculoResponse response = vehiculoService.obtenerVehiculoPorId(id);
-    return ResponseEntity.ok(response);
-  }
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('REPARTIDOR_MOTORIZADO', 'REPARTIDOR_VEHICULO', 'REPARTIDOR_CAMION', 'SUPERVISOR', 'GERENTE', 'ADMINISTRADOR_SISTEMA')")
+    @Operation(summary = "Obtener vehículo por ID",
+            description = "Consulta los detalles de un vehículo específico")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Vehículo encontrado"),
+            @ApiResponse(responseCode = "404", description = "Vehículo no encontrado"),
+            @ApiResponse(responseCode = "401", description = "No autenticado")
+    })
+    public ResponseEntity<VehiculoResponse> obtenerVehiculoPorId(
+            @Parameter(description = "ID del vehículo", required = true)
+            @PathVariable Long id
+    ) {
+        log.info("GET /vehiculos/{} - Consultando vehículo", id);
+        VehiculoResponse response = vehiculoService.obtenerVehiculoPorId(id);
+        return ResponseEntity.ok(response);
+    }
 
-  @GetMapping
-  @PreAuthorize("hasAnyRole('SUPERVISOR', 'GERENTE', 'ADMINISTRADOR_SISTEMA')")
-  @Operation(summary = "Listar todos los vehículos",
-          description = "Obtiene la lista completa de vehículos de la flota")
-  @ApiResponse(responseCode = "200", description = "Lista de vehículos obtenida")
-  public ResponseEntity<List<VehiculoResponse>> listarVehiculos() {
-    log.info("GET /vehiculos - Listando todos los vehículos");
-    List<VehiculoResponse> vehiculos = vehiculoService.obtenerTodosLosVehiculos();
-    return ResponseEntity.ok(vehiculos);
-  }
+    @GetMapping
+    @PreAuthorize("hasAnyRole('SUPERVISOR', 'GERENTE', 'ADMINISTRADOR_SISTEMA')")
+    @Operation(summary = "Listar todos los vehículos",
+            description = "Obtiene la lista completa de vehículos de la flota")
+    @ApiResponse(responseCode = "200", description = "Lista de vehículos obtenida")
+    public ResponseEntity<List<VehiculoResponse>> listarVehiculos() {
+        log.info("GET /vehiculos - Listando todos los vehículos");
+        List<VehiculoResponse> vehiculos = vehiculoService.obtenerTodosLosVehiculos();
+        return ResponseEntity.ok(vehiculos);
+    }
 
-  @PatchMapping("/{id}")
-  @PreAuthorize("hasAnyRole('SUPERVISOR', 'GERENTE', 'ADMINISTRADOR_SISTEMA')")
-  @Operation(summary = "Actualizar vehículo parcialmente",
-          description = "Actualiza campos específicos de un vehículo (PATCH)")
-  @ApiResponses(value = {
-          @ApiResponse(responseCode = "200", description = "Vehículo actualizado"),
-          @ApiResponse(responseCode = "404", description = "Vehículo no encontrado"),
-          @ApiResponse(responseCode = "400", description = "Datos inválidos")
-  })
-  public ResponseEntity<VehiculoResponse> actualizarVehiculo(
-          @Parameter(description = "ID del vehículo", required = true)
-          @PathVariable Long id,
-          @Valid @RequestBody VehiculoUpdateRequest request
-  ) {
-    log.info("PATCH /vehiculos/{} - Actualizando vehículo", id);
-    VehiculoResponse response = vehiculoService.actualizarVehiculo(id, request);
-    return ResponseEntity.ok(response);
-  }
+    @PatchMapping("/{id}")
+    @PreAuthorize("hasAnyRole('SUPERVISOR', 'GERENTE', 'ADMINISTRADOR_SISTEMA')")
+    @Operation(summary = "Actualizar vehículo parcialmente",
+            description = "Actualiza campos específicos de un vehículo (PATCH)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Vehículo actualizado"),
+            @ApiResponse(responseCode = "404", description = "Vehículo no encontrado"),
+            @ApiResponse(responseCode = "400", description = "Datos inválidos")
+    })
+    public ResponseEntity<VehiculoResponse> actualizarVehiculo(
+            @Parameter(description = "ID del vehículo", required = true)
+            @PathVariable Long id,
+            @Valid @RequestBody VehiculoUpdateRequest request
+    ) {
+        log.info("PATCH /vehiculos/{} - Actualizando vehículo", id);
+        VehiculoResponse response = vehiculoService.actualizarVehiculo(id, request);
+        return ResponseEntity.ok(response);
+    }
 
-  @PatchMapping("/{id}/estado")
-  @PreAuthorize("hasAnyRole('SUPERVISOR', 'GERENTE', 'ADMINISTRADOR_SISTEMA')")
-  @Operation(summary = "Cambiar estado del vehículo",
-          description = "Activa o desactiva un vehículo")
-  @ApiResponse(responseCode = "200", description = "Estado actualizado")
-  public ResponseEntity<VehiculoResponse> cambiarEstado(
-          @PathVariable Long id,
-          @RequestParam Boolean activo
-  ) {
-    log.info("PATCH /vehiculos/{}/estado - Cambiando a: {}", id, activo);
-    VehiculoResponse response = vehiculoService.actualizarEstadoVehiculo(id, activo);
-    return ResponseEntity.ok(response);
-  }
+    @PatchMapping("/{id}/estado")
+    @PreAuthorize("hasAnyRole('SUPERVISOR', 'GERENTE', 'ADMINISTRADOR_SISTEMA')")
+    @Operation(summary = "Cambiar estado del vehículo",
+            description = "Activa o desactiva un vehículo")
+    @ApiResponse(responseCode = "200", description = "Estado actualizado")
+    public ResponseEntity<VehiculoResponse> cambiarEstado(
+            @PathVariable Long id,
+            @RequestParam Boolean activo
+    ) {
+        log.info("PATCH /vehiculos/{}/estado - Cambiando a: {}", id, activo);
+        VehiculoResponse response = vehiculoService.actualizarEstadoVehiculo(id, activo);
+        return ResponseEntity.ok(response);
+    }
 
-  @DeleteMapping("/{id}")
-  @PreAuthorize("hasAnyRole('GERENTE', 'ADMINISTRADOR_SISTEMA')")
-  @Operation(summary = "Eliminar vehículo",
-          description = "Eliminación lógica del vehículo (marca como inactivo)")
-  @ApiResponses(value = {
-          @ApiResponse(responseCode = "204", description = "Vehículo eliminado"),
-          @ApiResponse(responseCode = "404", description = "Vehículo no encontrado")
-  })
-  public ResponseEntity<Void> eliminarVehiculo(
-          @Parameter(description = "ID del vehículo", required = true)
-          @PathVariable Long id
-  ) {
-    log.info("DELETE /vehiculos/{} - Eliminando vehículo", id);
-    vehiculoService.eliminarVehiculo(id);
-    return ResponseEntity.noContent().build();
-  }
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('GERENTE', 'ADMINISTRADOR_SISTEMA')")
+    @Operation(summary = "Eliminar vehículo",
+            description = "Eliminación lógica del vehículo (marca como inactivo)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Vehículo eliminado"),
+            @ApiResponse(responseCode = "404", description = "Vehículo no encontrado")
+    })
+    public ResponseEntity<Void> eliminarVehiculo(
+            @Parameter(description = "ID del vehículo", required = true)
+            @PathVariable Long id
+    ) {
+        log.info("DELETE /vehiculos/{} - Eliminando vehículo", id);
+        vehiculoService.eliminarVehiculo(id);
+        return ResponseEntity.noContent().build();
+    }
 }

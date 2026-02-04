@@ -51,7 +51,7 @@ public class SecurityConfig {
                 )
                 .addFilterBefore(
                         gatewayAuthFilter,
-                        org.springframework.security.web.access.intercept.AuthorizationFilter.class
+                        UsernamePasswordAuthenticationFilter.class
                 );
 
         return http.build();

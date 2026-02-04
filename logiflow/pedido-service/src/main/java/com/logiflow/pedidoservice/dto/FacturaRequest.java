@@ -17,6 +17,5 @@ public class FacturaRequest {
     private String pedidoId; // UUID del pedido como String
     private String tipoEntrega; // EXPRESS, NORMAL, PROGRAMADA
     private Double distanciaKm; // Distancia estimada en kilómetros
-    private Double peso; // Peso del pedido en kg
 }
 
