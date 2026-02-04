@@ -1,0 +1,238 @@
+services:
+  # =================================
+  # DATABASES
+  # =================================
+
+  # Auth Service Database
+  authservice-db:
+    image: postgres:16-alpine
+    container_name: logiflow-authservice-db
+    environment:
+      POSTGRES_DB: jwt_demo
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+    ports:
+      - "5432:5432"
+    volumes:
+      - authservice_data:/var/lib/postgresql/data
+    networks:
+      - logiflow-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d jwt_demo"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Billing Service Database
+  billing-db:
+    image: postgres:16-alpine
+    container_name: logiflow-billing-db
+    environment:
+      POSTGRES_DB: db_billing_users
+      POSTGRES_USER: billing
+      POSTGRES_PASSWORD: qwerty123
+    ports:
+      - "5433:5432"
+    volumes:
+      - billing_data:/var/lib/postgresql/data
+    networks:
+      - logiflow-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U billing -d db_billing_users"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Fleet Service Database
+  fleet-db:
+    image: postgres:16-alpine
+    container_name: logiflow-fleet-db
+    environment:
+      POSTGRES_DB: fleet_db
+      POSTGRES_USER: fleet_user
+      POSTGRES_PASSWORD: fleet_password
+    ports:
+      - "5435:5432"
+    volumes:
+      - fleet_data:/var/lib/postgresql/data
+    networks:
+      - logiflow-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fleet_user -d fleet_db"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Pedido Service Database
+  pedido-db:
+    image: postgres:16-alpine
+    container_name: logiflow-pedido-db
+    environment:
+      POSTGRES_DB: pedidos_db
+      POSTGRES_USER: pedido_user
+      POSTGRES_PASSWORD: pedido_pass
+    ports:
+      - "5436:5432"
+    volumes:
+      - pedido_data:/var/lib/postgresql/data
+    networks:
+      - logiflow-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pedido_user -d pedidos_db"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # =================================
+  # MICROSERVICES
+  # =================================
+
+  # Auth Service
+  authservice:
+    build:
+      context: ./authservice
+      dockerfile: Dockerfile
+    container_name: logiflow-authservice
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://authservice-db:5432/jwt_demo
+      - SPRING_DATASOURCE_USERNAME=admin
+      - SPRING_DATASOURCE_PASSWORD=admin
+      - JWT_SECRET=MiSuperClaveSecretaMuyLarga123456789
+      - JWT_ISSUER=auth-service
+      - JWT_EXPIRATION_MS=3600000
+      - JWT_REFRESH_EXPIRATION_MS=86400000
+    depends_on:
+      authservice-db:
+        condition: service_healthy
+    networks:
+      - logiflow-network
+    restart: unless-stopped
+
+  # Billing Service
+  billing-service:
+    build:
+      context: ./billing-service
+      dockerfile: Dockerfile
+    container_name: logiflow-billing-service
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://billing-db:5432/db_billing_users
+      - SPRING_DATASOURCE_USERNAME=billing
+      - SPRING_DATASOURCE_PASSWORD=qwerty123
+      - JWT_SECRET=MiSuperClaveSecretaMuyLarga123456789
+      - JWT_ISSUER=auth-service
+    depends_on:
+      billing-db:
+        condition: service_healthy
+    networks:
+      - logiflow-network
+    restart: unless-stopped
+
+  # Fleet Service
+  fleet-service:
+    build:
+      context: ./fleet-service
+      dockerfile: Dockerfile
+    container_name: logiflow-fleet-service
+    ports:
+      - "8083:8083"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://fleet-db:5432/fleet_db
+      - SPRING_DATASOURCE_USERNAME=fleet_user
+      - SPRING_DATASOURCE_PASSWORD=fleet_password
+      - JWT_SECRET=MiSuperClaveSecretaMuyLarga123456789
+      - JWT_ISSUER=auth-service
+      - JWT_EXPIRATION=3600000
+    depends_on:
+      fleet-db:
+        condition: service_healthy
+    networks:
+      - logiflow-network
+    restart: unless-stopped
+
+  # Pedido Service
+  pedido-service:
+    build:
+      context: ./pedido-service
+      dockerfile: Dockerfile
+    container_name: logiflow-pedido-service
+    ports:
+      - "8084:8084"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://pedido-db:5432/pedidos_db
+      - SPRING_DATASOURCE_USERNAME=pedido_user
+      - SPRING_DATASOURCE_PASSWORD=pedido_pass
+      - BILLING_SERVICE_URL=http://billing-service:8082
+      - FLEET_SERVICE_URL=http://fleet-service:8083
+      - BILLING_INTEGRATION_ENABLED=true
+      - FLEET_INTEGRATION_ENABLED=true
+      - JWT_SECRET=MiSuperClaveSecretaMuyLarga123456789
+      - JWT_ISSUER=auth-service
+      - JWT_EXPIRATION=3600000
+    depends_on:
+      pedido-db:
+        condition: service_healthy
+    networks:
+      - logiflow-network
+    restart: unless-stopped
+
+  # API Gateway
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    container_name: logiflow-api-gateway
+    ports:
+      - "8000:8000"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - JWT_SECRET=MiSuperClaveSecretaMuyLarga123456789
+      - JWT_ISSUER=auth-service
+      - SPRING_CLOUD_GATEWAY_ROUTES_0_URI=http://authservice:8081
+      - SPRING_CLOUD_GATEWAY_ROUTES_1_URI=http://billing-service:8082
+      - SPRING_CLOUD_GATEWAY_ROUTES_2_URI=http://fleet-service:8083
+      - SPRING_CLOUD_GATEWAY_ROUTES_3_URI=http://pedido-service:8084
+    networks:
+      - logiflow-network
+    depends_on:
+        authservice:
+            condition: service_started
+        billing-service:
+            condition: service_started
+        fleet-service:
+            condition: service_started
+        pedido-service:
+            condition: service_started
+    restart: unless-stopped
+
+# =================================
+# NETWORKS
+# =================================
+networks:
+  logiflow-network:
+    driver: bridge
+    name: logiflow-network
+
+# =================================
+# VOLUMES
+# =================================
+volumes:
+  authservice_data:
+    name: logiflow-authservice-data
+  billing_data:
+    name: logiflow-billing-data
+  fleet_data:
+    name: logiflow-fleet-data
+  pedido_data:
+    name: logiflow-pedido-data

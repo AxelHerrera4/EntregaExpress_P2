@@ -1,25 +1,51 @@
-# Multi-stage Dockerfile for fleet-service (Spring Boot 4, Java 21)
+# ==================================
+# Dockerfile para Fleet Service
+# ==================================
 
-# Build stage
-FROM maven:3.9-eclipse-temurin-21 AS build
+# Etapa 1: Build
+FROM maven:3.9.6-eclipse-temurin-21-alpine AS build
+
 WORKDIR /app
 
-# Copy Maven descriptor and source code
+# Copiar dependencias y código
 COPY pom.xml .
+RUN mvn dependency:go-offline -B
+
 COPY src ./src
+RUN mvn clean package -DskipTests
 
-# Build the application
-RUN mvn -q -DskipTests package
+# ==================================
+# Etapa 2: Runtime
+# ==================================
+FROM eclipse-temurin:21-jre-alpine
 
-# Runtime stage
-FROM eclipse-temurin:21-jre
+LABEL maintainer="LogiFlow Team" \
+      service="auth-service"
+
+# 1. INSTALAMOS CURL (CRÍTICO)
+# Sin esto, el healthcheck de tu docker-compose fallará
+RUN apk add --no-cache curl
+
+# Crear usuario seguro
+RUN addgroup -S spring && adduser -S spring -G spring
+
 WORKDIR /app
 
-# Copy the built jar from the build stage
-COPY --from=build /app/target/fleet-service-0.0.1-SNAPSHOT.jar app.jar
+# Copiar el JAR
+COPY --from=build /app/target/*.jar app.jar
+RUN chown spring:spring app.jar
 
-# Expose Fleet Service port
+USER spring:spring
+
+# 2. PUERTO CORRECTO PARA AUTH SERVICE
+# Es importante que sea el 8081
 EXPOSE 8083
 
-# Run the application
-ENTRYPOINT ["java","-jar","/app/app.jar"]
+ENV SPRING_PROFILES_ACTIVE=docker \
+    JAVA_OPTS="-Xms256m -Xmx512m"
+
+# 3. SIN HEALTHCHECK INTERNO CONFLICTIVO
+# Hemos borrado la línea "HEALTHCHECK CMD java..." que causaba el fallo.
+# Ahora dejamos que docker-compose use curl.
+
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]

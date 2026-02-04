@@ -1,5 +1,5 @@
 # ==================================
-# Dockerfile para Billing Service
+# Dockerfile para Auth Service
 # ==================================
 
 # Etapa 1: Build
@@ -39,7 +39,7 @@ USER spring:spring
 
 # 2. PUERTO CORRECTO PARA AUTH SERVICE
 # Es importante que sea el 8081
-EXPOSE 8082
+EXPOSE 8081
 
 ENV SPRING_PROFILES_ACTIVE=docker \
     JAVA_OPTS="-Xms256m -Xmx512m"
