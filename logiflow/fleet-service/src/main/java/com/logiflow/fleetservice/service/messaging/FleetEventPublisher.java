@@ -1,5 +1,6 @@
 package com.logiflow.fleetservice.service.messaging;
 
+import com.logiflow.fleetservice.event.AsignacionCompletadaEvent;
 import com.logiflow.fleetservice.event.RepartidorUbicacionActualizadaEvent;
 import com.logiflow.fleetservice.event.VehiculoEstadoActualizadoEvent;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,9 @@ public class FleetEventPublisher {
 
     @Value("${rabbitmq.routing-key.repartidor-ubicacion}")
     private String repartidorUbicacionRoutingKey;
+
+    @Value("${rabbitmq.routing-key.asignacion-completada}")
+    private String asignacionCompletadaRoutingKey;
 
     /**
      * Publica evento cuando cambia el estado de un vehículo
@@ -66,6 +70,31 @@ public class FleetEventPublisher {
                     fleetExchange, repartidorUbicacionRoutingKey);
         } catch (Exception e) {
             log.error("Error al publicar evento RepartidorUbicacionActualizada: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Publica evento cuando FleetService completa una asignación
+     * Este evento será consumido por PedidoService para actualizar el estado
+     */
+    public void publishAsignacionCompletada(AsignacionCompletadaEvent event) {
+        try {
+            log.info("=== PUBLICANDO EVENTO: asignacion.completada ===");
+            log.info("MessageID: {} | Timestamp: {}", event.getMessageId(), event.getTimestamp());
+            log.info("Pedido: {} | Repartidor: {} | Vehículo: {}", 
+                    event.getPedidoId(), event.getRepartidorNombre(), event.getVehiculoPlaca());
+            log.info("Estado: {} | Motivo: {}", event.getEstadoPedido(), event.getMotivoAsignacion());
+            
+            rabbitTemplate.convertAndSend(
+                    fleetExchange, 
+                    asignacionCompletadaRoutingKey, 
+                    event
+            );
+            
+            log.info("[RABBIT-PRODUCER] Evento publicado en exchange: {} con routing key: {}", 
+                    fleetExchange, asignacionCompletadaRoutingKey);
+        } catch (Exception e) {
+            log.error("[ERROR-RABBIT] Error al publicar evento AsignacionCompletada: {}", e.getMessage(), e);
         }
     }
 }

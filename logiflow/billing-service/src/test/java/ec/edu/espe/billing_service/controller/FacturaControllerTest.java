@@ -3,17 +3,22 @@ package ec.edu.espe.billing_service.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import ec.edu.espe.billing_service.model.dto.request.FacturaRequestDTO;
+import ec.edu.espe.billing_service.model.dto.response.EstadisticasFacturasDTO;
 import ec.edu.espe.billing_service.model.dto.response.FacturaResponseDTO;
 import ec.edu.espe.billing_service.model.enums.EstadoFactura;
 import ec.edu.espe.billing_service.service.FacturaService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.UUID;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -82,6 +87,84 @@ class FacturaControllerTest {
                         .estado(estado)
                         .fechaCreacion(LocalDateTime.now())
                         .distanciaKm(5.0)
+                        .build();
+            }
+
+            @Override
+            public Page<FacturaResponseDTO> obtenerTodasLasFacturas(Pageable pageable) {
+                FacturaResponseDTO factura = FacturaResponseDTO.builder()
+                        .id(UUID.randomUUID())
+                        .pedidoId("PED-001")
+                        .tipoEntrega("URBANA")
+                        .montoTotal(BigDecimal.valueOf(15.00))
+                        .estado(EstadoFactura.PAGADA)
+                        .fechaCreacion(LocalDateTime.now())
+                        .distanciaKm(10.0)
+                        .build();
+                return new PageImpl<>(Collections.singletonList(factura));
+            }
+
+            @Override
+            public Page<FacturaResponseDTO> obtenerFacturasPorEstado(EstadoFactura estado, Pageable pageable) {
+                FacturaResponseDTO factura = FacturaResponseDTO.builder()
+                        .id(UUID.randomUUID())
+                        .pedidoId("PED-002")
+                        .tipoEntrega("URBANA")
+                        .montoTotal(BigDecimal.valueOf(20.00))
+                        .estado(estado)
+                        .fechaCreacion(LocalDateTime.now())
+                        .distanciaKm(15.0)
+                        .build();
+                return new PageImpl<>(Collections.singletonList(factura));
+            }
+
+            @Override
+            public Page<FacturaResponseDTO> obtenerFacturasPorFechas(
+                    LocalDateTime fechaDesde, 
+                    LocalDateTime fechaHasta, 
+                    Pageable pageable) {
+                FacturaResponseDTO factura = FacturaResponseDTO.builder()
+                        .id(UUID.randomUUID())
+                        .pedidoId("PED-003")
+                        .tipoEntrega("NACIONAL")
+                        .montoTotal(BigDecimal.valueOf(50.00))
+                        .estado(EstadoFactura.EMITIDA)
+                        .fechaCreacion(LocalDateTime.now())
+                        .distanciaKm(100.0)
+                        .build();
+                return new PageImpl<>(Collections.singletonList(factura));
+            }
+
+            @Override
+            public Page<FacturaResponseDTO> obtenerFacturasPorEstadoYFechas(
+                    EstadoFactura estado,
+                    LocalDateTime fechaDesde,
+                    LocalDateTime fechaHasta,
+                    Pageable pageable) {
+                FacturaResponseDTO factura = FacturaResponseDTO.builder()
+                        .id(UUID.randomUUID())
+                        .pedidoId("PED-004")
+                        .tipoEntrega("INTERNACIONAL")
+                        .montoTotal(BigDecimal.valueOf(150.00))
+                        .estado(estado)
+                        .fechaCreacion(LocalDateTime.now())
+                        .distanciaKm(500.0)
+                        .build();
+                return new PageImpl<>(Collections.singletonList(factura));
+            }
+
+            @Override
+            public EstadisticasFacturasDTO obtenerEstadisticas() {
+                return EstadisticasFacturasDTO.builder()
+                        .totalFacturas(100L)
+                        .totalPagadas(75L)
+                        .totalPendientes(20L)
+                        .totalBorrador(3L)
+                        .totalCanceladas(2L)
+                        .montoTotalFacturado(BigDecimal.valueOf(5000.00))
+                        .montoTotalPagado(BigDecimal.valueOf(3750.00))
+                        .montoTotalPendiente(BigDecimal.valueOf(1000.00))
+                        .promedioMontoPorFactura(50.0)
                         .build();
             }
         };

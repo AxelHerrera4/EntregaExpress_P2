@@ -25,24 +25,24 @@ public class BillingServiceImpl implements BillingService {
     @Override
     @Transactional
     public void procesarPedidoCreado(PedidoCreadoEvent event) {
-        log.info("💳 [BILLING-SERVICE] Procesando pedido creado | PedidoID: {} | Usuario: {} | MessageID: {}", 
+        log.info("[BILLING-SERVICE] Procesando pedido creado | PedidoID: {} | Usuario: {} | MessageID: {}", 
             event.getPedidoId(), event.getUsuarioCreador(), event.getMessageId());
         
         try {
             // Verificar si ya existe una factura para este pedido (idempotencia)
             try {
                 FacturaResponseDTO facturaExistente = facturaService.obtenerFacturaPorPedidoId(event.getPedidoId());
-                log.warn("⚠️ [IDEMPOTENCIA-BILLING] Ya existe factura para pedido | PedidoID: {} | FacturaID: {} | Usuario: {} | MessageID: {}", 
+                log.warn("[IDEMPOTENCIA-BILLING] Ya existe factura para pedido | PedidoID: {} | FacturaID: {} | Usuario: {} | MessageID: {}", 
                     event.getPedidoId(), facturaExistente.getId(), event.getUsuarioCreador(), event.getMessageId());
                 return;
             } catch (Exception e) {
                 // No existe factura, proceder a crear
-                log.info("🛫 [BILLING-SERVICE] No existe factura previa, procediendo a crear | PedidoID: {} | MessageID: {}", 
+                log.info("[BILLING-SERVICE] No existe factura previa, procediendo a crear | PedidoID: {} | MessageID: {}", 
                     event.getPedidoId(), event.getMessageId());
             }
 
             // Crear la factura basada en el evento recibido
-            log.info("🏦 [BILLING-CREATE] Preparando factura | PedidoID: {} | Cliente: {} | Tipo: {} | Distancia: {} km | MessageID: {}", 
+            log.info("[BILLING-CREATE] Preparando factura | PedidoID: {} | Cliente: {} | Tipo: {} | Distancia: {} km | MessageID: {}", 
                 event.getPedidoId(), event.getClienteId(), event.getTipoEntrega(), event.getDistanciaEstimadaKm(), event.getMessageId());
                 
             FacturaRequestDTO facturaRequest = FacturaRequestDTO.builder()
@@ -53,13 +53,13 @@ public class BillingServiceImpl implements BillingService {
 
             FacturaResponseDTO facturaResponse = facturaService.crearFactura(facturaRequest);
             
-            log.info("✅ [BILLING-SUCCESS] Factura creada exitosamente | FacturaID: {} | PedidoID: {} | Usuario: {} | MessageID: {}", 
+            log.info("[BILLING-SUCCESS] Factura creada exitosamente | FacturaID: {} | PedidoID: {} | Usuario: {} | MessageID: {}", 
                 facturaResponse.getId(), event.getPedidoId(), event.getUsuarioCreador(), event.getMessageId());
-            log.info("🏁 [CORRELACION-BILLING] FacturaID={} | PedidoID={} | Usuario={} | MessageID={} | Monto={}", 
+            log.info("[CORRELACION-BILLING] FacturaID={} | PedidoID={} | Usuario={} | MessageID={} | Monto={}", 
                 facturaResponse.getId(), event.getPedidoId(), event.getUsuarioCreador(), event.getMessageId(), facturaResponse.getMontoTotal());
                 
         } catch (Exception e) {
-            log.error("❌ [BILLING-ERROR] Error procesando pedido creado | PedidoID={} | Usuario={} | MessageID={} | Error={}", 
+            log.error("[BILLING-ERROR] Error procesando pedido creado | PedidoID={} | Usuario={} | MessageID={} | Error={}", 
                 event.getPedidoId(), event.getUsuarioCreador(), event.getMessageId(), e.getMessage(), e);
             throw new RuntimeException("Error al procesar pedido creado", e);
         }
@@ -117,32 +117,32 @@ public class BillingServiceImpl implements BillingService {
      * Mapea el estado del pedido al estado correspondiente de la factura
      */
     private EstadoFactura mapearEstadoPedidoAFactura(String estadoPedido) {
-        log.info("🗺️ [MAPPING] Mapeando estado de pedido a factura: {}", estadoPedido);
+        log.info("[MAPPING] Mapeando estado de pedido a factura: {}", estadoPedido);
         
         EstadoFactura estadoFactura = switch (estadoPedido.toUpperCase()) {
             case "CREADO", "ASIGNADO" -> {
-                log.info("📊 [MAPPING] {} -> PENDIENTE", estadoPedido);
+                log.info("[MAPPING] {} -> PENDIENTE", estadoPedido);
                 yield EstadoFactura.BORRADOR;
             }
             case "EN_TRANSITO", "EN_RUTA" -> {
-                log.info("📊 [MAPPING] {} -> PENDIENTE", estadoPedido);
+                log.info("[MAPPING] {} -> PENDIENTE", estadoPedido);
                 yield EstadoFactura.BORRADOR;
             }
             case "ENTREGADO" -> {
-                log.info("📊 [MAPPING] {} -> PAGADA", estadoPedido);
+                log.info("[MAPPING] {} -> PAGADA", estadoPedido);
                 yield EstadoFactura.PAGADA;
             }
             case "CANCELADO" -> {
-                log.info("📊 [MAPPING] {} -> CANCELADA", estadoPedido);
+                log.info("[MAPPING] {} -> CANCELADA", estadoPedido);
                 yield EstadoFactura.ANULADA;
             }
             default -> {
-                log.warn("⚠️ [MAPPING] Estado de pedido no reconocido: {}", estadoPedido);
+                log.warn("[MAPPING] Estado de pedido no reconocido: {}", estadoPedido);
                 yield null;
             }
         };
         
-        log.info("🎯 [MAPPING-RESULT] {} -> {}", estadoPedido, estadoFactura);
+        log.info("[MAPPING-RESULT] {} -> {}", estadoPedido, estadoFactura);
         return estadoFactura;
     }
 }

@@ -1,4 +1,4 @@
-/*server:
+server:
   port: 8083
   servlet:
     context-path: /api
@@ -71,13 +71,18 @@ rabbitmq:
   queue:
     pedido-creado: fleet.pedido.creado
     pedido-estado: fleet.pedido.estado.actualizado
-    pedido-cancelado: fleet.pedido.cancelado
     tracking-ubicacion: fleet.tracking.ubicacion
+    pedido-reintento: fleet.pedido.reintento
   routing-key:
     pedido-creado: pedido.creado
     pedido-estado: pedido.estado.actualizado
-    pedido-cancelado: pedido.cancelado
     vehiculo-estado: vehiculo.estado.actualizado
     repartidor-ubicacion: repartidor.ubicacion.actualizada
     tracking-ubicacion: repartidor.ubicacion
+    asignacion-completada: asignacion.completada
+    pedido-reintento: pedido.reintento.asignacion
 
+# Configuración de URLs de otros microservicios
+services:
+  pedido:
+    url: http://pedido-service:8084

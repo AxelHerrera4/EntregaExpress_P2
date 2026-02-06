@@ -57,11 +57,11 @@ public class BillingClient {
                         FacturaResponse.class
                 );
 
-                log.info("✅ Factura creada exitosamente - facturaId: {}", response.getId());
+                log.info("Factura creada exitosamente - facturaId: {}", response.getId());
                 return response;
 
-            } catch (RestClientException e) {
-                log.error("❌ Error al comunicarse con Billing Service: {}", e.getMessage());
+            } catch (Exception e) {
+                log.error("Error al comunicarse con Billing Service: {}", e.getMessage());
                 throw new RuntimeException("No se pudo crear la factura: " + e.getMessage(), e);
             }
         }

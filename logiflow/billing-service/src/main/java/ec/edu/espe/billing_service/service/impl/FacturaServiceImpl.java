@@ -2,6 +2,7 @@ package ec.edu.espe.billing_service.service.impl;
 
 import ec.edu.espe.billing_service.factory.TarifaStrategyFactory;
 import ec.edu.espe.billing_service.model.dto.request.FacturaRequestDTO;
+import ec.edu.espe.billing_service.model.dto.response.EstadisticasFacturasDTO;
 import ec.edu.espe.billing_service.model.dto.response.FacturaResponseDTO;
 import ec.edu.espe.billing_service.model.entity.Factura;
 import ec.edu.espe.billing_service.model.entity.TarifaBase;
@@ -12,9 +13,12 @@ import ec.edu.espe.billing_service.service.TarifaBaseService;
 import ec.edu.espe.billing_service.strategy.TarifaStrategy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -122,6 +126,126 @@ public class FacturaServiceImpl implements FacturaService {
 
         return mapToResponse(actualizada);
 
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<FacturaResponseDTO> obtenerTodasLasFacturas(Pageable pageable) {
+        log.info("Consultando todas las facturas con paginación | page={} | size={}",
+                pageable.getPageNumber(),
+                pageable.getPageSize());
+        
+        Page<Factura> facturas = facturaRepository.findAll(pageable);
+        
+        log.info("Facturas encontradas | total={} | paginas={}",
+                facturas.getTotalElements(),
+                facturas.getTotalPages());
+        
+        return facturas.map(this::mapToResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<FacturaResponseDTO> obtenerFacturasPorEstado(EstadoFactura estado, Pageable pageable) {
+        log.info("Consultando facturas por estado={} | page={} | size={}",
+                estado,
+                pageable.getPageNumber(),
+                pageable.getPageSize());
+        
+        Page<Factura> facturas = facturaRepository.findAllByEstado(estado, pageable);
+        
+        log.info("Facturas encontradas con estado={} | total={}",
+                estado,
+                facturas.getTotalElements());
+        
+        return facturas.map(this::mapToResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<FacturaResponseDTO> obtenerFacturasPorFechas(
+            LocalDateTime fechaDesde, 
+            LocalDateTime fechaHasta, 
+            Pageable pageable) {
+        
+        log.info("Consultando facturas por rango de fechas | desde={} | hasta={} | page={} | size={}",
+                fechaDesde,
+                fechaHasta,
+                pageable.getPageNumber(),
+                pageable.getPageSize());
+        
+        Page<Factura> facturas = facturaRepository.findAllByFechaCreacionBetween(
+                fechaDesde, 
+                fechaHasta, 
+                pageable
+        );
+        
+        log.info("Facturas encontradas en rango | total={}",
+                facturas.getTotalElements());
+        
+        return facturas.map(this::mapToResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<FacturaResponseDTO> obtenerFacturasPorEstadoYFechas(
+            EstadoFactura estado,
+            LocalDateTime fechaDesde,
+            LocalDateTime fechaHasta,
+            Pageable pageable) {
+        
+        log.info("Consultando facturas por estado y fechas | estado={} | desde={} | hasta={}",
+                estado,
+                fechaDesde,
+                fechaHasta);
+        
+        Page<Factura> facturas = facturaRepository.findAllByEstadoAndFechaCreacionBetween(
+                estado,
+                fechaDesde,
+                fechaHasta,
+                pageable
+        );
+        
+        log.info("Facturas encontradas | total={}",
+                facturas.getTotalElements());
+        
+        return facturas.map(this::mapToResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public EstadisticasFacturasDTO obtenerEstadisticas() {
+        log.info("Calculando estadísticas de facturas");
+        
+        Long totalFacturas = facturaRepository.count();
+        Long totalPagadas = facturaRepository.countByEstado(EstadoFactura.PAGADA);
+        Long totalPendientes = facturaRepository.countByEstado(EstadoFactura.EMITIDA);
+        Long totalBorrador = facturaRepository.countByEstado(EstadoFactura.BORRADOR);
+        Long totalCanceladas = facturaRepository.countByEstado(EstadoFactura.ANULADA);
+        
+        BigDecimal montoTotalFacturado = facturaRepository.sumMontoTotal();
+        BigDecimal montoTotalPagado = facturaRepository.sumMontoByEstado(EstadoFactura.PAGADA);
+        BigDecimal montoTotalPendiente = facturaRepository.sumMontoByEstado(EstadoFactura.EMITIDA);
+        
+        Double promedioMontoPorFactura = facturaRepository.avgMontoTotal();
+        
+        log.info("Estadísticas calculadas | total={} | pagadas={} | pendientes={} | montoTotal={}",
+                totalFacturas,
+                totalPagadas,
+                totalPendientes,
+                montoTotalFacturado);
+        
+        return EstadisticasFacturasDTO.builder()
+                .totalFacturas(totalFacturas)
+                .totalPagadas(totalPagadas)
+                .totalPendientes(totalPendientes)
+                .totalBorrador(totalBorrador)
+                .totalCanceladas(totalCanceladas)
+                .montoTotalFacturado(montoTotalFacturado)
+                .montoTotalPagado(montoTotalPagado)
+                .montoTotalPendiente(montoTotalPendiente)
+                .promedioMontoPorFactura(promedioMontoPorFactura)
+                .build();
     }
 
     private FacturaResponseDTO mapToResponse(Factura factura) {

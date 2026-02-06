@@ -32,7 +32,7 @@ public class PedidoServiceImpl implements PedidoService {
     private final CoberturaValidationService coberturaValidationService;
     private final BillingClient billingClient;
     private final FleetClient fleetClient;
-    private final PedidoEventPublisher pedidoEventPublisher; // ✅ ÚNICA INYECCIÓN (corregido)
+    private final PedidoEventPublisher pedidoEventPublisher; 
 
     @Value("${integration.billing.enabled:true}")
     private boolean billingIntegrationEnabled;
@@ -45,7 +45,7 @@ public class PedidoServiceImpl implements PedidoService {
         if (auth != null && auth.getCredentials() != null) {
             return auth.getCredentials().toString();
         }
-        log.warn("⚠️ No se encontró token en el contexto de seguridad");
+        log.warn("No se encontró token en el contexto de seguridad");
         return null;
     }
 
@@ -54,22 +54,21 @@ public class PedidoServiceImpl implements PedidoService {
         if (auth != null && auth.getName() != null && !"anonymousUser".equals(auth.getName())) {
             return auth.getName();
         }
-        log.warn("⚠️ No se encontró usuario autenticado");
+        log.warn("No se encontró usuario autenticado");
         return "SYSTEM";
     }
 
     @Override
     @Transactional
-
     public PedidoResponse createPedido(PedidoRequest request) {
         String correlacionId = java.util.UUID.randomUUID().toString();
-        log.info("🚀 [INICIO-TRANSACCION] Creando nuevo pedido para cliente: {} | CorrelacionID: {}", 
+        log.info("[INICIO-TRANSACCION] Creando nuevo pedido para cliente: {} | CorrelacionID: {}", 
             request.getClienteId(), correlacionId);
 
         // 1. Extraer información de contexto de seguridad
         String token = obtenerTokenActual();
         String usuario = obtenerUsuarioActual();
-        log.info("🔐 [AUTH-CONTEXT] Usuario: {} | Token presente: {} | CorrelacionID: {}", 
+        log.info("[AUTH-CONTEXT] Usuario: {} | Token presente: {} | CorrelacionID: {}", 
             usuario, token != null, correlacionId);
 
         Pedido pedido = pedidoMapper.toEntity(request);
@@ -77,7 +76,7 @@ public class PedidoServiceImpl implements PedidoService {
         validateTipoEntrega(request.getTipoEntrega(), pedido.getCobertura());
 
         Pedido savedPedido = pedidoRepository.save(pedido);
-        log.info("💾 [DATABASE] Pedido guardado exitosamente - ID: {} | Usuario: {} | CorrelacionID: {}", 
+        log.info(" Pedido guardado exitosamente - ID: {} | Usuario: {} | CorrelacionID: {}", 
             savedPedido.getId(), usuario, correlacionId);
 
         // 2. Calcular distancia para el evento
@@ -86,17 +85,17 @@ public class PedidoServiceImpl implements PedidoService {
             savedPedido.getDireccionDestino().getCiudad(), 
             savedPedido.getModalidadServicio()
         );
-        log.info("📏 [CALCULO] Distancia estimada: {} km | PedidoID: {} | CorrelacionID: {}", 
+        log.info(" Distancia estimada: {} km | PedidoID: {} | CorrelacionID: {}", 
             distanciaEstimada, savedPedido.getId(), correlacionId);
 
-        // 3. 🔥 PUBLICAR EVENTO PEDIDO.CREADO PRIMERO (para billing-service)
+        // 3. PUBLICAR EVENTO PEDIDO.CREADO PRIMERO (para billing-service)
         log.info("📤 [EVENT-PREPARATION] Preparando evento pedido.creado | PedidoID: {} | CorrelacionID: {}", 
             savedPedido.getId(), correlacionId);
             
         PedidoCreadoEvent creadoEvent = new PedidoCreadoEvent(
             savedPedido.getId(),
             savedPedido.getClienteId(),
-            usuario, // 🔑 Usuario que creó el pedido
+            usuario, // Usuario que creó el pedido
             savedPedido.getEstado().name(),
             savedPedido.getTipoEntrega().name(),
             savedPedido.getModalidadServicio().name(),
@@ -110,7 +109,7 @@ public class PedidoServiceImpl implements PedidoService {
             null // tarifaCalculada se calculará después por billing-service
         );
         
-        log.info("🎯 [EVENT-PUBLISH] Publicando evento pedido.creado | MessageID: {} | PedidoID: {} | Usuario: {} | CorrelacionID: {}", 
+        log.info("[EVENT-PUBLISH] Publicando evento pedido.creado | MessageID: {} | PedidoID: {} | Usuario: {} | CorrelacionID: {}", 
             creadoEvent.getMessageId(), savedPedido.getId(), usuario, correlacionId);
         pedidoEventPublisher.publishPedidoCreadoEvent(creadoEvent);
 
@@ -135,14 +134,14 @@ public class PedidoServiceImpl implements PedidoService {
                 savedPedido.setTarifaCalculada(facturaResponse.getMontoTotal().doubleValue());
                 savedPedido = pedidoRepository.save(savedPedido);
                 
-                log.info("✅ [BILLING-SUCCESS] Factura creada exitosamente - FacturaID: {} | PedidoID: {} | Monto: {} | CorrelacionID: {}", 
+                log.info("[BILLING-SUCCESS] Factura creada exitosamente - FacturaID: {} | PedidoID: {} | Monto: {} | CorrelacionID: {}", 
                     facturaResponse.getId(), savedPedido.getId(), facturaResponse.getMontoTotal(), correlacionId);
             } catch (Exception e) {
-                log.error("❌ [BILLING-ERROR] Error en integración con Billing Service | PedidoID: {} | Error: {} | CorrelacionID: {}", 
+                log.error("[BILLING-ERROR] Error en integración con Billing Service | PedidoID: {} | Error: {} | CorrelacionID: {}", 
                     savedPedido.getId(), e.getMessage(), correlacionId, e);
             }
         } else {
-            log.warn("⚠️ [BILLING-DISABLED] Integración con Billing deshabilitada | PedidoID: {} | CorrelacionID: {}", 
+            log.warn("[BILLING-DISABLED] Integración con Billing deshabilitada | PedidoID: {} | CorrelacionID: {}", 
                 savedPedido.getId(), correlacionId);
         }
 
@@ -174,37 +173,37 @@ public class PedidoServiceImpl implements PedidoService {
                     savedPedido.setEstado(EstadoPedido.ASIGNADO);
                     savedPedido = pedidoRepository.save(savedPedido);
 
-                    log.info("✅ [FLEET-SUCCESS] Repartidor asignado exitosamente - RepartidorID: {} | VehiculoID: {} | PedidoID: {} | CorrelacionID: {}", 
+                    log.info("[FLEET-SUCCESS] Repartidor asignado exitosamente - RepartidorID: {} | VehiculoID: {} | PedidoID: {} | CorrelacionID: {}", 
                         asignacionResponse.getRepartidorId(), asignacionResponse.getVehiculoId(), savedPedido.getId(), correlacionId);
 
-                    // 📤 PUBLICAR EVENTO ESTADO ACTUALIZADO: CREADO -> ASIGNADO
+                    // PUBLICAR EVENTO ESTADO ACTUALIZADO: CREADO -> ASIGNADO
                     PedidoEstadoEvent asignadoEvent = new PedidoEstadoEvent(
                         savedPedido.getId(), 
                         estadoAnterior, 
                         savedPedido.getEstado().name(), 
-                        usuario, // 🔑 Usuario que modificó (sistema en este caso)
+                        usuario, // Usuario que modificó (sistema en este caso)
                         savedPedido.getRepartidorId(), 
                         savedPedido.getVehiculoId()
                     );
                     
-                    log.info("🎯 [EVENT-PUBLISH] Publicando evento pedido.estado.actualizado | MessageID: {} | {}→{} | PedidoID: {} | CorrelacionID: {}", 
+                    log.info("[EVENT-PUBLISH] Publicando evento pedido.estado.actualizado | MessageID: {} | {}\u2192{} | PedidoID: {} | CorrelacionID: {}", 
                         asignadoEvent.getMessageId(), estadoAnterior, savedPedido.getEstado().name(), savedPedido.getId(), correlacionId);
                     pedidoEventPublisher.publishPedidoEstadoEvent(asignadoEvent);
                     
                 } else {
-                    log.warn("⚠️ [FLEET-WARNING] No se pudo asignar repartidor | Estado recibido: {} | PedidoID: {} | CorrelacionID: {}", 
+                    log.warn("[FLEET-WARNING] No se pudo asignar repartidor | Estado recibido: {} | PedidoID: {} | CorrelacionID: {}", 
                         asignacionResponse.getEstado(), savedPedido.getId(), correlacionId);
                 }
             } catch (Exception e) {
-                log.error("❌ [FLEET-ERROR] Error en integración con Fleet Service | PedidoID: {} | Error: {} | CorrelacionID: {}", 
+                log.error("[FLEET-ERROR] Error en integración con Fleet Service | PedidoID: {} | Error: {} | CorrelacionID: {}", 
                     savedPedido.getId(), e.getMessage(), correlacionId, e);
             }
         } else {
-            log.warn("⚠️ [FLEET-DISABLED] Integración con Fleet deshabilitada | PedidoID: {} | CorrelacionID: {}", 
+            log.warn("[FLEET-DISABLED] Integración con Fleet deshabilitada | PedidoID: {} | CorrelacionID: {}", 
                 savedPedido.getId(), correlacionId);
         }
 
-        log.info("🏁 [COMPLETION] Pedido creado exitosamente | PedidoID: {} | Estado final: {} | CorrelacionID: {}", 
+        log.info("[COMPLETION] Pedido creado exitosamente | PedidoID: {} | Estado final: {} | CorrelacionID: {}",
             savedPedido.getId(), savedPedido.getEstado(), correlacionId);
         return pedidoMapper.toResponse(savedPedido);
     }
@@ -216,17 +215,71 @@ public class PedidoServiceImpl implements PedidoService {
 
     @Override
     public List<PedidoResponse> getAllPedidos() {
-        return List.of();
+        log.info("Consultando todos los pedidos en la base de datos");
+        List<Pedido> pedidos = pedidoRepository.findAll();
+        log.info("Encontrados {} pedidos", pedidos.size());
+        return pedidos.stream()
+                .map(pedidoMapper::toResponse)
+                .toList();
     }
 
     @Override
     public List<PedidoResponse> getPedidosByCliente(String clienteId) {
-        return List.of();
+        log.info("Consultando pedidos del cliente: {}", clienteId);
+        List<Pedido> pedidos = pedidoRepository.findByClienteId(clienteId);
+        log.info("Encontrados {} pedidos para cliente {}", pedidos.size(), clienteId);
+        return pedidos.stream()
+                .map(pedidoMapper::toResponse)
+                .toList();
     }
 
     @Override
+    @Transactional
     public PedidoResponse patchPedido(String id, PedidoPatchRequest patchRequest) {
-        return null;
+        String correlacionId = java.util.UUID.randomUUID().toString();
+        String usuario = obtenerUsuarioActual();
+        log.info("[INICIO-PATCH] Actualizando pedido {} | Usuario: {} | CorrelacionID: {}", id, usuario, correlacionId);
+
+        // 1. Buscar pedido
+        Pedido pedido = pedidoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Pedido no encontrado: " + id));
+
+        String estadoAnterior = pedido.getEstado().name();
+        boolean estadoCambio = false;
+
+        // 2. Aplicar cambios parciales
+        if (patchRequest.getEstado() != null) {
+            EstadoPedido nuevoEstado = patchRequest.getEstado();
+            log.info("[PATCH-ESTADO] Cambiando estado: {} \u2192 {} | PedidoID: {} | CorrelacionID: {}",
+                estadoAnterior, nuevoEstado, id, correlacionId);
+            pedido.setEstado(nuevoEstado);
+            estadoCambio = true;
+        }
+
+        // 3. Guardar cambios
+        Pedido updatedPedido = pedidoRepository.save(pedido);
+        log.info("[DATABASE] Pedido actualizado | PedidoID: {} | CorrelacionID: {}", id, correlacionId);
+
+        // 4. Si cambió el estado, publicar evento
+        if (estadoCambio) {
+            PedidoEstadoEvent estadoEvent = new PedidoEstadoEvent(
+                updatedPedido.getId(),
+                estadoAnterior,
+                updatedPedido.getEstado().name(),
+                usuario,
+                updatedPedido.getRepartidorId(),
+                updatedPedido.getVehiculoId()
+            );
+
+            log.info("[EVENT-PUBLISH] Publicando evento cambio estado | MessageID: {} | {}\u2192{} | PedidoID: {} | Usuario: {} | CorrelacionID: {}",
+                estadoEvent.getMessageId(), estadoAnterior, updatedPedido.getEstado(), id, usuario, correlacionId);
+            pedidoEventPublisher.publishPedidoEstadoEvent(estadoEvent);
+        }
+
+        log.info("[PATCH-SUCCESS] Pedido actualizado exitosamente | PedidoID: {} | Usuario: {} | CorrelacionID: {}",
+            id, usuario, correlacionId);
+
+        return pedidoMapper.toResponse(updatedPedido);
     }
 
     @Override
@@ -235,39 +288,39 @@ public class PedidoServiceImpl implements PedidoService {
         String correlacionId = java.util.UUID.randomUUID().toString();
         String usuario = obtenerUsuarioActual();
         
-        log.info("🚫 [CANCEL-START] Iniciando cancelación de pedido | PedidoID: {} | Usuario: {} | CorrelacionID: {}", 
+        log.info(" Iniciando cancelación de pedido | PedidoID: {} | Usuario: {} | CorrelacionID: {}", 
             id, usuario, correlacionId);
 
         Pedido pedido = findPedidoOrThrow(id);
 
         if (pedido.getEstado() == EstadoPedido.CANCELADO) {
-            log.warn("⚠️ [CANCEL-WARNING] Pedido ya está cancelado | PedidoID: {} | CorrelacionID: {}", 
+            log.warn("Pedido ya está cancelado | PedidoID: {} | CorrelacionID: {}", 
                 id, correlacionId);
             throw new IllegalStateException("El pedido ya está cancelado");
         }
 
         String estadoAnterior = pedido.getEstado().name();
-        log.info("📊 [CANCEL-INFO] Estado actual: {} | PedidoID: {} | CorrelacionID: {}", 
+        log.info("Estado actual: {} | PedidoID: {} | CorrelacionID: {}", 
             estadoAnterior, id, correlacionId);
 
         pedido.setEstado(EstadoPedido.CANCELADO);
         Pedido canceledPedido = pedidoRepository.save(pedido);
 
-        // 🔥 PUBLICAR EVENTO: X → CANCELADO
+        // PUBLICAR EVENTO: X \u2192 CANCELADO
         PedidoEstadoEvent canceladoEvent = new PedidoEstadoEvent(
             canceledPedido.getId(),
             estadoAnterior,
             "CANCELADO",
-            usuario, // 🔑 Usuario que canceló
+            usuario,
             canceledPedido.getRepartidorId(),
             canceledPedido.getVehiculoId()
         );
 
-        log.info("🎯 [EVENT-PUBLISH] Publicando evento cancelación | MessageID: {} | {}→CANCELADO | PedidoID: {} | Usuario: {} | CorrelacionID: {}", 
+        log.info("Publicando evento cancelación | MessageID: {} | {}→CANCELADO | PedidoID: {} | Usuario: {} | CorrelacionID: {}", 
             canceladoEvent.getMessageId(), estadoAnterior, id, usuario, correlacionId);
         pedidoEventPublisher.publishPedidoEstadoEvent(canceladoEvent);
 
-        log.info("✅ [CANCEL-SUCCESS] Pedido cancelado exitosamente | PedidoID: {} | Usuario: {} | CorrelacionID: {}", 
+        log.info("Pedido cancelado exitosamente | PedidoID: {} | Usuario: {} | CorrelacionID: {}", 
             id, usuario, correlacionId);
 
         return pedidoMapper.toResponse(canceledPedido);
@@ -279,13 +332,57 @@ public class PedidoServiceImpl implements PedidoService {
     }
 
     @Override
+    @Transactional
     public PedidoResponse asignarRepartidorYVehiculo(String pedidoId, String repartidorId, String vehiculoId) {
-        return null;
+        String correlacionId = java.util.UUID.randomUUID().toString();
+        String usuario = obtenerUsuarioActual();
+        log.info("[INICIO-ASIGNACION] Asignando repartidor {} y vehículo {} al pedido {} | Usuario: {} | CorrelacionID: {}",
+            repartidorId, vehiculoId, pedidoId, usuario, correlacionId);
+
+        // 1. Buscar pedido
+        Pedido pedido = pedidoRepository.findById(pedidoId)
+                .orElseThrow(() -> new RuntimeException("Pedido no encontrado: " + pedidoId));
+
+        String estadoAnterior = pedido.getEstado().name();
+        log.info("[ASSIGN-INFO] Estado actual: {} | PedidoID: {} | CorrelacionID: {}",
+            estadoAnterior, pedidoId, correlacionId);
+
+        // 2. Actualizar pedido
+        pedido.setRepartidorId(repartidorId);
+        pedido.setVehiculoId(vehiculoId);
+        pedido.setEstado(EstadoPedido.ASIGNADO);
+        Pedido updatedPedido = pedidoRepository.save(pedido);
+        log.info("[DATABASE] Pedido actualizado - Estado: {} \u2192 ASIGNADO | RepartidorID: {} | VehiculoID: {} | CorrelacionID: {}",
+            estadoAnterior, repartidorId, vehiculoId, correlacionId);
+
+        // 3. PUBLICAR EVENTO: X \u2192 ASIGNADO
+        PedidoEstadoEvent asignadoEvent = new PedidoEstadoEvent(
+            updatedPedido.getId(),
+            estadoAnterior,
+            "ASIGNADO",
+            usuario,
+            updatedPedido.getRepartidorId(),
+            updatedPedido.getVehiculoId()
+        );
+
+        log.info("[EVENT-PUBLISH] Publicando evento asignación | MessageID: {} | {}\u2192ASIGNADO | PedidoID: {} | Repartidor: {} | Vehiculo: {} | Usuario: {} | CorrelacionID: {}",
+            asignadoEvent.getMessageId(), estadoAnterior, pedidoId, repartidorId, vehiculoId, usuario, correlacionId);
+        pedidoEventPublisher.publishPedidoEstadoEvent(asignadoEvent);
+
+        log.info("[ASSIGN-SUCCESS] Pedido asignado exitosamente | PedidoID: {} | Repartidor: {} | Vehiculo: {} | Usuario: {} | CorrelacionID: {}",
+            pedidoId, repartidorId, vehiculoId, usuario, correlacionId);
+
+        return pedidoMapper.toResponse(updatedPedido);
     }
 
     @Override
     public List<PedidoResponse> getPedidosPendientesAsignacion() {
-        return List.of();
+        log.info("[QUERY] Consultando pedidos pendientes de asignación (PENDIENTE sin repartidor/vehículo)");
+        List<Pedido> pedidos = pedidoRepository.findPedidosPendientesAsignacion();
+        log.info("[RESULT] Encontrados {} pedidos pendientes de asignación", pedidos.size());
+        return pedidos.stream()
+                .map(pedidoMapper::toResponse)
+                .toList();
     }
 
     @Override
@@ -311,6 +408,54 @@ public class PedidoServiceImpl implements PedidoService {
     @Override
     public List<PedidoResponse> getPedidosAltaPrioridad() {
         return List.of();
+    }
+
+    @Override
+    @Transactional
+    public PedidoResponse reintentarAsignacionAutomatica(String pedidoId, String usuarioSolicitante) {
+        String correlacionId = java.util.UUID.randomUUID().toString();
+        log.info("[REINTENTO-ASIGNACION] Iniciando reintento para pedido={} | Usuario={} | CorrelacionID={}", 
+            pedidoId, usuarioSolicitante, correlacionId);
+
+        // 1. Validar que el pedido existe
+        Pedido pedido = findPedidoOrThrow(pedidoId);
+        
+        // 2. Validar que el pedido está en estado PENDIENTE
+        if (pedido.getEstado() != EstadoPedido.PENDIENTE) {
+            log.warn("[REINTENTO-ASIGNACION] Pedido {} no está en estado PENDIENTE. Estado actual: {}", 
+                pedidoId, pedido.getEstado());
+            throw new IllegalStateException(
+                String.format("El pedido debe estar en estado PENDIENTE para reintentar asignación. Estado actual: %s", 
+                    pedido.getEstado()));
+        }
+
+        // 3. Construir evento de reintento
+        com.logiflow.pedidoservice.event.ReintentarAsignacionEvent evento = 
+            com.logiflow.pedidoservice.event.ReintentarAsignacionEvent.builder()
+                .messageId(java.util.UUID.randomUUID().toString())
+                .timestamp(java.time.LocalDateTime.now())
+                .pedidoId(pedido.getId())
+                .clienteId(pedido.getClienteId())
+                .usuarioSolicitante(usuarioSolicitante)
+                .modalidadServicio(pedido.getModalidadServicio().name())
+                .tipoEntrega(pedido.getTipoEntrega().name())
+                .prioridad(pedido.getPrioridad().name())
+                .peso(pedido.getPeso())
+                .ciudadOrigen(pedido.getDireccionOrigen().getCiudad())
+                .ciudadDestino(pedido.getDireccionDestino().getCiudad())
+                .numeroReintento(1) // Aquí podrías implementar un contador de reintentos
+                .motivoReintento("SOLICITUD_MANUAL")
+                .build();
+
+        // 4. Publicar evento a RabbitMQ
+        log.info("[REINTENTO-ASIGNACION] Publicando evento pedido.reintento.asignacion para pedido={}", pedidoId);
+        pedidoEventPublisher.publishReintentarAsignacionEvent(evento);
+
+        log.info("[REINTENTO-ASIGNACION] Evento publicado exitosamente. PedidoID={} | MessageID={} | CorrelacionID={}", 
+            pedidoId, evento.getMessageId(), correlacionId);
+
+        // 5. Retornar estado actual del pedido
+        return pedidoMapper.toResponse(pedido);
     }
 
     // ======= MÉTODOS AUXILIARES =======

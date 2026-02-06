@@ -74,7 +74,7 @@ class TarifaBaseControllerTest {
                 );
             }
 
-            // 🔥 MÉTODO QUE FALTABA (CLAVE)
+            // MÉTODO QUE FALTABA (CLAVE)
             @Override
             public TarifaBase obtenerEntidadPorTipoEntrega(String tipoEntrega) {
                 return TarifaBase.builder()

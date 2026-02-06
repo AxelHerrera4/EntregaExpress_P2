@@ -46,12 +46,16 @@ spring:
 rabbitmq:
   exchange:
     pedidos: pedidos.exchange
+    fleet: fleet.exchange
   queue:
     pedido-creado: pedido.creado
     pedido-estado: pedido.estado.actualizado
+    asignacion-completada: pedido.asignacion.completada
   routing-key:
     pedido-creado: pedido.creado
     pedido-estado: pedido.estado.actualizado
+    asignacion-completada: asignacion.completada
+    reintento-asignacion: pedido.reintento.asignacion
 
   # Swagger UI
   springdoc:
@@ -70,9 +74,9 @@ services:
 
 integration:
   billing:
-    enabled: true
+    enabled: false  # ⚠️ DESHABILITADO temporalmente para debug
   fleet:
-    enabled: true
+    enabled: false  # ⚠️ DESHABILITADO - Usamos eventos RabbitMQ en su lugar
 
 jwt:
   secret: MiSuperClaveSecretaMuyLarga123456789

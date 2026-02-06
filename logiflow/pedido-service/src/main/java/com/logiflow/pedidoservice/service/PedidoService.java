@@ -114,6 +114,14 @@ public interface PedidoService {
      * @return lista de pedidos urgentes
      */
     List<PedidoResponse> getPedidosAltaPrioridad();
+
+    /**
+     * Reintentar asignación automática de repartidor y vehículo
+     * @param pedidoId ID del pedido a reintentar
+     * @param usuarioSolicitante usuario que solicita el reintento
+     * @return pedido actualizado
+     */
+    PedidoResponse reintentarAsignacionAutomatica(String pedidoId, String usuarioSolicitante);
 }
 
 

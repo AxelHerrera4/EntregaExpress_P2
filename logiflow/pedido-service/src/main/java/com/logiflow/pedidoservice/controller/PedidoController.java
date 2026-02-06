@@ -38,9 +38,9 @@ public class PedidoController {
     @GetMapping("/debug-auth")
     public ResponseEntity<?> debugAuth() {
         var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
-        log.info("🔍 DEBUG AUTH - Authentication: {}", auth);
-        log.info("🔍 DEBUG AUTH - Principal: {}", auth != null ? auth.getPrincipal() : "NULL");
-        log.info("🔍 DEBUG AUTH - Authorities: {}", auth != null ? auth.getAuthorities() : "NULL");
+        log.info("DEBUG AUTH - Authentication: {}", auth);
+        log.info("DEBUG AUTH - Principal: {}", auth != null ? auth.getPrincipal() : "NULL");
+        log.info("DEBUG AUTH - Authorities: {}", auth != null ? auth.getAuthorities() : "NULL");
         return ResponseEntity.ok("Auth: " + (auth != null ? auth.toString() : "NULL"));
     }
 
@@ -223,6 +223,54 @@ public class PedidoController {
         pedidoService.deletePedido(id);
 
         return ResponseEntity.noContent().build();
+    }
+
+
+    @Operation(
+            summary = "Reintentar asignación automática",
+            description = "Publica un evento para reintentar la asignación automática de un pedido PENDIENTE. " +
+                         "El FleetService procesará el evento y asignará repartidor/vehículo si hay recursos disponibles."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "202",
+                    description = "Solicitud de reintento aceptada. El evento fue publicado a RabbitMQ.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = PedidoResponse.class)
+                    )
+            ),
+            @ApiResponse(responseCode = "404", description = "Pedido no encontrado"),
+            @ApiResponse(responseCode = "400", description = "El pedido no está en estado PENDIENTE")
+    })
+    @PostMapping("/{id}/reintentar-asignacion")
+    @PreAuthorize("hasAnyRole('SUPERVISOR', 'GERENTE', 'ADMINISTRADOR_SISTEMA')")
+    public ResponseEntity<PedidoResponse> reintentarAsignacion(
+            @Parameter(description = "ID del pedido", required = true)
+            @PathVariable String id,
+            @Parameter(description = "ID del usuario que solicita el reintento (desde header de autenticación)")
+            @RequestHeader(value = "X-User-Id", required = false) String userId) {
+        
+        log.info("POST /api/pedidos/{}/reintentar-asignacion - Solicitando reintento de asignación", id);
+        
+        // Si no viene userId en header, intentar obtenerlo del contexto de seguridad
+        if (userId == null || userId.isBlank()) {
+            var auth = org.springframework.security.core.context.SecurityContextHolder
+                .getContext().getAuthentication();
+            if (auth != null && auth.getName() != null && !"anonymousUser".equals(auth.getName())) {
+                userId = auth.getName();
+            } else {
+                userId = "SYSTEM";
+            }
+        }
+        
+        log.info("Usuario solicitante: {}", userId);
+        
+        PedidoResponse response = pedidoService.reintentarAsignacionAutomatica(id, userId);
+        
+        log.info("POST /api/pedidos/{}/reintentar-asignacion - Evento publicado. PedidoID: {}", id, response.getId());
+        
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
     }
 
     // ==================== ENDPOINTS PARA INTEGRACIÓN CON FLEETSERVICE ====================

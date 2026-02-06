@@ -49,7 +49,7 @@ public class GatewayAuthFilter extends OncePerRequestFilter {
                             .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
                             .toList();
 
-                    // ✅ PASO CLAVE: Cambiamos null por 'token' para que esté disponible después
+                    // PASO CLAVE: Cambiamos null por 'token' para que esté disponible después
                     UsernamePasswordAuthenticationToken auth =
                             new UsernamePasswordAuthenticationToken(username, token, authorities);
 
