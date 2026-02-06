@@ -1,0 +1,5 @@
+export enum ModalidadServicio {
+  URBANA_RAPIDA = 'URBANA_RAPIDA',
+  INTERMUNICIPAL = 'INTERMUNICIPAL',
+  NACIONAL = 'NACIONAL'
+}

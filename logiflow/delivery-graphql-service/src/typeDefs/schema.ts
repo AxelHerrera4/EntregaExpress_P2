@@ -7,47 +7,120 @@ export const typeDefs = gql`
     id: ID!
     clienteId: String!
     cliente: Cliente
-    origen: Ubicacion
-    destino: String!
-    ubicacionDestino: Ubicacion
+    direccionOrigen: Direccion!
+    direccionDestino: Direccion!
+    modalidadServicio: ModalidadServicio!
+    tipoEntrega: TipoEntrega!
     estado: EstadoPedido!
+    peso: Float!
+    telefonoContacto: String!
+    nombreDestinatario: String
+    fechaCreacion: String!
+    fechaActualizacion: String!
+    cobertura: String!
     repartidorId: String
-    repartidor: RepartidorDetalle
+    repartidor: Repartidor
+    vehiculoId: String
+    vehiculo: Vehiculo
+    facturaId: String
+    factura: Factura
+    tarifa: Float
     tiempoTranscurrido: Int
     retrasoMin: Int
-    fechaCreacion: String
-    fechaActualizacion: String
-    zona: String
+  }
+
+  type Factura {
+    id: ID!
+    pedidoId: String!
+    monto: Float!
+    subtotal: Float
+    impuestos: Float
+    estado: String!
+    fechaEmision: String
+    fechaPago: String
+    metodoPago: String
+  }
+
+  type Direccion {
+    calle: String!
+    numero: String!
+    ciudad: String!
+    provincia: String!
+    latitud: Float!
+    longitud: Float!
   }
 
   type Cliente {
+    id: String!
     nombre: String!
     telefono: String
+    email: String
     direccion: String
   }
 
-  type RepartidorDetalle {
+  type Repartidor {
     id: ID!
     nombre: String!
-    vehiculo: Vehiculo
-    disponible: Boolean!
+    apellido: String
+    documento: String
+    tipoDocumento: String
+    telefono: String
+    email: String
+    estado: String!
+    zonaAsignada: String
+    tipoLicencia: String
+    vehiculoId: String
+    vehiculo: VehiculoInfo
+    ubicacionActual: UbicacionInfo
+    fechaContratacion: String
+    activo: Boolean
+    createdAt: String
+    updatedAt: String
+  }
+
+  type UbicacionInfo {
+    latitud: Float!
+    longitud: Float!
+    ultimaActualizacion: String
+  }
+
+  type VehiculoInfo {
+    placa: String
+    tipo: String
+    estado: String
   }
 
   type Vehiculo {
     id: ID!
-    tipo: TipoVehiculo!
     placa: String!
+    tipo: String!
+    marca: String
     modelo: String
-    capacidad: Float
+    anio: Int
+    capacidadCarga: Float
+    estado: String!
+    caracteristicasEspecificas: CaracteristicasEspecificas
+    activo: Boolean
+    createdAt: String
+    updatedAt: String
+  }
+
+  type CaracteristicasEspecificas {
+    cilindraje: Int
+    tieneCajones: Boolean
+    numeroPuertas: Int
+    tipoCarroceria: String
+    numeroEjes: Int
+    capacidadVolumen: Float
   }
 
   type RepartidorEnMapa {
     id: ID!
     nombre: String!
-    placa: String!
+    placa: String
     latitud: Float!
     longitud: Float!
-    estado: EstadoRepartidor!
+    estado: String!
     velocidad: Float
     ultimaActualizacion: String
   }
@@ -56,41 +129,36 @@ export const typeDefs = gql`
     total: Int!
     disponibles: Int!
     enRuta: Int!
+    mantenimiento: Int!
+    desconectados: Int!
   }
 
-  type KPI {
-    zonaId: ID!
+  type EstadisticasCobertura {
+    cobertura: String!
+    fecha: String
+    pedidosTotal: Int!
     pedidosPendientes: Int!
     pedidosEnRuta: Int!
     pedidosEntregados: Int!
+    pedidosCancelados: Int!
     tiempoPromedioEntrega: Float
     repartidoresActivos: Int!
-    fecha: String
   }
 
-  type Usuario {
-    id: ID!
-    nombre: String!
-    telefono: String!
-    email: String!
-    rol: String!
+  type RutaPopular {
+    origen: String!
+    destino: String!
+    cantidad: Int!
   }
 
   type Incidencia {
     id: ID!
     pedidoId: ID!
+    pedido: Pedido
     descripcion: String!
-    tipo: TipoIncidencia!
+    tipo: String!
     fechaCreacion: String!
     resuelto: Boolean!
-  }
-
-  type Ubicacion {
-    latitud: Float!
-    longitud: Float!
-    ciudad: String!
-    provincia: String!
-    direccion: String
   }
 
   # ==================== ENUMS ====================
@@ -103,110 +171,67 @@ export const typeDefs = gql`
     CANCELADO
   }
 
-  enum TipoVehiculo {
-    MOTO
-    AUTO
-    CAMIONETA
-    BICICLETA
+  enum ModalidadServicio {
+    URBANA_RAPIDA
+    INTERMUNICIPAL
+    NACIONAL
   }
 
-  enum EstadoRepartidor {
-    DISPONIBLE
-    EN_RUTA
-    DESCONECTADO
-    MANTENIMIENTO
-  }
-
-  enum TipoIncidencia {
-    PAQUETE_DANADO
-    DIRECCION_INCORRECTA
-    CLIENTE_NO_ENCONTRADO
-    VEHICULO_AVERIADO
-    RETRASO_TRAFICO
-    OTRO
+  enum TipoEntrega {
+    STANDARD
+    EXPRESS
+    PREMIUM
   }
 
   # ==================== INPUT ====================
 
-  input FiltroPedido {
-    zonaId: ID
-    estado: EstadoPedido
-    repartidorId: ID
-    ciudadOrigen: String
-    ciudadDestino: String
-    provinciaOrigen: String
-    provinciaDestino: String
-  }
-
-  input ActualizarEstadoRepartidorInput {
-    repartidorId: ID!
-    estado: EstadoRepartidor!
-    motivo: String
-  }
-
-  input ReasignarPedidoInput {
+  input CancelarPedidoInput {
     pedidoId: ID!
-    nuevoRepartidorId: ID!
     motivo: String
-  }
-
-  input ActualizarDatosContactoInput {
-    usuarioId: ID!
-    telefono: String!
-    email: String!
-    nombre: String
-  }
-
-  input RegistrarIncidenciaInput {
-    pedidoId: ID!
-    descripcion: String!
-    tipo: TipoIncidencia!
   }
 
   # ==================== QUERIES ====================
 
   type Query {
-    # Pedidos filtrados por zona, estado, repartidor, ciudades
-    pedidos(filtro: FiltroPedido!): [Pedido]!
-
-    # Pedidos por zona específica
-    pedidosPorZona(zonaId: ID!, estado: EstadoPedido): [Pedido]!
-
-    # Pedidos por ciudad origen
-    pedidosPorCiudadOrigen(ciudad: String!, provincia: String): [Pedido]!
-
-    # Pedidos por ciudad destino
-    pedidosPorCiudadDestino(ciudad: String!, provincia: String): [Pedido]!
-
-    # Pedidos por ruta (origen -> destino)
-    pedidosPorRuta(ciudadOrigen: String!, ciudadDestino: String!): [Pedido]!
-
-    # Flota activa en mapa (con ubicacion en tiempo real)
-    flotaActiva(zonaId: ID!): [RepartidorEnMapa]!
-
-    # Resumen de flota
-    flotaResumen(zonaId: ID!): FlotaResumen!
-
-    # KPIs por zona
-    kpis(zonaId: ID!): KPI!
-
-    # KPIs diarios por fecha y zona (requiere fecha)
-    kpiDiario(fecha: String!, zonaId: ID): KPI!
-
-    # Detalle de un pedido
+    # Obtener un pedido por ID con su factura
     pedido(id: ID!): Pedido
 
-    # Métricas de caché (para monitoreo)
-    cacheMetrics: CacheMetricsResult!
+    # Listar todos los pedidos
+    pedidos: [Pedido]!
 
-    # Estadísticas por ciudad/provincia
-    estadisticasPorCiudad(ciudad: String!, tipo: String!): [KPI]!
+    # Pedidos pendientes de asignación
+    pedidosPendientesAsignacion: [Pedido]!
+
+    # Obtener un repartidor por ID
+    repartidor(id: ID!): Repartidor
+
+    # Listar todos los repartidores
+    repartidores: [Repartidor]!
+
+    # Obtener un vehículo por ID
+    vehiculo(id: ID!): Vehiculo
+
+    # Listar todos los vehículos
+    vehiculos: [Vehiculo]!
+
+    # Flota activa (repartidores con ubicación)
+    flotaActiva: [RepartidorEnMapa]!
+
+    # Resumen de flota
+    flotaResumen: FlotaResumen!
+
+    # Estadísticas por cobertura
+    estadisticasPorCobertura(cobertura: String!): EstadisticasCobertura!
+
+    # Rutas más populares
+    rutasPopulares(limite: Int = 10): [RutaPopular!]!
+
+    # Métricas de caché
+    cacheMetrics: CacheMetricsResult!
   }
 
-  # Métricas de rendimiento del caché
   type CacheMetricsResult {
     flotaCache: CacheStats!
-    kpiCache: CacheStats!
     pedidoCache: CacheStats!
   }
 
@@ -221,16 +246,7 @@ export const typeDefs = gql`
   # ==================== MUTATIONS ====================
 
   type Mutation {
-    # Gestión de Disponibilidad del Repartidor
-    actualizarEstadoRepartidor(input: ActualizarEstadoRepartidorInput!): RepartidorDetalle!
-
-    # Reasignación Manual de Pedidos
-    reasignarPedido(input: ReasignarPedidoInput!): Pedido!
-
-    # Actualización de Perfil y Preferencias
-    actualizarDatosContacto(input: ActualizarDatosContactoInput!): Usuario!
-
-    # Gestión de Incidencias
-    registrarIncidencia(input: RegistrarIncidenciaInput!): Incidencia!
+    # Cancelar un pedido
+    cancelarPedido(input: CancelarPedidoInput!): Pedido!
   }
 `;

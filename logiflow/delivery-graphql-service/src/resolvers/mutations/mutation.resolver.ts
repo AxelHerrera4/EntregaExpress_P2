@@ -1,95 +1,121 @@
-import { GraphQLContext } from '../../index';
 import { 
-  Usuario, 
-  RepartidorDetalle, 
-  Pedido, 
-  Incidencia,
-  ActualizarDatosContactoInput,
-  RegistrarIncidenciaInput
-} from '../../entities';
-import { EstadoRepartidor } from '../../enums';
+  PedidoService, 
+  IncidenciaServiceClient 
+} from '../../services';
 
-// ✅ Agregamos 'export' para resolver el error TS4023
-export interface ActualizarEstadoRepartidorArgs {
-  input: {
-    repartidorId: string;
-    estado: EstadoRepartidor;
-    motivo?: string;
-  };
-}
-
-export interface ReasignarPedidoArgs {
-  input: {
-    pedidoId: string;
-    nuevoRepartidorId: string;
-    motivo?: string;
-  };
-}
-
-export interface ActualizarDatosContactoArgs {
-  input: ActualizarDatosContactoInput;
-}
-
-export interface RegistrarIncidenciaArgs {
-  input: RegistrarIncidenciaInput;
+/**
+ * Input para asignar pedido
+ */
+export interface AsignarPedidoInput {
+  pedidoId: string;
+  repartidorId: string;
+  vehiculoId: string;
 }
 
 /**
- * Resolvers para las MUTATIONS de GraphQL
+ * Input para cancelar pedido
+ */
+export interface CancelarPedidoInput {
+  pedidoId: string;
+  motivo?: string;
+}
+
+/**
+ * Input para registrar incidencia
+ */
+export interface RegistrarIncidenciaInput {
+  pedidoId: string;
+  descripcion: string;
+  tipo: string;
+}
+
+/**
+ * Contexto de GraphQL
+ */
+export interface GraphQLContext {
+  pedidoService: PedidoService;
+  incidenciaClient: IncidenciaServiceClient;
+}
+
+/**
+ * Mutation Resolvers simplificados
+ * 
+ * Mutations disponibles:
+ * - asignarPedido: Asigna repartidor y vehículo a un pedido
+ * - cancelarPedido: Cancela un pedido
+ * - registrarIncidencia: Registra una incidencia
  */
 export const mutationResolvers = {
-  actualizarEstadoRepartidor: async (
-    parent: any,
-    args: ActualizarEstadoRepartidorArgs,
+  /**
+   * Mutation: asignarPedido(input: AsignarPedidoInput!): Pedido!
+   * PATCH /api/pedidos/{id}/asignar
+   */
+  asignarPedido: async (
+    _parent: unknown,
+    args: { input: AsignarPedidoInput },
     context: GraphQLContext
-  ): Promise<RepartidorDetalle> => {
-    const { repartidorId, estado, motivo } = args.input;
-    console.log(`[Mutation] Actualizando repartidor ${repartidorId} a ${estado}`);
+  ) => {
+    const { pedidoId, repartidorId, vehiculoId } = args.input;
+    console.log(`[Mutation] asignarPedido(pedidoId: ${pedidoId}, repartidorId: ${repartidorId}, vehiculoId: ${vehiculoId})`);
     
     try {
-      // ✅ Este método debe existir en fleetClient para evitar el error TS2339
-      return await context.fleetClient.actualizarEstadoRepartidor(repartidorId, estado, motivo);
-    } catch (error) {
-      throw new Error(`Error en fleet-service: ${error}`);
+      const pedido = await context.pedidoService.asignarRepartidorYVehiculo(
+        pedidoId,
+        repartidorId,
+        vehiculoId
+      );
+      console.log(`[Mutation] Pedido ${pedidoId} asignado correctamente`);
+      return pedido;
+    } catch (error: any) {
+      console.error(`[Mutation] Error al asignar pedido:`, error.message);
+      throw new Error(`Error al asignar pedido: ${error.message}`);
     }
   },
 
-  reasignarPedido: async (
-    parent: any,
-    args: ReasignarPedidoArgs,
+  /**
+   * Mutation: cancelarPedido(input: CancelarPedidoInput!): Pedido!
+   * PATCH /api/pedidos/{id}/cancelar
+   */
+  cancelarPedido: async (
+    _parent: unknown,
+    args: { input: CancelarPedidoInput },
     context: GraphQLContext
-  ): Promise<Pedido> => {
-    const { pedidoId, nuevoRepartidorId, motivo } = args.input;
+  ) => {
+    const { pedidoId, motivo } = args.input;
+    console.log(`[Mutation] cancelarPedido(${pedidoId}, motivo: ${motivo || 'N/A'})`);
+    
     try {
-      // ✅ Herramienta de reasignación manual requerida para la Fase 3
-      return await context.pedidoService.reasignarPedido(pedidoId, nuevoRepartidorId, motivo);
-    } catch (error) {
-      throw new Error(`Error al reasignar: ${error}`);
+      const pedido = await context.pedidoService.cancelarPedido(pedidoId, motivo);
+      console.log(`[Mutation] Pedido ${pedidoId} cancelado`);
+      return pedido;
+    } catch (error: any) {
+      console.error(`[Mutation] Error al cancelar pedido:`, error.message);
+      throw new Error(`Error al cancelar pedido: ${error.message}`);
     }
   },
 
-  actualizarDatosContacto: async (
-    parent: any,
-    args: ActualizarDatosContactoArgs,
-    context: GraphQLContext
-  ): Promise<Usuario> => {
-    try {
-      return await context.authClient.actualizarDatosContacto(args.input);
-    } catch (error) {
-      throw new Error(`Error en auth-service: ${error}`);
-    }
-  },
-
+  /**
+   * Mutation: registrarIncidencia(input: RegistrarIncidenciaInput!): Incidencia!
+   */
   registrarIncidencia: async (
-    parent: any,
-    args: RegistrarIncidenciaArgs,
+    _parent: unknown,
+    args: { input: RegistrarIncidenciaInput },
     context: GraphQLContext
-  ): Promise<Incidencia> => {
+  ) => {
+    const { pedidoId, descripcion, tipo } = args.input;
+    console.log(`[Mutation] registrarIncidencia(pedidoId: ${pedidoId})`);
+    
     try {
-      // ✅ Reporte de incidencias solicitado en el panel de control
-      return await context.incidenciaClient.registrarIncidencia(args.input);
-    } catch (error) {
-      throw new Error(`Error al registrar incidencia: ${error}`);
+      const incidencia = await context.incidenciaClient.registrarIncidencia({
+        pedidoId,
+        descripcion,
+        tipo: tipo as any
+      });
+      console.log(`[Mutation] Incidencia registrada con ID ${incidencia.id}`);
+      return incidencia;
+    } catch (error: any) {
+      console.error(`[Mutation] Error al registrar incidencia:`, error.message);
+      throw new Error(`Error al registrar incidencia: ${error.message}`);
     }
   }
 };

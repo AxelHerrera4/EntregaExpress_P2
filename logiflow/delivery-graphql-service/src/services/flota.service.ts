@@ -1,11 +1,35 @@
-import { FleetServiceClient } from './fleet.client';
+import { FleetServiceClient, RepartidorResponse } from './fleet.client';
 import { TrackingServiceClient } from './tracking.client';
-import { RepartidorEnMapa, FlotaResumen } from '../entities';
 import { EstadoRepartidor } from '../enums';
 
 /**
+ * Repartidor en mapa para visualización
+ */
+export interface RepartidorEnMapa {
+  id: string;
+  nombre: string;
+  placa: string | null;
+  latitud: number;
+  longitud: number;
+  velocidad: number | null;
+  estado: EstadoRepartidor;
+  ultimaActualizacion: string | null;
+}
+
+/**
+ * Resumen de flota
+ */
+export interface FlotaResumen {
+  total: number;
+  disponibles: number;
+  enRuta: number;
+  mantenimiento: number;
+  desconectados: number;
+}
+
+/**
  * FlotaService - Combina datos de Fleet Service + Tracking Service
- * Funcionalidad clave para el mapa en tiempo real
+ * Funcionalidad para el mapa en tiempo real
  */
 export class FlotaService {
   private fleetClient: FleetServiceClient;
@@ -17,31 +41,36 @@ export class FlotaService {
   }
 
   /**
-   * QUERY 2: Combina datos estáticos (Fleet) + tiempo real (Tracking)
-   * Para cada repartidor de la zona, obtiene su ubicación en tiempo real
+   * Obtiene flota activa con ubicación en tiempo real
+   * Combina datos estáticos (Fleet) + tiempo real (Tracking)
    */
-  async obtenerFlotaActivaConUbicacion(zonaId: string): Promise<RepartidorEnMapa[]> {
-    console.log(`[FlotaService] Obteniendo flota activa para zona: ${zonaId}`);
+  async obtenerFlotaActivaConUbicacion(): Promise<RepartidorEnMapa[]> {
+    console.log('[FlotaService] Obteniendo flota activa');
 
-    // 1. Obtener repartidores de la zona (Fleet Service)
-    const repartidores = await this.fleetClient.obtenerRepartidoresPorZona(zonaId);
+    // 1. Obtener todos los repartidores activos
+    const repartidores = await this.fleetClient.obtenerFlotaActiva();
 
-    // 2. Por cada repartidor, obtener ubicación en tiempo real (Tracking Service)
+    // 2. Por cada repartidor, obtener ubicación en tiempo real si está disponible
     const resultados = await Promise.all(
-      repartidores.map(async (repartidor) => {
-        const ubicacion = await this.trackingClient.obtenerUbicacion(repartidor.id);
+      repartidores.map(async (repartidor: RepartidorResponse) => {
+        // Intentar obtener ubicación del tracking service
+        let ubicacion = null;
+        try {
+          ubicacion = await this.trackingClient.obtenerUbicacion(repartidor.id);
+        } catch (e) {
+          // Si falla, usar la ubicación del repartidor
+        }
 
         const enMapa: RepartidorEnMapa = {
           id: repartidor.id,
-          nombre: repartidor.nombre,
-          placa: repartidor.vehiculo ? repartidor.vehiculo.placa : 'N/A',
-          latitud: ubicacion ? ubicacion.latitud : 0.0,
-          longitud: ubicacion ? ubicacion.longitud : 0.0,
-          velocidad: ubicacion ? ubicacion.velocidad : 0.0,
-          estado: repartidor.disponible
-            ? EstadoRepartidor.DISPONIBLE
-            : EstadoRepartidor.EN_RUTA,
-          ultimaActualizacion: ubicacion ? ubicacion.ultimaActualizacion : null,
+          nombre: `${repartidor.nombre} ${repartidor.apellido || ''}`.trim(),
+          placa: repartidor.vehiculo?.placa || null,
+          latitud: ubicacion?.latitud || repartidor.ubicacionActual?.latitud || 0.0,
+          longitud: ubicacion?.longitud || repartidor.ubicacionActual?.longitud || 0.0,
+          velocidad: ubicacion?.velocidad || null,
+          estado: repartidor.estado as EstadoRepartidor,
+          ultimaActualizacion: ubicacion?.ultimaActualizacion || 
+            repartidor.ubicacionActual?.ultimaActualizacion || null,
         };
 
         return enMapa;
@@ -52,18 +81,9 @@ export class FlotaService {
   }
 
   /**
-   * Resumen de flota: total, disponibles, en ruta
+   * Obtiene resumen de flota
    */
-  async obtenerResumenFlota(zonaId: string): Promise<FlotaResumen> {
-    const repartidores = await this.fleetClient.obtenerRepartidoresPorZona(zonaId);
-
-    const disponibles = repartidores.filter((r) => r.disponible).length;
-    const enRuta = repartidores.length - disponibles;
-
-    return {
-      total: repartidores.length,
-      disponibles,
-      enRuta,
-    };
+  async obtenerResumenFlota(): Promise<FlotaResumen> {
+    return this.fleetClient.obtenerFlotaResumen();
   }
 }

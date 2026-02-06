@@ -3,4 +3,5 @@ export enum EstadoRepartidor {
   EN_RUTA = 'EN_RUTA',
   DESCONECTADO = 'DESCONECTADO',
   MANTENIMIENTO = 'MANTENIMIENTO',
+  INACTIVO = 'INACTIVO',
 }

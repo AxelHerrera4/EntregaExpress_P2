@@ -3,12 +3,12 @@ import { Incidencia, RegistrarIncidenciaInput } from '../entities';
 
 /**
  * IncidenciaServiceClient - Comunicación con el microservicio de Incidencias
- * Las incidencias se manejan a través del pedido-service
+ * Las incidencias se manejan a través del pedido-service via API Gateway
  */
 export class IncidenciaServiceClient {
   /**
    * Registra una nueva incidencia
-   * POST /api/incidencias
+   * POST /incidencias (se convierte a /api/incidencias via API Gateway)
    */
   async registrarIncidencia(input: RegistrarIncidenciaInput): Promise<Incidencia> {
     try {
@@ -18,7 +18,7 @@ export class IncidenciaServiceClient {
         tipo: input.tipo
       };
       
-      const response = await pedidoClient.post<Incidencia>('/api/incidencias', payload);
+      const response = await pedidoClient.post<Incidencia>('/incidencias', payload);
       
       console.log(`[IncidenciaServiceClient] Incidencia registrada para pedido ${input.pedidoId}`);
       return response.data;
@@ -30,11 +30,11 @@ export class IncidenciaServiceClient {
 
   /**
    * Obtiene incidencias de un pedido específico
-   * GET /api/incidencias/pedido/{pedidoId}
+   * GET /incidencias/pedido/{pedidoId} (se convierte a /api/incidencias/pedido/{pedidoId} via API Gateway)
    */
   async obtenerIncidenciasPorPedido(pedidoId: string): Promise<Incidencia[]> {
     try {
-      const response = await pedidoClient.get<Incidencia[]>(`/api/incidencias/pedido/${pedidoId}`);
+      const response = await pedidoClient.get<Incidencia[]>(`/incidencias/pedido/${pedidoId}`);
       return response.data;
     } catch (error) {
       console.error(`[IncidenciaServiceClient] Error al obtener incidencias del pedido ${pedidoId}:`, error);
@@ -44,11 +44,11 @@ export class IncidenciaServiceClient {
 
   /**
    * Obtiene una incidencia específica
-   * GET /api/incidencias/{incidenciaId}
+   * GET /incidencias/{incidenciaId} (se convierte a /api/incidencias/{incidenciaId} via API Gateway)
    */
   async obtenerIncidencia(incidenciaId: string): Promise<Incidencia | null> {
     try {
-      const response = await pedidoClient.get<Incidencia>(`/api/incidencias/${incidenciaId}`);
+      const response = await pedidoClient.get<Incidencia>(`/incidencias/${incidenciaId}`);
       return response.data;
     } catch (error) {
       console.error(`[IncidenciaServiceClient] Error al obtener incidencia ${incidenciaId}:`, error);

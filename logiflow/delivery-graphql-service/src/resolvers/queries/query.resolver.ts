@@ -1,193 +1,230 @@
-import {
-  PedidoService,
+import { 
+  PedidoService, 
+  FleetServiceClient,
   FlotaService,
-  KpiService,
+  KpiService
 } from '../../services';
-import { FiltroPedidoInput, Pedido, RepartidorEnMapa, FlotaResumen, Kpi } from '../../entities';
-import { flotaCache, kpiCache, pedidoCache, CacheMetrics } from '../../utils';
+import { flotaCache, pedidoCache } from '../../utils';
 
 /**
- * Query Resolvers - Equivalente al QueryResolver.java
+ * Query Resolvers simplificados
+ * 
+ * Queries disponibles:
+ * - pedido(id): Pedido individual
+ * - pedidos: Lista de todos los pedidos
+ * - pedidosPendientesAsignacion: Pedidos sin asignar
+ * - repartidor(id): Repartidor individual
+ * - repartidores: Lista de repartidores
+ * - vehiculo(id): Vehículo individual
+ * - vehiculos: Lista de vehículos
+ * - flotaActiva: Repartidores en mapa
+ * - flotaResumen: Resumen de flota
+ * - estadisticasPorCobertura: KPIs
+ * - rutasPopulares: Rutas más usadas
+ * - cacheMetrics: Métricas de caché
  */
 export const queryResolvers = {
   /**
-   * Query: pedidos(filtro: FiltroPedido!): [Pedido]!
-   * Obtiene pedidos filtrados por zona, estado, repartidor
-   */
-  pedidos: async (
-    _parent: unknown,
-    args: { filtro: FiltroPedidoInput },
-    context: { pedidoService: PedidoService }
-  ): Promise<Pedido[]> => {
-    const cacheKey = `pedidos:${JSON.stringify(args.filtro)}`;
-    return pedidoCache.getOrCompute(cacheKey, () =>
-      context.pedidoService.obtenerPedidosFiltrados(args.filtro)
-    );
-  },
-
-  /**
-   * Query: flotaActiva(zonaId: ID!): [RepartidorEnMapa]!
-   * Flota activa en mapa con ubicación en tiempo real
-   */
-  flotaActiva: async (
-    _parent: unknown,
-    args: { zonaId: string },
-    context: { flotaService: FlotaService }
-  ): Promise<RepartidorEnMapa[]> => {
-    const cacheKey = `flotaActiva:${args.zonaId}`;
-    return flotaCache.getOrCompute(cacheKey, () =>
-      context.flotaService.obtenerFlotaActivaConUbicacion(args.zonaId)
-    );
-  },
-
-  /**
-   * Query: flotaResumen(zonaId: ID!): FlotaResumen!
-   * Resumen de flota por zona
-   */
-  flotaResumen: async (
-    _parent: unknown,
-    args: { zonaId: string },
-    context: { flotaService: FlotaService }
-  ): Promise<FlotaResumen> => {
-    const cacheKey = `flotaResumen:${args.zonaId}`;
-    return flotaCache.getOrCompute(cacheKey, () =>
-      context.flotaService.obtenerResumenFlota(args.zonaId)
-    );
-  },
-
-  /**
-   * Query: kpis(zonaId: ID!): KPI!
-   * KPIs calculados para una zona
-   */
-  kpis: async (
-    _parent: unknown,
-    args: { zonaId: string },
-    context: { kpiService: KpiService }
-  ): Promise<Kpi> => {
-    const cacheKey = `kpis:${args.zonaId}`;
-    return kpiCache.getOrCompute(cacheKey, () =>
-      context.kpiService.calcularKpis(args.zonaId)
-    );
-  },
-
-  /**
-   * Query: kpiDiario(fecha: String!, zonaId: ID): KPI!
-   * KPIs diarios calculados para una fecha y zona específica
-   */
-  kpiDiario: async (
-    _parent: unknown,
-    args: { fecha: string; zonaId?: string },
-    context: { kpiService: KpiService }
-  ): Promise<Kpi> => {
-    const cacheKey = `kpiDiario:${args.fecha}:${args.zonaId || 'all'}`;
-    return kpiCache.getOrCompute(cacheKey, () =>
-      context.kpiService.calcularKpisDiarios(args.fecha, args.zonaId)
-    );
-  },
-
-  /**
    * Query: pedido(id: ID!): Pedido
-   * Detalle de un pedido específico
    */
   pedido: async (
     _parent: unknown,
     args: { id: string },
     context: { pedidoService: PedidoService }
-  ): Promise<Pedido | null> => {
+  ) => {
     const cacheKey = `pedido:${args.id}`;
-    return pedidoCache.getOrCompute(cacheKey, () =>
-      context.pedidoService.obtenerPedidoPorId(args.id)
-    );
+    return pedidoCache.getOrCompute(cacheKey, async () => {
+      console.log(`[Query] pedido(${args.id})`);
+      return context.pedidoService.obtenerPedidoPorId(args.id);
+    });
+  },
+
+  /**
+   * Query: pedidos: [Pedido]!
+   */
+  pedidos: async (
+    _parent: unknown,
+    _args: unknown,
+    context: { pedidoService: PedidoService }
+  ) => {
+    const cacheKey = 'pedidos:all';
+    return pedidoCache.getOrCompute(cacheKey, async () => {
+      console.log('[Query] pedidos');
+      const result = await context.pedidoService.obtenerTodosLosPedidos();
+      return result || [];
+    });
+  },
+
+  /**
+   * Query: pedidosPendientesAsignacion: [Pedido]!
+   */
+  pedidosPendientesAsignacion: async (
+    _parent: unknown,
+    _args: unknown,
+    context: { pedidoService: PedidoService }
+  ) => {
+    const cacheKey = 'pedidos:pendientes';
+    return pedidoCache.getOrCompute(cacheKey, async () => {
+      console.log('[Query] pedidosPendientesAsignacion');
+      const result = await context.pedidoService.obtenerPedidosPendientesAsignacion();
+      return result || [];
+    });
+  },
+
+  /**
+   * Query: repartidor(id: ID!): Repartidor
+   */
+  repartidor: async (
+    _parent: unknown,
+    args: { id: string },
+    context: { fleetClient: FleetServiceClient }
+  ) => {
+    const cacheKey = `repartidor:${args.id}`;
+    return flotaCache.getOrCompute(cacheKey, async () => {
+      console.log(`[Query] repartidor(${args.id})`);
+      return context.fleetClient.obtenerRepartidor(args.id);
+    });
+  },
+
+  /**
+   * Query: repartidores: [Repartidor]!
+   */
+  repartidores: async (
+    _parent: unknown,
+    _args: unknown,
+    context: { fleetClient: FleetServiceClient }
+  ) => {
+    const cacheKey = 'repartidores:all';
+    return flotaCache.getOrCompute(cacheKey, async () => {
+      console.log('[Query] repartidores');
+      const result = await context.fleetClient.obtenerTodosLosRepartidores();
+      return result || [];
+    });
+  },
+
+  /**
+   * Query: vehiculo(id: ID!): Vehiculo
+   */
+  vehiculo: async (
+    _parent: unknown,
+    args: { id: string },
+    context: { fleetClient: FleetServiceClient }
+  ) => {
+    const cacheKey = `vehiculo:${args.id}`;
+    return flotaCache.getOrCompute(cacheKey, async () => {
+      console.log(`[Query] vehiculo(${args.id})`);
+      return context.fleetClient.obtenerVehiculo(args.id);
+    });
+  },
+
+  /**
+   * Query: vehiculos: [Vehiculo]!
+   */
+  vehiculos: async (
+    _parent: unknown,
+    _args: unknown,
+    context: { fleetClient: FleetServiceClient }
+  ) => {
+    const cacheKey = 'vehiculos:all';
+    return flotaCache.getOrCompute(cacheKey, async () => {
+      console.log('[Query] vehiculos');
+      const result = await context.fleetClient.obtenerTodosLosVehiculos();
+      return result || [];
+    });
+  },
+
+  /**
+   * Query: flotaActiva: [RepartidorEnMapa]!
+   */
+  flotaActiva: async (
+    _parent: unknown,
+    _args: unknown,
+    context: { flotaService: FlotaService }
+  ) => {
+    const cacheKey = 'flota:activa';
+    return flotaCache.getOrCompute(cacheKey, async () => {
+      console.log('[Query] flotaActiva');
+      const result = await context.flotaService.obtenerFlotaActivaConUbicacion();
+      return result || [];
+    });
+  },
+
+  /**
+   * Query: flotaResumen: FlotaResumen!
+   */
+  flotaResumen: async (
+    _parent: unknown,
+    _args: unknown,
+    context: { flotaService: FlotaService }
+  ) => {
+    const cacheKey = 'flota:resumen';
+    return flotaCache.getOrCompute(cacheKey, async () => {
+      console.log('[Query] flotaResumen');
+      return context.flotaService.obtenerResumenFlota();
+    });
+  },
+
+  /**
+   * Query: estadisticasPorCobertura(cobertura: String!): EstadisticasCobertura!
+   */
+  estadisticasPorCobertura: async (
+    _parent: unknown,
+    args: { cobertura: string },
+    context: { kpiService: KpiService }
+  ) => {
+    const cacheKey = `kpi:cobertura:${args.cobertura}`;
+    return pedidoCache.getOrCompute(cacheKey, async () => {
+      console.log(`[Query] estadisticasPorCobertura(${args.cobertura})`);
+      return context.kpiService.calcularKpisPorCobertura(args.cobertura);
+    });
+  },
+
+  /**
+   * Query: rutasPopulares(limite: Int): [RutaPopular!]!
+   */
+  rutasPopulares: async (
+    _parent: unknown,
+    args: { limite?: number },
+    context: { pedidoService: PedidoService }
+  ) => {
+    const limite = args.limite || 10;
+    console.log(`[Query] rutasPopulares(limite: ${limite})`);
+    
+    try {
+      const pedidos = await context.pedidoService.obtenerTodosLosPedidos();
+      
+      // Calcular rutas populares
+      const rutasMap = new Map<string, number>();
+      for (const pedido of pedidos || []) {
+        const origen = pedido.direccionOrigen?.ciudad || 'Desconocido';
+        const destino = pedido.direccionDestino?.ciudad || 'Desconocido';
+        const key = `${origen}-${destino}`;
+        rutasMap.set(key, (rutasMap.get(key) || 0) + 1);
+      }
+      
+      const rutas = Array.from(rutasMap.entries())
+        .map(([key, cantidad]) => {
+          const [origen, destino] = key.split('-');
+          return { origen, destino, cantidad };
+        })
+        .sort((a, b) => b.cantidad - a.cantidad)
+        .slice(0, limite);
+      
+      return rutas;
+    } catch (error) {
+      console.error('[Query] Error en rutasPopulares:', error);
+      return [];
+    }
   },
 
   /**
    * Query: cacheMetrics: CacheMetricsResult!
-   * Métricas de rendimiento del caché (hit/miss rates)
    */
-  cacheMetrics: async (): Promise<{
-    flotaCache: CacheMetrics & { size: number };
-    kpiCache: CacheMetrics & { size: number };
-    pedidoCache: CacheMetrics & { size: number };
-  }> => {
+  cacheMetrics: () => {
+    console.log('[Query] cacheMetrics');
     return {
-      flotaCache: { ...flotaCache.getMetrics(), size: flotaCache.size() },
-      kpiCache: { ...kpiCache.getMetrics(), size: kpiCache.size() },
-      pedidoCache: { ...pedidoCache.getMetrics(), size: pedidoCache.size() },
+      flotaCache: flotaCache.getMetrics(),
+      pedidoCache: pedidoCache.getMetrics()
     };
-  },
-
-  /**
-   * Query: pedidosPorZona(zonaId: ID!, estado: EstadoPedido): [Pedido]!
-   * Pedidos de una zona específica con filtro opcional por estado
-   */
-  pedidosPorZona: async (
-    _parent: unknown,
-    args: { zonaId: string; estado?: string },
-    context: { pedidoService: PedidoService }
-  ): Promise<Pedido[]> => {
-    const cacheKey = `pedidosPorZona:${args.zonaId}:${args.estado || 'all'}`;
-    return pedidoCache.getOrCompute(cacheKey, () =>
-      context.pedidoService.obtenerPedidosPorZona(args.zonaId, args.estado)
-    );
-  },
-
-  /**
-   * Query: pedidosPorCiudadOrigen(ciudad: String!, provincia: String): [Pedido]!
-   * Pedidos filtrados por ciudad origen
-   */
-  pedidosPorCiudadOrigen: async (
-    _parent: unknown,
-    args: { ciudad: string; provincia?: string },
-    context: { pedidoService: PedidoService }
-  ): Promise<Pedido[]> => {
-    const cacheKey = `pedidosPorCiudadOrigen:${args.ciudad}:${args.provincia || 'all'}`;
-    return pedidoCache.getOrCompute(cacheKey, () =>
-      context.pedidoService.obtenerPedidosPorCiudadOrigen(args.ciudad, args.provincia)
-    );
-  },
-
-  /**
-   * Query: pedidosPorCiudadDestino(ciudad: String!, provincia: String): [Pedido]!
-   * Pedidos filtrados por ciudad destino
-   */
-  pedidosPorCiudadDestino: async (
-    _parent: unknown,
-    args: { ciudad: string; provincia?: string },
-    context: { pedidoService: PedidoService }
-  ): Promise<Pedido[]> => {
-    const cacheKey = `pedidosPorCiudadDestino:${args.ciudad}:${args.provincia || 'all'}`;
-    return pedidoCache.getOrCompute(cacheKey, () =>
-      context.pedidoService.obtenerPedidosPorCiudadDestino(args.ciudad, args.provincia)
-    );
-  },
-
-  /**
-   * Query: pedidosPorRuta(ciudadOrigen: String!, ciudadDestino: String!): [Pedido]!
-   * Pedidos de una ruta específica (origen -> destino)
-   */
-  pedidosPorRuta: async (
-    _parent: unknown,
-    args: { ciudadOrigen: string; ciudadDestino: string },
-    context: { pedidoService: PedidoService }
-  ): Promise<Pedido[]> => {
-    const cacheKey = `pedidosPorRuta:${args.ciudadOrigen}:${args.ciudadDestino}`;
-    return pedidoCache.getOrCompute(cacheKey, () =>
-      context.pedidoService.obtenerPedidosPorRuta(args.ciudadOrigen, args.ciudadDestino)
-    );
-  },
-
-  /**
-   * Query: estadisticasPorCiudad(ciudad: String!, tipo: String!): [KPI]!
-   * Estadísticas agregadas por ciudad
-   */
-  estadisticasPorCiudad: async (
-    _parent: unknown,
-    args: { ciudad: string; tipo: string },
-    context: { kpiService: KpiService }
-  ): Promise<Kpi[]> => {
-    const cacheKey = `estadisticasPorCiudad:${args.ciudad}:${args.tipo}`;
-    return kpiCache.getOrCompute(cacheKey, () =>
-      context.kpiService.calcularKpisPorCiudad(args.ciudad, args.tipo)
-    );
-  },
+  }
 };

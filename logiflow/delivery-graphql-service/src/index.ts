@@ -11,9 +11,12 @@ import {
   KpiService,
   AuthServiceClient,
   IncidenciaServiceClient,
+  BillingServiceClient,
+  RepartidorResponse,
+  VehiculoResponse,
 } from './services';
-import { config, createRepartidorLoader, createVehiculoLoader } from './utils';
-import { RepartidorDetalle, Vehiculo } from './entities';
+import { config, createRepartidorLoader, createVehiculoLoader, setupHttpClients } from './utils';
+import { authManager } from './auth';
 
 /**
  * Contexto compartido por todos los resolvers
@@ -27,9 +30,10 @@ export interface GraphQLContext {
   kpiService: KpiService;
   authClient: AuthServiceClient;
   incidenciaClient: IncidenciaServiceClient;
+  billingClient: BillingServiceClient;
   // DataLoaders para evitar N+1
-  repartidorLoader: DataLoader<string, RepartidorDetalle | null>;
-  vehiculoLoader: DataLoader<string, Vehiculo | null>;
+  repartidorLoader: DataLoader<string, RepartidorResponse | null>;
+  vehiculoLoader: DataLoader<string, VehiculoResponse | null>;
 }
 
 // Instanciar servicios (singleton)
@@ -38,45 +42,89 @@ const fleetClient = new FleetServiceClient();
 const trackingClient = new TrackingServiceClient();
 const authClient = new AuthServiceClient();
 const incidenciaClient = new IncidenciaServiceClient();
+const billingClient = new BillingServiceClient();
 const flotaService = new FlotaService(fleetClient, trackingClient);
 const kpiService = new KpiService(pedidoService, fleetClient);
 
 async function startServer(): Promise<void> {
-  const server = new ApolloServer<GraphQLContext>({
-    typeDefs,
-    resolvers,
-  });
+  try {
+    console.log('🔐 Inicializando sistema de autenticación...');
+    
+    // 1. Inicializar el sistema de autenticación automática
+    await authManager.initialize();
+    
+    // 2. Configurar interceptors para todos los clientes HTTP
+    setupHttpClients();
 
-  const { url } = await startStandaloneServer(server, {
-    listen: { port: config.port },
-    context: async (): Promise<GraphQLContext> => ({
-      pedidoService,
-      fleetClient,
-      trackingClient,
-      flotaService,
-      kpiService,
-      authClient,
-      incidenciaClient,
-      // Crear nuevos DataLoaders por request (importante para evitar cache entre requests)
-      repartidorLoader: createRepartidorLoader(fleetClient),
-      vehiculoLoader: createVehiculoLoader(fleetClient),
-    }),
-  });
+    console.log('🚀 Iniciando servidor GraphQL...');
+    
+    const server = new ApolloServer<GraphQLContext>({
+      typeDefs,
+      resolvers,
+    });
 
-  console.log(`🚀 Servidor GraphQL listo en ${url}`);
-  console.log(`📊 Playground disponible en ${url}`);
-  console.log('');
-  console.log('Microservicios configurados:');
-  console.log(`  - Auth Service:     ${config.authServiceUrl}`);
-  console.log(`  - Pedido Service:   ${config.pedidoServiceUrl}`);
-  console.log(`  - Fleet Service:    ${config.fleetServiceUrl}`);
-  console.log(`  - Tracking Service: ${config.trackingServiceUrl}`);
-  console.log('');
-  console.log('✅ DataLoaders activos (prevención N+1)');
-  console.log('✅ Caché en memoria activo con métricas');
+    const { url } = await startStandaloneServer(server, {
+      listen: { port: config.port },
+      context: async (): Promise<GraphQLContext> => ({
+        pedidoService,
+        fleetClient,
+        trackingClient,
+        flotaService,
+        kpiService,
+        authClient,
+        incidenciaClient,
+        billingClient,
+        // Crear nuevos DataLoaders por request (importante para evitar cache entre requests)
+        repartidorLoader: createRepartidorLoader(fleetClient),
+        vehiculoLoader: createVehiculoLoader(fleetClient),
+      }),
+    });
+
+    console.log('');
+    console.log('🎉 ¡LogiFlow GraphQL Service iniciado exitosamente!');
+    console.log('');
+    console.log(`🚀 Servidor GraphQL listo en ${url}`);
+    console.log(`📊 Playground disponible en ${url}`);
+    console.log('');
+    console.log('🔐 Sistema de autenticación:');
+    console.log('  ✅ Autenticado automáticamente como admin');
+    console.log('  ✅ Token JWT configurado en todas las peticiones');
+    console.log('  ✅ Renovación automática de token activa');
+    console.log('');
+    console.log('🌐 Microservicios (vía API Gateway):');
+    console.log(`  - Auth Service:     ${config.authServiceUrl}`);
+    console.log(`  - Pedido Service:   ${config.pedidoServiceUrl}`);
+    console.log(`  - Fleet Service:    ${config.fleetServiceUrl}`);
+    console.log(`  - Tracking Service: ${config.trackingServiceUrl}`);
+    console.log('');
+    console.log('⚡ Optimizaciones activas:');
+    console.log('✅ DataLoaders activos (prevención N+1)');
+    console.log('✅ Caché en memoria activo con métricas');
+    console.log('✅ Interceptors HTTP con manejo automático de errores 401/403');
+    
+  } catch (error) {
+    console.error('❌ Error al inicializar el sistema:', error);
+    throw error;
+  }
 }
 
+// Manejo de cierre del proceso
+process.on('SIGINT', () => {
+  console.log('\n🔄 Cerrando servidor...');
+  authManager.shutdown();
+  console.log('👋 Servidor cerrado correctamente');
+  process.exit(0);
+});
+
+process.on('SIGTERM', () => {
+  console.log('\n🔄 Cerrando servidor...');
+  authManager.shutdown();
+  console.log('👋 Servidor cerrado correctamente');
+  process.exit(0);
+});
+
 startServer().catch((error) => {
-  console.error('Error al iniciar el servidor:', error);
+  console.error('❌ Error al iniciar el servidor:', error);
+  authManager.shutdown();
   process.exit(1);
 });

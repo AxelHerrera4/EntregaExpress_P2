@@ -1,6 +1,5 @@
 import DataLoader from 'dataloader';
-import { FleetServiceClient } from '../services';
-import { RepartidorDetalle, Vehiculo } from '../entities';
+import { FleetServiceClient, RepartidorResponse, VehiculoResponse } from '../services';
 
 /**
  * DataLoader para repartidores - Evita el problema N+1
@@ -8,8 +7,8 @@ import { RepartidorDetalle, Vehiculo } from '../entities';
  */
 export const createRepartidorLoader = (
   fleetClient: FleetServiceClient
-): DataLoader<string, RepartidorDetalle | null> => {
-  return new DataLoader<string, RepartidorDetalle | null>(
+): DataLoader<string, RepartidorResponse | null> => {
+  return new DataLoader<string, RepartidorResponse | null>(
     async (repartidorIds: readonly string[]) => {
       console.log(`[DataLoader] Cargando ${repartidorIds.length} repartidores en batch`);
 
@@ -30,20 +29,18 @@ export const createRepartidorLoader = (
 
 /**
  * DataLoader para vehículos - Evita el problema N+1 al resolver Repartidor.vehiculo
- * Nota: Asume que el vehiculo ya viene en RepartidorDetalle, este loader es para casos
- * donde se necesite cargar vehículos por separado
  */
 export const createVehiculoLoader = (
   fleetClient: FleetServiceClient
-): DataLoader<string, Vehiculo | null> => {
-  return new DataLoader<string, Vehiculo | null>(
+): DataLoader<string, VehiculoResponse | null> => {
+  return new DataLoader<string, VehiculoResponse | null>(
     async (vehiculoIds: readonly string[]) => {
       console.log(`[DataLoader] Cargando ${vehiculoIds.length} vehículos en batch`);
 
-      // Placeholder: Si existiera un endpoint batch para vehículos
-      // En este caso, el vehículo ya viene con el repartidor, así que este loader
-      // es más una muestra de cómo implementar otro DataLoader
-      const results = vehiculoIds.map(() => null);
+      // Llamada batch: obtener vehículos en paralelo
+      const results = await Promise.all(
+        vehiculoIds.map((id) => fleetClient.obtenerVehiculo(id))
+      );
 
       return results;
     },

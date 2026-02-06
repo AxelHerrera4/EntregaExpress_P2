@@ -25,3 +25,25 @@ export const trackingClient = createClient(config.trackingServiceUrl);
 
 /** Cliente HTTP para Auth Service (puerto 8081) */
 export const authClient = createClient(config.authServiceUrl);
+
+/** Cliente HTTP para Billing Service (puerto 8082) */
+export const billingClient = createClient(config.billingServiceUrl);
+
+/**
+ * Configura los interceptors de autenticación para todos los clientes
+ * DEBE llamarse después de inicializar el AuthManager
+ */
+export function setupHttpClients(): void {
+  // Los interceptors se configuran de forma lazy para evitar dependencias circulares
+  const { setupAllInterceptors } = require('../auth');
+  
+  setupAllInterceptors({
+    pedidoClient,
+    fleetClient,
+    trackingClient,
+    authClient,
+    billingClient
+  });
+  
+  console.log('[AxiosClients] ✅ Clientes HTTP configurados con autenticación');
+}

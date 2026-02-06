@@ -2,12 +2,12 @@ import { authClient } from '../utils';
 import { Usuario, ActualizarDatosContactoInput } from '../entities';
 
 /**
- * AuthServiceClient - Comunicación con el microservicio de Autenticación (puerto 8081)
+ * AuthServiceClient - Comunicación con el microservicio de Autenticación a través del API Gateway
  */
 export class AuthServiceClient {
   /**
    * Actualiza los datos de contacto de un usuario
-   * PATCH /api/usuarios/{usuarioId}/contacto
+   * PATCH /usuarios/{usuarioId}/contacto (se envía a /api/auth/usuarios/{usuarioId}/contacto via API Gateway)
    */
   async actualizarDatosContacto(input: ActualizarDatosContactoInput): Promise<Usuario> {
     try {
@@ -18,7 +18,7 @@ export class AuthServiceClient {
       };
       
       const response = await authClient.patch<Usuario>(
-        `/api/usuarios/${input.usuarioId}/contacto`,
+        `/usuarios/${input.usuarioId}/contacto`,
         payload
       );
       
@@ -32,11 +32,11 @@ export class AuthServiceClient {
 
   /**
    * Obtiene información de un usuario específico
-   * GET /api/usuarios/{usuarioId}
+   * GET /usuarios/{usuarioId} (se envía a /api/auth/usuarios/{usuarioId} via API Gateway)
    */
   async obtenerUsuario(usuarioId: string): Promise<Usuario | null> {
     try {
-      const response = await authClient.get<Usuario>(`/api/usuarios/${usuarioId}`);
+      const response = await authClient.get<Usuario>(`/usuarios/${usuarioId}`);
       return response.data;
     } catch (error) {
       console.error(`[AuthServiceClient] Error al obtener usuario ${usuarioId}:`, error);
