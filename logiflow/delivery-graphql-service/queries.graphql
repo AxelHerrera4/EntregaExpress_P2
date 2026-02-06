@@ -1,0 +1,213 @@
+# ==========================================
+# CONSULTAS DE EJEMPLO - DASHBOARD SUPERVISOR
+# ==========================================
+
+# 1. Dashboard supervisor - Pedidos en Zona con Flota Activa
+# Query principal mencionada en la documentación
+query PedidosEnZona($zonaId: ID!, $estado: EstadoPedido) {
+  # Pedidos filtrados por zona y opcionalmente por estado
+  pedidos(filtro: { zonaId: $zonaId, estado: $estado }) {
+    id
+    cliente {
+      nombre
+    }
+    destino
+    estado
+    repartidor {
+      nombre
+      vehiculo {
+        tipo
+      }
+    }
+    tiempoTranscurrido
+    retrasoMin
+  }
+  
+  # Resumen de flota activa en la zona
+  flotaResumen(zonaId: $zonaId) {
+    total
+    disponibles
+    enRuta
+  }
+}
+
+# Variables de ejemplo para PedidosEnZona:
+# {
+#   "zonaId": "ZONA-01",
+#   "estado": "EN_RUTA"
+# }
+
+
+# ==========================================
+# 2. Detalle de un Pedido Específico
+# ==========================================
+query DetallePedido($id: ID!) {
+  pedido(id: $id) {
+    id
+    clienteId
+    cliente {
+      nombre
+      telefono
+      direccion
+    }
+    destino
+    estado
+    repartidor {
+      id
+      nombre
+      disponible
+      vehiculo {
+        tipo
+        placa
+        modelo
+        capacidad
+      }
+    }
+    tiempoTranscurrido
+    retrasoMin
+    fechaCreacion
+    fechaActualizacion
+  }
+}
+
+# Variables:
+# {
+#   "id": "PED-123"
+# }
+
+
+# ==========================================
+# 3. Flota Activa en Mapa (Tiempo Real)
+# ==========================================
+query FlotaEnMapa($zonaId: ID!) {
+  flotaActiva(zonaId: $zonaId) {
+    id
+    nombre
+    placa
+    latitud
+    longitud
+    estado
+    velocidad
+    ultimaActualizacion
+  }
+}
+
+# Variables:
+# {
+#   "zonaId": "ZONA-01"
+# }
+
+
+# ==========================================
+# 4. KPIs de una Zona
+# ==========================================
+query KPIsZona($zonaId: ID!) {
+  kpis(zonaId: $zonaId) {
+    zonaId
+    pedidosPendientes
+    pedidosEnRuta
+    pedidosEntregados
+    tiempoPromedioEntrega
+    repartidoresActivos
+  }
+}
+
+# Variables:
+# {
+#   "zonaId": "ZONA-01"
+# }
+
+
+# ==========================================
+# 5. KPIs Diarios (con fecha específica)
+# ==========================================
+query KPIDiario($fecha: String!, $zonaId: ID) {
+  kpiDiario(fecha: $fecha, zonaId: $zonaId) {
+    zonaId
+    fecha
+    pedidosPendientes
+    pedidosEnRuta
+    pedidosEntregados
+    tiempoPromedioEntrega
+    repartidoresActivos
+  }
+}
+
+# Variables:
+# {
+#   "fecha": "2026-02-06",
+#   "zonaId": "ZONA-01"
+# }
+
+
+# ==========================================
+# 6. Métricas de Caché (Rendimiento)
+# ==========================================
+query MetricasCache {
+  cacheMetrics {
+    flotaCache {
+      hits
+      misses
+      total
+      hitRate
+      size
+    }
+    kpiCache {
+      hits
+      misses
+      total
+      hitRate
+      size
+    }
+    pedidoCache {
+      hits
+      misses
+      total
+      hitRate
+      size
+    }
+  }
+}
+
+
+# ==========================================
+# 7. Dashboard Completo (Múltiples Queries)
+# ==========================================
+query DashboardCompleto($zonaId: ID!) {
+  pedidos(filtro: { zonaId: $zonaId }) {
+    id
+    destino
+    estado
+    repartidor {
+      nombre
+    }
+    tiempoTranscurrido
+  }
+  
+  flotaResumen(zonaId: $zonaId) {
+    total
+    disponibles
+    enRuta
+  }
+  
+  kpis(zonaId: $zonaId) {
+    pedidosPendientes
+    pedidosEnRuta
+    pedidosEntregados
+    tiempoPromedioEntrega
+    repartidoresActivos
+  }
+  
+  flotaActiva(zonaId: $zonaId) {
+    id
+    nombre
+    latitud
+    longitud
+    estado
+  }
+}
+
+# Variables:
+# {
+#   "zonaId": "ZONA-01"
+# }

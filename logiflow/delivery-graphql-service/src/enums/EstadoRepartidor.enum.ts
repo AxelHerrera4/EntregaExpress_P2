@@ -1,0 +1,5 @@
+export enum EstadoRepartidor {
+  DISPONIBLE = 'DISPONIBLE',
+  EN_RUTA = 'EN_RUTA',
+  DESCONECTADO = 'DESCONECTADO',
+}
