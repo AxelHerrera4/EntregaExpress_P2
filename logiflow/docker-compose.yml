@@ -241,21 +241,25 @@ services:
       - SPRING_CLOUD_GATEWAY_ROUTES_0_ID=auth-route
       - SPRING_CLOUD_GATEWAY_ROUTES_0_URI=http://authservice:8081
       - SPRING_CLOUD_GATEWAY_ROUTES_0_PREDICATES_0=Path=/auth/**
+      - SPRING_CLOUD_GATEWAY_ROUTES_0_FILTERS_0=RewritePath=/auth/(?<path>.*), /api/auth/$\{path}
 
       # Ruta 1 -> billing-service
       - SPRING_CLOUD_GATEWAY_ROUTES_1_ID=billing-route
       - SPRING_CLOUD_GATEWAY_ROUTES_1_URI=http://billing-service:8082
       - SPRING_CLOUD_GATEWAY_ROUTES_1_PREDICATES_0=Path=/billing/**
+      - SPRING_CLOUD_GATEWAY_ROUTES_1_FILTERS_0=RewritePath=/billing/(?<path>.*), /api/$\{path}
 
       # Ruta 2 -> fleet-service
       - SPRING_CLOUD_GATEWAY_ROUTES_2_ID=fleet-route
       - SPRING_CLOUD_GATEWAY_ROUTES_2_URI=http://fleet-service:8083
       - SPRING_CLOUD_GATEWAY_ROUTES_2_PREDICATES_0=Path=/fleet/**
+      - SPRING_CLOUD_GATEWAY_ROUTES_2_FILTERS_0=RewritePath=/fleet/(?<path>.*), /api/$\{path}
 
       # Ruta 3 -> pedido-service
       - SPRING_CLOUD_GATEWAY_ROUTES_3_ID=pedido-route
       - SPRING_CLOUD_GATEWAY_ROUTES_3_URI=http://pedido-service:8084
       - SPRING_CLOUD_GATEWAY_ROUTES_3_PREDICATES_0=Path=/pedido/**
+      - SPRING_CLOUD_GATEWAY_ROUTES_3_FILTERS_0=RewritePath=/pedido/(?<path>.*), /api/$\{path}
     networks:
       - logiflow-network
     depends_on:
