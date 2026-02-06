@@ -1,5 +1,6 @@
 import { ApolloServer } from '@apollo/server';
 import { startStandaloneServer } from '@apollo/server/standalone';
+import DataLoader from 'dataloader';
 import { typeDefs } from './typeDefs/schema';
 import { resolvers } from './resolvers';
 import {
@@ -9,11 +10,12 @@ import {
   FlotaService,
   KpiService,
 } from './services';
-import { config } from './utils';
+import { config, createRepartidorLoader, createVehiculoLoader } from './utils';
+import { RepartidorDetalle, Vehiculo } from './entities';
 
 /**
  * Contexto compartido por todos los resolvers
- * Inyecta las instancias de los servicios para que cada resolver pueda usarlos
+ * Inyecta las instancias de los servicios y DataLoaders para que cada resolver pueda usarlos
  */
 export interface GraphQLContext {
   pedidoService: PedidoService;
@@ -21,6 +23,9 @@ export interface GraphQLContext {
   trackingClient: TrackingServiceClient;
   flotaService: FlotaService;
   kpiService: KpiService;
+  // DataLoaders para evitar N+1
+  repartidorLoader: DataLoader<string, RepartidorDetalle | null>;
+  vehiculoLoader: DataLoader<string, Vehiculo | null>;
 }
 
 // Instanciar servicios (singleton)
@@ -44,6 +49,9 @@ async function startServer(): Promise<void> {
       trackingClient,
       flotaService,
       kpiService,
+      // Crear nuevos DataLoaders por request (importante para evitar cache entre requests)
+      repartidorLoader: createRepartidorLoader(fleetClient),
+      vehiculoLoader: createVehiculoLoader(fleetClient),
     }),
   });
 
@@ -54,6 +62,9 @@ async function startServer(): Promise<void> {
   console.log(`  - Pedido Service:   ${config.pedidoServiceUrl}`);
   console.log(`  - Fleet Service:    ${config.fleetServiceUrl}`);
   console.log(`  - Tracking Service: ${config.trackingServiceUrl}`);
+  console.log('');
+  console.log('✅ DataLoaders activos (prevención N+1)');
+  console.log('✅ Caché en memoria activo con métricas');
 }
 
 startServer().catch((error) => {

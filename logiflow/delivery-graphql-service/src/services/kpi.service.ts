@@ -50,4 +50,30 @@ export class KpiService {
       repartidoresActivos: repartidores.length,
     };
   }
+
+  /**
+   * Calcula KPIs diarios para una fecha y zona específica
+   * Nota: En producción, el backend debería tener un endpoint específico para KPIs por fecha
+   */
+  async calcularKpisDiarios(fecha: string, zonaId?: string): Promise<Kpi> {
+    console.log(`[KpiService] Calculando KPIs diarios para fecha: ${fecha}, zona: ${zonaId || 'todas'}`);
+
+    // Por ahora, como no tenemos endpoint específico de fecha en el backend,
+    // reutilizamos el cálculo normal y agregamos la fecha al resultado
+    const kpis = zonaId
+      ? await this.calcularKpis(zonaId)
+      : {
+          zonaId: 'ALL',
+          pedidosPendientes: 0,
+          pedidosEnRuta: 0,
+          pedidosEntregados: 0,
+          tiempoPromedioEntrega: null,
+          repartidoresActivos: 0,
+        };
+
+    return {
+      ...kpis,
+      fecha,
+    };
+  }
 }

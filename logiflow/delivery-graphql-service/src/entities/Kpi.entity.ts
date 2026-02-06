@@ -5,4 +5,5 @@ export interface Kpi {
   pedidosEntregados: number;
   tiempoPromedioEntrega: number | null;
   repartidoresActivos: number;
+  fecha?: string; // Agregado para KPIs diarios
 }

@@ -4,6 +4,7 @@ import {
   KpiService,
 } from '../../services';
 import { FiltroPedidoInput, Pedido, RepartidorEnMapa, FlotaResumen, Kpi } from '../../entities';
+import { flotaCache, kpiCache, pedidoCache, CacheMetrics } from '../../utils';
 
 /**
  * Query Resolvers - Equivalente al QueryResolver.java
@@ -18,7 +19,10 @@ export const queryResolvers = {
     args: { filtro: FiltroPedidoInput },
     context: { pedidoService: PedidoService }
   ): Promise<Pedido[]> => {
-    return context.pedidoService.obtenerPedidosFiltrados(args.filtro);
+    const cacheKey = `pedidos:${JSON.stringify(args.filtro)}`;
+    return pedidoCache.getOrCompute(cacheKey, () =>
+      context.pedidoService.obtenerPedidosFiltrados(args.filtro)
+    );
   },
 
   /**
@@ -30,7 +34,10 @@ export const queryResolvers = {
     args: { zonaId: string },
     context: { flotaService: FlotaService }
   ): Promise<RepartidorEnMapa[]> => {
-    return context.flotaService.obtenerFlotaActivaConUbicacion(args.zonaId);
+    const cacheKey = `flotaActiva:${args.zonaId}`;
+    return flotaCache.getOrCompute(cacheKey, () =>
+      context.flotaService.obtenerFlotaActivaConUbicacion(args.zonaId)
+    );
   },
 
   /**
@@ -42,7 +49,10 @@ export const queryResolvers = {
     args: { zonaId: string },
     context: { flotaService: FlotaService }
   ): Promise<FlotaResumen> => {
-    return context.flotaService.obtenerResumenFlota(args.zonaId);
+    const cacheKey = `flotaResumen:${args.zonaId}`;
+    return flotaCache.getOrCompute(cacheKey, () =>
+      context.flotaService.obtenerResumenFlota(args.zonaId)
+    );
   },
 
   /**
@@ -54,7 +64,25 @@ export const queryResolvers = {
     args: { zonaId: string },
     context: { kpiService: KpiService }
   ): Promise<Kpi> => {
-    return context.kpiService.calcularKpis(args.zonaId);
+    const cacheKey = `kpis:${args.zonaId}`;
+    return kpiCache.getOrCompute(cacheKey, () =>
+      context.kpiService.calcularKpis(args.zonaId)
+    );
+  },
+
+  /**
+   * Query: kpiDiario(fecha: String!, zonaId: ID): KPI!
+   * KPIs diarios calculados para una fecha y zona específica
+   */
+  kpiDiario: async (
+    _parent: unknown,
+    args: { fecha: string; zonaId?: string },
+    context: { kpiService: KpiService }
+  ): Promise<Kpi> => {
+    const cacheKey = `kpiDiario:${args.fecha}:${args.zonaId || 'all'}`;
+    return kpiCache.getOrCompute(cacheKey, () =>
+      context.kpiService.calcularKpisDiarios(args.fecha, args.zonaId)
+    );
   },
 
   /**
@@ -66,6 +94,25 @@ export const queryResolvers = {
     args: { id: string },
     context: { pedidoService: PedidoService }
   ): Promise<Pedido | null> => {
-    return context.pedidoService.obtenerPedidoPorId(args.id);
+    const cacheKey = `pedido:${args.id}`;
+    return pedidoCache.getOrCompute(cacheKey, () =>
+      context.pedidoService.obtenerPedidoPorId(args.id)
+    );
+  },
+
+  /**
+   * Query: cacheMetrics: CacheMetricsResult!
+   * Métricas de rendimiento del caché (hit/miss rates)
+   */
+  cacheMetrics: async (): Promise<{
+    flotaCache: CacheMetrics & { size: number };
+    kpiCache: CacheMetrics & { size: number };
+    pedidoCache: CacheMetrics & { size: number };
+  }> => {
+    return {
+      flotaCache: { ...flotaCache.getMetrics(), size: flotaCache.size() },
+      kpiCache: { ...kpiCache.getMetrics(), size: kpiCache.size() },
+      pedidoCache: { ...pedidoCache.getMetrics(), size: pedidoCache.size() },
+    };
   },
 };

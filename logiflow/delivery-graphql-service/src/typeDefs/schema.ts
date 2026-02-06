@@ -62,6 +62,7 @@ export const typeDefs = gql`
     pedidosEntregados: Int!
     tiempoPromedioEntrega: Float
     repartidoresActivos: Int!
+    fecha: String
   }
 
   # ==================== ENUMS ====================
@@ -110,7 +111,28 @@ export const typeDefs = gql`
     # KPIs por zona
     kpis(zonaId: ID!): KPI!
 
+    # KPIs diarios por fecha y zona (requiere fecha)
+    kpiDiario(fecha: String!, zonaId: ID): KPI!
+
     # Detalle de un pedido
     pedido(id: ID!): Pedido
+
+    # Métricas de caché (para monitoreo)
+    cacheMetrics: CacheMetricsResult!
+  }
+
+  # Métricas de rendimiento del caché
+  type CacheMetricsResult {
+    flotaCache: CacheStats!
+    kpiCache: CacheStats!
+    pedidoCache: CacheStats!
+  }
+
+  type CacheStats {
+    hits: Int!
+    misses: Int!
+    total: Int!
+    hitRate: Float!
+    size: Int!
   }
 `;
