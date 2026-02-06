@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  graphql-service:
+    build: .
+    ports:
+      - "4000:4000"
+    environment:
+      PORT: 4000
+      PEDIDO_SERVICE_URL: http://host.docker.internal:8084
+      FLEET_SERVICE_URL: http://host.docker.internal:8083
+      TRACKING_SERVICE_URL: http://host.docker.internal:8090
+      HTTP_TIMEOUT: 5000
+    restart: unless-stopped

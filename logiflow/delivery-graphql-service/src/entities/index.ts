@@ -1,0 +1,9 @@
+export { Cliente } from './Cliente.entity';
+export { Vehiculo } from './Vehiculo.entity';
+export { Pedido } from './Pedido.entity';
+export { RepartidorDetalle } from './RepartidorDetalle.entity';
+export { RepartidorEnMapa } from './RepartidorEnMapa.entity';
+export { FlotaResumen } from './FlotaResumen.entity';
+export { Kpi } from './Kpi.entity';
+export { Ubicacion } from './Ubicacion.entity';
+export { FiltroPedidoInput } from './FiltroPedidoInput.entity';
