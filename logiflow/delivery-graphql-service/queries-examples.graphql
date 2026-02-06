@@ -1,0 +1,408 @@
+# ===============================================
+# QUERIES RECOMENDADAS PARA LOGIFLOW - GRAPHQL
+# ===============================================
+
+# 1. GESTIÓN DE DISPONIBILIDAD DEL REPARTIDOR
+mutation ActualizarEstadoRepartidor($input: ActualizarEstadoRepartidorInput!) {
+  actualizarEstadoRepartidor(input: $input) {
+    id
+    nombre
+    disponible
+    vehiculo {
+      id
+      tipo
+      placa
+      modelo
+    }
+  }
+}
+
+# Variables de ejemplo:
+# {
+#   "input": {
+#     "repartidorId": "R-001",
+#     "estado": "MANTENIMIENTO",
+#     "motivo": "Vehículo en reparación programada"
+#   }
+# }
+
+# ==============================================
+
+# 2. REASIGNACIÓN MANUAL DE PEDIDOS
+mutation ReasignarPedido($input: ReasignarPedidoInput!) {
+  reasignarPedido(input: $input) {
+    id
+    estado
+    repartidor {
+      id
+      nombre
+      vehiculo {
+        placa
+        tipo
+      }
+    }
+    cliente {
+      nombre
+    }
+    destino
+    fechaActualizacion
+  }
+}
+
+# Variables de ejemplo:
+# {
+#   "input": {
+#     "pedidoId": "P-12345",
+#     "nuevoRepartidorId": "R-002",
+#     "motivo": "Repartidor original tuvo inconveniente técnico"
+#   }
+# }
+
+# ==============================================
+
+# 3. ACTUALIZACIÓN DE PERFIL Y PREFERENCIAS
+mutation ActualizarDatosContacto($input: ActualizarDatosContactoInput!) {
+  actualizarDatosContacto(input: $input) {
+    id
+    nombre
+    telefono
+    email
+    rol
+  }
+}
+
+# Variables de ejemplo:
+# {
+#   "input": {
+#     "usuarioId": "U-001",
+#     "telefono": "0987654321",
+#     "email": "nuevo@email.com",
+#     "nombre": "Juan Pérez Actualizado"
+#   }
+# }
+
+# ==============================================
+
+# 4. GESTIÓN DE INCIDENCIAS
+mutation RegistrarIncidencia($input: RegistrarIncidenciaInput!) {
+  registrarIncidencia(input: $input) {
+    id
+    pedidoId
+    descripcion
+    tipo
+    fechaCreacion
+    resuelto
+  }
+}
+
+# Variables de ejemplo:
+# {
+#   "input": {
+#     "pedidoId": "P-12345",
+#     "descripcion": "El paquete llegó con daños en la esquina debido a manipulación durante el transporte",
+#     "tipo": "PAQUETE_DANADO"
+#   }
+# }
+
+# ==============================================
+# QUERIES POR ZONA, CIUDAD ORIGEN Y DESTINO
+# ==============================================
+
+# 5. PEDIDOS POR ZONA ESPECÍFICA
+query PedidosPorZona($zonaId: ID!, $estado: EstadoPedido) {
+  pedidosPorZona(zonaId: $zonaId, estado: $estado) {
+    id
+    cliente {
+      nombre
+    }
+    destino
+    estado
+    repartidor {
+      nombre
+      vehiculo {
+        placa
+        tipo
+      }
+    }
+    fechaCreacion
+    zona
+  }
+}
+
+# Variables de ejemplo:
+# {
+#   "zonaId": "QUITO_NORTE",
+#   "estado": "EN_RUTA"
+# }
+
+# ==============================================
+
+# 6. PEDIDOS POR CIUDAD ORIGEN
+query PedidosPorCiudadOrigen($ciudad: String!, $provincia: String) {
+  pedidosPorCiudadOrigen(ciudad: $ciudad, provincia: $provincia) {
+    id
+    cliente {
+      nombre
+    }
+    origen {
+      ciudad
+      provincia
+      direccion
+    }
+    destino
+    ubicacionDestino {
+      ciudad
+      provincia
+    }
+    estado
+    repartidor {
+      nombre
+    }
+    fechaCreacion
+  }
+}
+
+# Variables de ejemplo:
+# {
+#   "ciudad": "Quito",
+#   "provincia": "Pichincha"
+# }
+
+# ==============================================
+
+# 7. PEDIDOS POR CIUDAD DESTINO
+query PedidosPorCiudadDestino($ciudad: String!, $provincia: String) {
+  pedidosPorCiudadDestino(ciudad: $ciudad, provincia: $provincia) {
+    id
+    cliente {
+      nombre
+    }
+    destino
+    ubicacionDestino {
+      ciudad
+      provincia
+      direccion
+    }
+    origen {
+      ciudad
+      provincia
+    }
+    estado
+    repartidor {
+      nombre
+      vehiculo {
+        tipo
+        placa
+      }
+    }
+    tiempoTranscurrido
+    fechaCreacion
+  }
+}
+
+# Variables de ejemplo:
+# {
+#   "ciudad": "Guayaquil",
+#   "provincia": "Guayas"
+# }
+
+# ==============================================
+
+# 8. PEDIDOS POR RUTA (ORIGEN -> DESTINO)
+query PedidosPorRuta($ciudadOrigen: String!, $ciudadDestino: String!) {
+  pedidosPorRuta(ciudadOrigen: $ciudadOrigen, ciudadDestino: $ciudadDestino) {
+    id
+    cliente {
+      nombre
+      telefono
+    }
+    origen {
+      ciudad
+      provincia
+    }
+    ubicacionDestino {
+      ciudad
+      provincia
+    }
+    estado
+    repartidor {
+      nombre
+      vehiculo {
+        tipo
+        placa
+        modelo
+        capacidad
+      }
+    }
+    tiempoTranscurrido
+    retrasoMin
+    fechaCreacion
+    fechaActualizacion
+  }
+}
+
+# Variables de ejemplo:
+# {
+#   "ciudadOrigen": "Quito",
+#   "ciudadDestino": "Cuenca"
+# }
+
+# ==============================================
+
+# 9. ESTADÍSTICAS POR CIUDAD
+query EstadisticasPorCiudad($ciudad: String!, $tipo: String!) {
+  estadisticasPorCiudad(ciudad: $ciudad, tipo: $tipo) {
+    zonaId
+    pedidosPendientes
+    pedidosEnRuta
+    pedidosEntregados
+    tiempoPromedioEntrega
+    repartidoresActivos
+  }
+}
+
+# Variables de ejemplo:
+# {
+#   "ciudad": "Quito",
+#   "tipo": "origen"
+# }
+
+# ==============================================
+
+# 10. QUERY COMPLETA PARA DASHBOARD DE SUPERVISOR
+query DashboardSupervisor($zonaId: ID!) {
+  # Pedidos de la zona
+  pedidosPorZona(zonaId: $zonaId) {
+    id
+    cliente {
+      nombre
+    }
+    destino
+    estado
+    repartidor {
+      id
+      nombre
+      vehiculo {
+        placa
+        tipo
+      }
+    }
+    tiempoTranscurrido
+    retrasoMin
+    fechaCreacion
+  }
+  
+  # Flota activa en mapa
+  flotaActiva(zonaId: $zonaId) {
+    id
+    nombre
+    placa
+    latitud
+    longitud
+    estado
+    velocidad
+    ultimaActualizacion
+  }
+  
+  # Resumen de flota
+  flotaResumen(zonaId: $zonaId) {
+    total
+    disponibles
+    enRuta
+  }
+  
+  # KPIs de la zona
+  kpis(zonaId: $zonaId) {
+    zonaId
+    pedidosPendientes
+    pedidosEnRuta
+    pedidosEntregados
+    tiempoPromedioEntrega
+    repartidoresActivos
+  }
+}
+
+# Variables de ejemplo:
+# {
+#   "zonaId": "QUITO_NORTE"
+# }
+
+# ==============================================
+
+# 11. QUERY PARA MÉTRICAS DE RENDIMIENTO
+query MetricasRendimiento {
+  cacheMetrics {
+    flotaCache {
+      hits
+      misses
+      total
+      hitRate
+      size
+    }
+    kpiCache {
+      hits
+      misses
+      total
+      hitRate
+      size
+    }
+    pedidoCache {
+      hits
+      misses
+      total
+      hitRate
+      size
+    }
+  }
+}
+
+# ==============================================
+
+# 12. PEDIDOS CON FILTROS AVANZADOS
+query PedidosConFiltros($filtro: FiltroPedido!) {
+  pedidos(filtro: $filtro) {
+    id
+    cliente {
+      nombre
+      telefono
+    }
+    origen {
+      ciudad
+      provincia
+      direccion
+    }
+    destino
+    ubicacionDestino {
+      ciudad
+      provincia
+      direccion
+    }
+    estado
+    repartidor {
+      id
+      nombre
+      vehiculo {
+        id
+        tipo
+        placa
+        modelo
+        capacidad
+      }
+    }
+    tiempoTranscurrido
+    retrasoMin
+    fechaCreacion
+    fechaActualizacion
+    zona
+  }
+}
+
+# Variables de ejemplo para filtros complejos:
+# {
+#   "filtro": {
+#     "zonaId": "QUITO_CENTRO",
+#     "estado": "EN_RUTA",
+#     "ciudadOrigen": "Quito",
+#     "provinciaDestino": "Azuay"
+#   }
+# }

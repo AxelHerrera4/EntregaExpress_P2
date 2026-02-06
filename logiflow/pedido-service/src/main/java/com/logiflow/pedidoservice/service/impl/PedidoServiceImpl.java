@@ -134,8 +134,10 @@ public class PedidoServiceImpl implements PedidoService {
                 savedPedido.setTarifaCalculada(facturaResponse.getMontoTotal().doubleValue());
                 savedPedido = pedidoRepository.save(savedPedido);
                 
-                log.info("[BILLING-SUCCESS] Factura creada exitosamente - FacturaID: {} | PedidoID: {} | Monto: {} | CorrelacionID: {}", 
+                log.info("💰 [FACTURA-ASOCIADA] Factura asociada al pedido | FacturaID: {} | PedidoID: {} | Monto: ${} | CorrelacionID: {}", 
                     facturaResponse.getId(), savedPedido.getId(), facturaResponse.getMontoTotal(), correlacionId);
+                log.info("🎯 [PEDIDO-COMPLETO] Pedido creado con factura | PedidoID: {} tiene FacturaID: {} por valor de ${}",
+                    savedPedido.getId(), facturaResponse.getId(), facturaResponse.getMontoTotal());
             } catch (Exception e) {
                 log.error("[BILLING-ERROR] Error en integración con Billing Service | PedidoID: {} | Error: {} | CorrelacionID: {}", 
                     savedPedido.getId(), e.getMessage(), correlacionId, e);

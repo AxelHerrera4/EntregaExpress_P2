@@ -7,7 +7,9 @@ export const typeDefs = gql`
     id: ID!
     clienteId: String!
     cliente: Cliente
+    origen: Ubicacion
     destino: String!
+    ubicacionDestino: Ubicacion
     estado: EstadoPedido!
     repartidorId: String
     repartidor: RepartidorDetalle
@@ -15,6 +17,7 @@ export const typeDefs = gql`
     retrasoMin: Int
     fechaCreacion: String
     fechaActualizacion: String
+    zona: String
   }
 
   type Cliente {
@@ -65,6 +68,31 @@ export const typeDefs = gql`
     fecha: String
   }
 
+  type Usuario {
+    id: ID!
+    nombre: String!
+    telefono: String!
+    email: String!
+    rol: String!
+  }
+
+  type Incidencia {
+    id: ID!
+    pedidoId: ID!
+    descripcion: String!
+    tipo: TipoIncidencia!
+    fechaCreacion: String!
+    resuelto: Boolean!
+  }
+
+  type Ubicacion {
+    latitud: Float!
+    longitud: Float!
+    ciudad: String!
+    provincia: String!
+    direccion: String
+  }
+
   # ==================== ENUMS ====================
 
   enum EstadoPedido {
@@ -86,6 +114,16 @@ export const typeDefs = gql`
     DISPONIBLE
     EN_RUTA
     DESCONECTADO
+    MANTENIMIENTO
+  }
+
+  enum TipoIncidencia {
+    PAQUETE_DANADO
+    DIRECCION_INCORRECTA
+    CLIENTE_NO_ENCONTRADO
+    VEHICULO_AVERIADO
+    RETRASO_TRAFICO
+    OTRO
   }
 
   # ==================== INPUT ====================
@@ -94,13 +132,54 @@ export const typeDefs = gql`
     zonaId: ID
     estado: EstadoPedido
     repartidorId: ID
+    ciudadOrigen: String
+    ciudadDestino: String
+    provinciaOrigen: String
+    provinciaDestino: String
+  }
+
+  input ActualizarEstadoRepartidorInput {
+    repartidorId: ID!
+    estado: EstadoRepartidor!
+    motivo: String
+  }
+
+  input ReasignarPedidoInput {
+    pedidoId: ID!
+    nuevoRepartidorId: ID!
+    motivo: String
+  }
+
+  input ActualizarDatosContactoInput {
+    usuarioId: ID!
+    telefono: String!
+    email: String!
+    nombre: String
+  }
+
+  input RegistrarIncidenciaInput {
+    pedidoId: ID!
+    descripcion: String!
+    tipo: TipoIncidencia!
   }
 
   # ==================== QUERIES ====================
 
   type Query {
-    # Pedidos filtrados por zona, estado, repartidor
+    # Pedidos filtrados por zona, estado, repartidor, ciudades
     pedidos(filtro: FiltroPedido!): [Pedido]!
+
+    # Pedidos por zona específica
+    pedidosPorZona(zonaId: ID!, estado: EstadoPedido): [Pedido]!
+
+    # Pedidos por ciudad origen
+    pedidosPorCiudadOrigen(ciudad: String!, provincia: String): [Pedido]!
+
+    # Pedidos por ciudad destino
+    pedidosPorCiudadDestino(ciudad: String!, provincia: String): [Pedido]!
+
+    # Pedidos por ruta (origen -> destino)
+    pedidosPorRuta(ciudadOrigen: String!, ciudadDestino: String!): [Pedido]!
 
     # Flota activa en mapa (con ubicacion en tiempo real)
     flotaActiva(zonaId: ID!): [RepartidorEnMapa]!
@@ -119,6 +198,9 @@ export const typeDefs = gql`
 
     # Métricas de caché (para monitoreo)
     cacheMetrics: CacheMetricsResult!
+
+    # Estadísticas por ciudad/provincia
+    estadisticasPorCiudad(ciudad: String!, tipo: String!): [KPI]!
   }
 
   # Métricas de rendimiento del caché
@@ -134,5 +216,21 @@ export const typeDefs = gql`
     total: Int!
     hitRate: Float!
     size: Int!
+  }
+
+  # ==================== MUTATIONS ====================
+
+  type Mutation {
+    # Gestión de Disponibilidad del Repartidor
+    actualizarEstadoRepartidor(input: ActualizarEstadoRepartidorInput!): RepartidorDetalle!
+
+    # Reasignación Manual de Pedidos
+    reasignarPedido(input: ReasignarPedidoInput!): Pedido!
+
+    # Actualización de Perfil y Preferencias
+    actualizarDatosContacto(input: ActualizarDatosContactoInput!): Usuario!
+
+    # Gestión de Incidencias
+    registrarIncidencia(input: RegistrarIncidenciaInput!): Incidencia!
   }
 `;

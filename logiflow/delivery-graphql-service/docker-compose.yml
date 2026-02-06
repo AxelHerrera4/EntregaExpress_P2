@@ -1,14 +1,129 @@
 version: '3.8'
 
 services:
+  # ========================================
+  # REDIS - Caché persistente para GraphQL
+  # ========================================
+  redis-cache:
+    image: redis:7.2-alpine
+    container_name: logiflow-graphql-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+      - ./redis.conf:/usr/local/etc/redis/redis.conf
+    command: redis-server --appendonly yes
+    environment:
+      - REDIS_REPLICATION_MODE=master
+    networks:
+      - graphql-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ========================================
+  # PostgreSQL - Base de datos para logs y métricas del GraphQL
+  # ========================================
+  postgres-graphql:
+    image: postgres:16-alpine
+    container_name: logiflow-graphql-postgres
+    restart: unless-stopped
+    ports:
+      - "5436:5432"
+    environment:
+      POSTGRES_DB: graphql_analytics
+      POSTGRES_USER: graphql_user
+      POSTGRES_PASSWORD: graphql_pass123
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --locale=C"
+    volumes:
+      - postgres_graphql_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    networks:
+      - graphql-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U graphql_user -d graphql_analytics"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ========================================
+  # GraphQL Service - Microservicio principal
+  # ========================================
   graphql-service:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: logiflow-graphql-service
+    restart: unless-stopped
     ports:
       - "4000:4000"
     environment:
+      # Puerto del servicio
       PORT: 4000
+      
+      # URLs de los microservicios Java
+      AUTH_SERVICE_URL: http://host.docker.internal:8081
       PEDIDO_SERVICE_URL: http://host.docker.internal:8084
       FLEET_SERVICE_URL: http://host.docker.internal:8083
       TRACKING_SERVICE_URL: http://host.docker.internal:8090
-      HTTP_TIMEOUT: 5000
-    restart: unless-stopped
+      
+      # Redis para caché
+      REDIS_URL: redis://redis-cache:6379
+      REDIS_HOST: redis-cache
+      REDIS_PORT: 6379
+      
+      # PostgreSQL para analytics (opcional)
+      DATABASE_URL: postgresql://graphql_user:graphql_pass123@postgres-graphql:5432/graphql_analytics
+      DB_HOST: postgres-graphql
+      DB_PORT: 5432
+      DB_NAME: graphql_analytics
+      DB_USER: graphql_user
+      DB_PASSWORD: graphql_pass123
+      
+      # Configuración de timeouts
+      HTTP_TIMEOUT: 10000
+      CACHE_TTL: 300
+      
+      # Modo de desarrollo
+      NODE_ENV: development
+    
+    depends_on:
+      redis-cache:
+        condition: service_healthy
+      postgres-graphql:
+        condition: service_healthy
+    
+    networks:
+      - graphql-network
+    
+    volumes:
+      - ./logs:/app/logs
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/graphql?query=%7B__typename%7D"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+# ========================================
+# VOLÚMENES PERSISTENTES
+# ========================================
+volumes:
+  redis_data:
+    driver: local
+    name: logiflow_graphql_redis_data
+  
+  postgres_graphql_data:
+    driver: local
+    name: logiflow_graphql_postgres_data
+
+# ========================================
+# REDES
+# ========================================
+networks:
+  graphql-network:
+    driver: bridge
+    name: logiflow-graphql-network

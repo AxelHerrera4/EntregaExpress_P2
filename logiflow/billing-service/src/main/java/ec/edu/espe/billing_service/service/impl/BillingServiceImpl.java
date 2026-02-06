@@ -53,10 +53,12 @@ public class BillingServiceImpl implements BillingService {
 
             FacturaResponseDTO facturaResponse = facturaService.crearFactura(facturaRequest);
             
-            log.info("[BILLING-SUCCESS] Factura creada exitosamente | FacturaID: {} | PedidoID: {} | Usuario: {} | MessageID: {}", 
+            log.info("💰 [BILLING-EVENT-SUCCESS] Factura creada por evento | FacturaID: {} | PedidoID: {} | Usuario: {} | MessageID: {}", 
                 facturaResponse.getId(), event.getPedidoId(), event.getUsuarioCreador(), event.getMessageId());
-            log.info("[CORRELACION-BILLING] FacturaID={} | PedidoID={} | Usuario={} | MessageID={} | Monto={}", 
+            log.info("🔗 [CORRELACION-BILLING] FacturaID: {} creada para PedidoID: {} | Usuario: {} | MessageID: {} | Monto: ${}", 
                 facturaResponse.getId(), event.getPedidoId(), event.getUsuarioCreador(), event.getMessageId(), facturaResponse.getMontoTotal());
+            log.info("📋 [FACTURA-EVENTO] Nueva factura generada via evento | FacturaID: {} para Pedido: {} con monto ${}",
+                facturaResponse.getId(), event.getPedidoId(), facturaResponse.getMontoTotal());
                 
         } catch (Exception e) {
             log.error("[BILLING-ERROR] Error procesando pedido creado | PedidoID={} | Usuario={} | MessageID={} | Error={}", 

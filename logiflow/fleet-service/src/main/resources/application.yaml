@@ -67,20 +67,22 @@ rabbitmq:
   exchange:
     pedidos: pedidos.exchange
     fleet: fleet.exchange
-    tracking: exchange-tracking
+    tracking: tracking.exchange
   queue:
+    # Colas específicas para fleet-service (evitar conflictos)
     pedido-creado: fleet.pedido.creado
     pedido-estado: fleet.pedido.estado.actualizado
-    tracking-ubicacion: fleet.tracking.ubicacion
-    pedido-reintento: fleet.pedido.reintento
+    tracking-ubicacion: fleet.repartidor.ubicacion.actualizada
+    pedido-reintento: fleet.pedido.reintento.asignacion
   routing-key:
+    # Routing keys comunes (compartidas entre servicios)
     pedido-creado: pedido.creado
     pedido-estado: pedido.estado.actualizado
-    vehiculo-estado: vehiculo.estado.actualizado
+    tracking-ubicacion: repartidor.ubicacion.actualizada
     repartidor-ubicacion: repartidor.ubicacion.actualizada
-    tracking-ubicacion: repartidor.ubicacion
-    asignacion-completada: asignacion.completada
     pedido-reintento: pedido.reintento.asignacion
+    vehiculo-estado: vehiculo.estado.actualizado
+    asignacion-completada: asignacion.completada
 
 # Configuración de URLs de otros microservicios
 services:

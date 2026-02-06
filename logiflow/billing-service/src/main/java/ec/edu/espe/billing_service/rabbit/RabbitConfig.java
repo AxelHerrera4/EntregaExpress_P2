@@ -19,11 +19,17 @@ public class RabbitConfig {
     @Value("${rabbitmq.exchange.pedidos}")
     private String pedidosExchange;
 
+    @Value("${rabbitmq.exchange.tracking}")
+    private String trackingExchange;
+
     @Value("${rabbitmq.queue.pedido-creado}")
     private String pedidoCreadoQueue;
 
     @Value("${rabbitmq.queue.pedido-estado}")
     private String pedidoEstadoQueue;
+
+    @Value("${rabbitmq.queue.repartidor-ubicacion}")
+    private String repartidorUbicacionQueue;
 
     @Value("${rabbitmq.routing-key.pedido-creado}")
     private String pedidoCreadoRoutingKey;
@@ -31,10 +37,18 @@ public class RabbitConfig {
     @Value("${rabbitmq.routing-key.pedido-estado}")
     private String pedidoEstadoRoutingKey;
 
+    @Value("${rabbitmq.routing-key.repartidor-ubicacion}")
+    private String repartidorUbicacionRoutingKey;
+
     // Exchange
     @Bean
     public TopicExchange pedidosExchange() {
         return new TopicExchange(pedidosExchange);
+    }
+
+    @Bean
+    public TopicExchange trackingExchange() {
+        return new TopicExchange(trackingExchange);
     }
 
     // Colas
@@ -46,6 +60,11 @@ public class RabbitConfig {
     @Bean
     public Queue pedidoEstadoQueue() {
         return new Queue(pedidoEstadoQueue, true);
+    }
+
+    @Bean
+    public Queue repartidorUbicacionQueue() {
+        return new Queue(repartidorUbicacionQueue, true);
     }
 
     // Bindings
@@ -63,6 +82,14 @@ public class RabbitConfig {
                 .bind(pedidoEstadoQueue)
                 .to(pedidosExchange)
                 .with(pedidoEstadoRoutingKey);
+    }
+
+    @Bean
+    public Binding bindingRepartidorUbicacion(Queue repartidorUbicacionQueue, TopicExchange trackingExchange) {
+        return BindingBuilder
+                .bind(repartidorUbicacionQueue)
+                .to(trackingExchange)
+                .with(repartidorUbicacionRoutingKey);
     }
 
     // Converter para JSON con soporte para LocalDateTime

@@ -5,5 +5,7 @@ export { RepartidorDetalle } from './RepartidorDetalle.entity';
 export { RepartidorEnMapa } from './RepartidorEnMapa.entity';
 export { FlotaResumen } from './FlotaResumen.entity';
 export { Kpi } from './Kpi.entity';
-export { Ubicacion } from './Ubicacion.entity';
+export { Ubicacion, UbicacionGeografica } from './Ubicacion.entity';
 export { FiltroPedidoInput } from './FiltroPedidoInput.entity';
+export { Usuario, ActualizarDatosContactoInput } from './Usuario.entity';
+export { Incidencia, TipoIncidencia, RegistrarIncidenciaInput } from './Incidencia.entity';

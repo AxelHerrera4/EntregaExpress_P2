@@ -22,3 +22,6 @@ export const fleetClient = createClient(config.fleetServiceUrl);
 
 /** Cliente HTTP para Tracking Service (puerto 8090) */
 export const trackingClient = createClient(config.trackingServiceUrl);
+
+/** Cliente HTTP para Auth Service (puerto 8081) */
+export const authClient = createClient(config.authServiceUrl);

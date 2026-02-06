@@ -21,6 +21,9 @@ public class RabbitMQConfig {
     @Value("${rabbitmq.exchange.fleet:fleet.exchange}")
     private String fleetExchange;
 
+    @Value("${rabbitmq.exchange.tracking:tracking.exchange}")
+    private String trackingExchange;
+
     @Value("${rabbitmq.queue.pedido-creado:pedido.creado}")
     private String pedidoCreadoQueue;
 
@@ -39,6 +42,9 @@ public class RabbitMQConfig {
     @Value("${rabbitmq.routing-key.asignacion-completada:asignacion.completada}")
     private String asignacionCompletadaRoutingKey;
 
+    @Value("${rabbitmq.routing-key.repartidor-ubicacion:repartidor.ubicacion.actualizada}")
+    private String repartidorUbicacionRoutingKey;
+
     // 1. Definición del Exchange (Topic para permitir ruteo flexible)
     @Bean
     public TopicExchange pedidosExchange() {
@@ -48,6 +54,11 @@ public class RabbitMQConfig {
     @Bean
     public TopicExchange fleetExchange() {
         return new TopicExchange(fleetExchange);
+    }
+
+    @Bean
+    public TopicExchange trackingExchange() {
+        return new TopicExchange(trackingExchange);
     }
 
     // 2. Definición de Colas (Durables para persistencia)
@@ -64,6 +75,11 @@ public class RabbitMQConfig {
     @Bean
     public Queue asignacionCompletadaQueue() {
         return new Queue(asignacionCompletadaQueue, true);
+    }
+
+    @Bean
+    public Queue repartidorUbicacionQueue() {
+        return new Queue("${rabbitmq.queue.repartidor-ubicacion:repartidor.ubicacion.actualizada}", true);
     }
 
     // 3. Bindings (Relación entre Colas y Exchange)
@@ -89,6 +105,14 @@ public class RabbitMQConfig {
                 .bind(asignacionCompletadaQueue())
                 .to(fleetExchange())
                 .with(asignacionCompletadaRoutingKey);
+    }
+
+    @Bean
+    public Binding bindingRepartidorUbicacion() {
+        return BindingBuilder
+                .bind(repartidorUbicacionQueue())
+                .to(trackingExchange())
+                .with(repartidorUbicacionRoutingKey);
     }
 
     // 4. Conversor JSON (Corregido para evitar error de compilación y manejar LocalDateTime)

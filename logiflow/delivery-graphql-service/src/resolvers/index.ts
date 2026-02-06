@@ -1,4 +1,5 @@
 import { queryResolvers } from './queries/query.resolver';
+import { mutationResolvers } from './mutations/mutation.resolver';
 import { pedidoFieldResolvers } from './fields/pedido.resolver';
 
 /**
@@ -6,5 +7,6 @@ import { pedidoFieldResolvers } from './fields/pedido.resolver';
  */
 export const resolvers = {
   Query: queryResolvers,
+  Mutation: mutationResolvers,
   Pedido: pedidoFieldResolvers,
 };

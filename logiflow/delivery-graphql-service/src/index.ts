@@ -9,6 +9,8 @@ import {
   TrackingServiceClient,
   FlotaService,
   KpiService,
+  AuthServiceClient,
+  IncidenciaServiceClient,
 } from './services';
 import { config, createRepartidorLoader, createVehiculoLoader } from './utils';
 import { RepartidorDetalle, Vehiculo } from './entities';
@@ -23,6 +25,8 @@ export interface GraphQLContext {
   trackingClient: TrackingServiceClient;
   flotaService: FlotaService;
   kpiService: KpiService;
+  authClient: AuthServiceClient;
+  incidenciaClient: IncidenciaServiceClient;
   // DataLoaders para evitar N+1
   repartidorLoader: DataLoader<string, RepartidorDetalle | null>;
   vehiculoLoader: DataLoader<string, Vehiculo | null>;
@@ -32,6 +36,8 @@ export interface GraphQLContext {
 const pedidoService = new PedidoService();
 const fleetClient = new FleetServiceClient();
 const trackingClient = new TrackingServiceClient();
+const authClient = new AuthServiceClient();
+const incidenciaClient = new IncidenciaServiceClient();
 const flotaService = new FlotaService(fleetClient, trackingClient);
 const kpiService = new KpiService(pedidoService, fleetClient);
 
@@ -49,6 +55,8 @@ async function startServer(): Promise<void> {
       trackingClient,
       flotaService,
       kpiService,
+      authClient,
+      incidenciaClient,
       // Crear nuevos DataLoaders por request (importante para evitar cache entre requests)
       repartidorLoader: createRepartidorLoader(fleetClient),
       vehiculoLoader: createVehiculoLoader(fleetClient),
@@ -59,6 +67,7 @@ async function startServer(): Promise<void> {
   console.log(`📊 Playground disponible en ${url}`);
   console.log('');
   console.log('Microservicios configurados:');
+  console.log(`  - Auth Service:     ${config.authServiceUrl}`);
   console.log(`  - Pedido Service:   ${config.pedidoServiceUrl}`);
   console.log(`  - Fleet Service:    ${config.fleetServiceUrl}`);
   console.log(`  - Tracking Service: ${config.trackingServiceUrl}`);

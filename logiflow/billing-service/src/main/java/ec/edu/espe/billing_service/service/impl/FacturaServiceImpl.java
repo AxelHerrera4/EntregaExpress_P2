@@ -71,10 +71,14 @@ public class FacturaServiceImpl implements FacturaService {
 
         Factura guardada = facturaRepository.save(factura);
 
-        log.info("Factura guardada | facturaId={} | pedidoId={}",
+        log.info("💰 [FACTURA-CREADA] Factura guardada exitosamente | FacturaID: {} | PedidoID: {} | Monto: {} | Estado: {}",
                 guardada.getId(),
-                guardada.getPedidoId());
-
+                guardada.getPedidoId(),
+                guardada.getMontoTotal(),
+                guardada.getEstado());
+        
+        log.info("🔍 [FACTURA-DETAILS] FacturaID: {} - Creada para Pedido: {} con monto total de ${}",
+                guardada.getId(), guardada.getPedidoId(), guardada.getMontoTotal());
 
         return mapToResponse(guardada);
     }

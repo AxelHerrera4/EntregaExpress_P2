@@ -57,7 +57,10 @@ public class BillingClient {
                         FacturaResponse.class
                 );
 
-                log.info("Factura creada exitosamente - facturaId: {}", response.getId());
+                log.info("💰 [BILLING-CLIENT] Factura creada exitosamente | FacturaID: {} | PedidoID: {} | Monto: ${}", 
+                    response.getId(), request.getPedidoId(), response.getMontoTotal());
+                log.info("🔗 [FACTURA-RESPONSE] Cliente recibió respuesta | FacturaID: {} para PedidoID: {}",
+                    response.getId(), request.getPedidoId());
                 return response;
 
             } catch (Exception e) {

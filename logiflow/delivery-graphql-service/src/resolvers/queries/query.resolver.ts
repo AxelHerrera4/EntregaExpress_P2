@@ -115,4 +115,79 @@ export const queryResolvers = {
       pedidoCache: { ...pedidoCache.getMetrics(), size: pedidoCache.size() },
     };
   },
+
+  /**
+   * Query: pedidosPorZona(zonaId: ID!, estado: EstadoPedido): [Pedido]!
+   * Pedidos de una zona específica con filtro opcional por estado
+   */
+  pedidosPorZona: async (
+    _parent: unknown,
+    args: { zonaId: string; estado?: string },
+    context: { pedidoService: PedidoService }
+  ): Promise<Pedido[]> => {
+    const cacheKey = `pedidosPorZona:${args.zonaId}:${args.estado || 'all'}`;
+    return pedidoCache.getOrCompute(cacheKey, () =>
+      context.pedidoService.obtenerPedidosPorZona(args.zonaId, args.estado)
+    );
+  },
+
+  /**
+   * Query: pedidosPorCiudadOrigen(ciudad: String!, provincia: String): [Pedido]!
+   * Pedidos filtrados por ciudad origen
+   */
+  pedidosPorCiudadOrigen: async (
+    _parent: unknown,
+    args: { ciudad: string; provincia?: string },
+    context: { pedidoService: PedidoService }
+  ): Promise<Pedido[]> => {
+    const cacheKey = `pedidosPorCiudadOrigen:${args.ciudad}:${args.provincia || 'all'}`;
+    return pedidoCache.getOrCompute(cacheKey, () =>
+      context.pedidoService.obtenerPedidosPorCiudadOrigen(args.ciudad, args.provincia)
+    );
+  },
+
+  /**
+   * Query: pedidosPorCiudadDestino(ciudad: String!, provincia: String): [Pedido]!
+   * Pedidos filtrados por ciudad destino
+   */
+  pedidosPorCiudadDestino: async (
+    _parent: unknown,
+    args: { ciudad: string; provincia?: string },
+    context: { pedidoService: PedidoService }
+  ): Promise<Pedido[]> => {
+    const cacheKey = `pedidosPorCiudadDestino:${args.ciudad}:${args.provincia || 'all'}`;
+    return pedidoCache.getOrCompute(cacheKey, () =>
+      context.pedidoService.obtenerPedidosPorCiudadDestino(args.ciudad, args.provincia)
+    );
+  },
+
+  /**
+   * Query: pedidosPorRuta(ciudadOrigen: String!, ciudadDestino: String!): [Pedido]!
+   * Pedidos de una ruta específica (origen -> destino)
+   */
+  pedidosPorRuta: async (
+    _parent: unknown,
+    args: { ciudadOrigen: string; ciudadDestino: string },
+    context: { pedidoService: PedidoService }
+  ): Promise<Pedido[]> => {
+    const cacheKey = `pedidosPorRuta:${args.ciudadOrigen}:${args.ciudadDestino}`;
+    return pedidoCache.getOrCompute(cacheKey, () =>
+      context.pedidoService.obtenerPedidosPorRuta(args.ciudadOrigen, args.ciudadDestino)
+    );
+  },
+
+  /**
+   * Query: estadisticasPorCiudad(ciudad: String!, tipo: String!): [KPI]!
+   * Estadísticas agregadas por ciudad
+   */
+  estadisticasPorCiudad: async (
+    _parent: unknown,
+    args: { ciudad: string; tipo: string },
+    context: { kpiService: KpiService }
+  ): Promise<Kpi[]> => {
+    const cacheKey = `estadisticasPorCiudad:${args.ciudad}:${args.tipo}`;
+    return kpiCache.getOrCompute(cacheKey, () =>
+      context.kpiService.calcularKpisPorCiudad(args.ciudad, args.tipo)
+    );
+  },
 };

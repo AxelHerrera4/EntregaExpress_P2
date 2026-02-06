@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  fleet-db:
+    image: postgres:16
+    container_name: fleet-postgres-container
+    environment:
+      POSTGRES_DB: fleet_db
+      POSTGRES_USER: fleet_user
+      POSTGRES_PASSWORD: fleet_password
+    ports:
+      - "5435:5432" # Mapea el puerto 5432 del contenedor al 5435 local
+    volumes:
+      - fleet_db_data:/var/lib/postgresql/data
+    networks:
+      - logiflow-network
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: logiflow-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin
+    ports:
+      - "5672:5672"   # Puerto de mensajería
+      - "15672:15672" # Puerto de interfaz web (Management)
+    networks:
+      - logiflow-network
+
+networks:
+  logiflow-network:
+    driver: bridge
+
+volumes:
+  fleet_db_data:

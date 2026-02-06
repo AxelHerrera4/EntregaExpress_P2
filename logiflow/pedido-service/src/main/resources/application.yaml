@@ -47,15 +47,18 @@ rabbitmq:
   exchange:
     pedidos: pedidos.exchange
     fleet: fleet.exchange
+    tracking: tracking.exchange
   queue:
     pedido-creado: pedido.creado
     pedido-estado: pedido.estado.actualizado
     asignacion-completada: pedido.asignacion.completada
+    repartidor-ubicacion: repartidor.ubicacion.actualizada
   routing-key:
     pedido-creado: pedido.creado
     pedido-estado: pedido.estado.actualizado
     asignacion-completada: asignacion.completada
     reintento-asignacion: pedido.reintento.asignacion
+    repartidor-ubicacion: repartidor.ubicacion.actualizada
 
   # Swagger UI
   springdoc:

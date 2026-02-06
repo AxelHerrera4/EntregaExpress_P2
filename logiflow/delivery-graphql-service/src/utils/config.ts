@@ -9,6 +9,7 @@ export const config = {
   pedidoServiceUrl: process.env.PEDIDO_SERVICE_URL || 'http://localhost:8084',
   fleetServiceUrl: process.env.FLEET_SERVICE_URL || 'http://localhost:8083',
   trackingServiceUrl: process.env.TRACKING_SERVICE_URL || 'http://localhost:8090',
+  authServiceUrl: process.env.AUTH_SERVICE_URL || 'http://localhost:8081',
 
   // Timeout para llamadas HTTP (ms)
   httpTimeout: parseInt(process.env.HTTP_TIMEOUT || '5000', 10),

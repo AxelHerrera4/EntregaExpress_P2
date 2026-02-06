@@ -41,12 +41,15 @@ server:
 rabbitmq:
   exchange:
     pedidos: pedidos.exchange
+    tracking: tracking.exchange
   queue:
     pedido-creado: pedido.creado
     pedido-estado: pedido.estado.actualizado
+    repartidor-ubicacion: billing.repartidor.ubicacion.actualizada
   routing-key:
     pedido-creado: pedido.creado
     pedido-estado: pedido.estado.actualizado
+    repartidor-ubicacion: repartidor.ubicacion.actualizada
 
 jwt:
   secret: MiSuperClaveSecretaMuyLarga123456789
