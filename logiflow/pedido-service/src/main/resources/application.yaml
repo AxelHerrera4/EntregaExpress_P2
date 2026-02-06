@@ -7,7 +7,7 @@ spring:
 
   datasource:
     # ⚠️ IMPORTANTE: Asegúrate de que este puerto coincida con el de tu docker-compose
-    url: jdbc:postgresql://localhost:5436/pedidos_db
+    url: jdbc:postgresql://localhost:5434/pedidos_db
     username: pedido_user
     password: pedido_pass
     driver-class-name: org.postgresql.Driver

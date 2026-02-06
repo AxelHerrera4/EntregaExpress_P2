@@ -1,8 +1,7 @@
 package com.logiflow.pedidoservice.model;
 
 import jakarta.persistence.Embeddable;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -35,5 +34,16 @@ public class Direccion {
     @NotBlank(message = "La provincia es obligatoria y no puede estar vacía")
     @Pattern(regexp = "^[A-Za-z\\s]+$", message = "La provincia solo puede contener letras y espacios")
     private String provincia;
+
+    @NotNull(message = "La latitud es obligatoria")
+    @Min(value = -90, message = "La latitud mínima es -90")
+    @Max(value = 90, message = "La latitud máxima es 90")
+    private Double latitud;
+
+    @NotNull(message = "La longitud es obligatoria")
+    @Min(value = -180, message = "La longitud mínima es -180")
+    @Max(value = 180, message = "La longitud máxima es 180")
+    private Double longitud;
+
 }
 

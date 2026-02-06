@@ -36,7 +36,9 @@ public class Pedido {
         @AttributeOverride(name = "calle", column = @Column(name = "origen_calle")),
         @AttributeOverride(name = "numero", column = @Column(name = "origen_numero")),
         @AttributeOverride(name = "ciudad", column = @Column(name = "origen_ciudad")),
-        @AttributeOverride(name = "provincia", column = @Column(name = "origen_provincia"))
+        @AttributeOverride(name = "provincia", column = @Column(name = "origen_provincia")),
+            @AttributeOverride(name = "latitud", column = @Column(name = "origen_latitud")),
+            @AttributeOverride(name = "longitud", column = @Column(name = "origen_longitud"))
     })
     private Direccion direccionOrigen;
 
@@ -46,7 +48,9 @@ public class Pedido {
         @AttributeOverride(name = "calle", column = @Column(name = "destino_calle")),
         @AttributeOverride(name = "numero", column = @Column(name = "destino_numero")),
         @AttributeOverride(name = "ciudad", column = @Column(name = "destino_ciudad")),
-        @AttributeOverride(name = "provincia", column = @Column(name = "destino_provincia"))
+        @AttributeOverride(name = "provincia", column = @Column(name = "destino_provincia")),
+            @AttributeOverride(name = "latitud", column = @Column(name = "destino_latitud")),
+            @AttributeOverride(name = "longitud", column = @Column(name = "destino_longitud"))
     })
     private Direccion direccionDestino;
 
