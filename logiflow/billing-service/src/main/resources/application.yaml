@@ -1,4 +1,7 @@
 spring:
+  application:
+    name: billing-service
+
   datasource:
     url: jdbc:postgresql://localhost:5433/db_billing_users
     username: billing
@@ -13,12 +16,25 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
     show-sql: true
 
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: admin
+    password: admin
 
 server:
   port: 8082
 
-# JWT Configuration
+rabbitmq:
+  exchange:
+    pedidos: pedidos.exchange
+
+  queue:
+    pedido-estado: pedido.estado.actualizado
+
+  routing-key:
+    pedido-estado: pedido.estado.actualizado
+
 jwt:
   secret: MiSuperClaveSecretaMuyLarga123456789
   issuer: auth-service
-

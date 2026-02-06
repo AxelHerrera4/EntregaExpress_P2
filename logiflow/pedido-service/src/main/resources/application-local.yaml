@@ -6,13 +6,11 @@ spring:
     name: pedido-service
 
   datasource:
-    # Configuración para desarrollo local (con Docker Compose ejecutándose)
+    # ⚠️ IMPORTANTE: Asegúrate de que este puerto coincida con el de tu docker-compose
     url: jdbc:postgresql://localhost:5436/pedidos_db
     username: pedido_user
     password: pedido_pass
     driver-class-name: org.postgresql.Driver
-    
-    # Connection pool settings para desarrollo
     hikari:
       maximum-pool-size: 5
       minimum-idle: 2
@@ -29,34 +27,47 @@ spring:
         format_sql: true
     open-in-view: false
 
-# Swagger UI habilitado para desarrollo
-springdoc:
-  swagger-ui:
-    enabled: true
-    path: /swagger-ui.html
-  api-docs:
-    path: /v3/api-docs
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: admin
+    password: admin
+    listener:
+      simple:
+        acknowledge-mode: auto
+        prefetch: 1
+        retry:
+          enabled: true
+          initial-interval: 3000
+          max-attempts: 3
+          multiplier: 2
 
-# URLs de microservicios para desarrollo local
+  # Swagger UI
+  springdoc:
+    swagger-ui:
+      enabled: true
+      path: /swagger-ui.html
+    api-docs:
+      path: /v3/api-docs
+
+# URLs de microservicios y JWT (Fuera del bloque spring)
 services:
   billing:
     url: http://localhost:8082
   fleet:
     url: http://localhost:8083
 
-# Integraciones habilitadas
 integration:
   billing:
     enabled: true
   fleet:
     enabled: true
 
-# JWT Configuration
 jwt:
   secret: MiSuperClaveSecretaMuyLarga123456789
   expiration: 3600000
   issuer: auth-service
-# Logging detallado para desarrollo
+
 logging:
   level:
     root: INFO

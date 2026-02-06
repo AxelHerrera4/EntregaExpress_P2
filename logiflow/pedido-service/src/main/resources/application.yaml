@@ -6,11 +6,16 @@ spring:
     name: pedido-service
 
   datasource:
-    # Leer desde variables de entorno con valores por defecto
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5436/pedidos_db}
-    username: ${SPRING_DATASOURCE_USERNAME:pedido_user}
-    password: ${SPRING_DATASOURCE_PASSWORD:pedido_pass}
+    # ⚠️ IMPORTANTE: Asegúrate de que este puerto coincida con el de tu docker-compose
+    url: jdbc:postgresql://localhost:5436/pedidos_db
+    username: pedido_user
+    password: pedido_pass
     driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 2
+      connection-timeout: 20000
+      idle-timeout: 600000
 
   jpa:
     hibernate:
@@ -19,37 +24,56 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
     open-in-view: false
 
-# Opcional: activar Swagger UI (por defecto springdoc sirve en /swagger-ui.html)
-springdoc:
-  swagger-ui:
-    enabled: true
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: admin
+    password: admin
+    listener:
+      simple:
+        acknowledge-mode: auto
+        prefetch: 1
+        retry:
+          enabled: true
+          initial-interval: 3000
+          max-attempts: 3
+          multiplier: 2
 
-# Configuración de integración con otros microservicios
+  # Swagger UI
+  springdoc:
+    swagger-ui:
+      enabled: true
+      path: /swagger-ui.html
+    api-docs:
+      path: /v3/api-docs
+
+# URLs de microservicios y JWT (Fuera del bloque spring)
 services:
   billing:
-    url: ${BILLING_SERVICE_URL:http://localhost:8082}
+    url: http://localhost:8082
   fleet:
-    url: ${FLEET_SERVICE_URL:http://localhost:8083}
+    url: http://localhost:8083
 
-# Habilitar/deshabilitar integraciones
 integration:
   billing:
-    enabled: ${BILLING_INTEGRATION_ENABLED:true}
+    enabled: true
   fleet:
-    enabled: ${FLEET_INTEGRATION_ENABLED:true}
+    enabled: true
 
-# JWT Configuration
 jwt:
   secret: MiSuperClaveSecretaMuyLarga123456789
   expiration: 3600000
   issuer: auth-service
 
-# Logging mínimo
 logging:
   level:
     root: INFO
-    com.logiflow.pedidoservice: INFO
+    com.logiflow.pedidoservice: DEBUG
+    org.springframework.web: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
   pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} %-5level %logger{36} - %msg%n"
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
