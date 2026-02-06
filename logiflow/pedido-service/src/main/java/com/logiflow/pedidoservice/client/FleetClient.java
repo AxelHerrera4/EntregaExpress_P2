@@ -26,10 +26,12 @@ public class FleetClient {
 
     /**
      * Solicita asignación de repartidor y vehículo al Fleet Service
+     *
      * @param request datos del pedido para la asignación
+     * @param token
      * @return respuesta con repartidor y vehículo asignados
      */
-    public AsignacionResponse asignarRepartidor(AsignacionRequest request) {
+    public AsignacionResponse asignarRepartidor(AsignacionRequest request, String token) {
         try {
             log.info("Llamando a Fleet Service para asignar repartidor - pedidoId: {}", request.getPedidoId());
 

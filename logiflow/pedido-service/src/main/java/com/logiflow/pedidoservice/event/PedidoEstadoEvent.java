@@ -1,51 +1,59 @@
 package com.logiflow.pedidoservice.event;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
-public class PedidoEstadoEvent {
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class PedidoEstadoEvent implements Serializable {
+    private static final long serialVersionUID = 1L;
 
+    // Para idempotencia
+    private String messageId;
+    private LocalDateTime timestamp;
+    
+    // Información del evento
     private String pedidoId;
     private String estadoAnterior;
     private String estadoNuevo;
-    private LocalDateTime fecha;
-
-
+    private String usuarioModificador; // Usuario que modificó el estado
+    private String repartidorId;
+    private String vehiculoId;
+    
     public PedidoEstadoEvent(String pedidoId, String estadoAnterior, String estadoNuevo) {
+        this.messageId = UUID.randomUUID().toString();
+        this.timestamp = LocalDateTime.now();
         this.pedidoId = pedidoId;
         this.estadoAnterior = estadoAnterior;
         this.estadoNuevo = estadoNuevo;
-        this.fecha = LocalDateTime.now();
     }
-
-    public String getPedidoId() {
-        return pedidoId;
-    }
-
-    public void setPedidoId(String pedidoId) {
+    
+    public PedidoEstadoEvent(String pedidoId, String estadoAnterior, String estadoNuevo, 
+                           String usuarioModificador) {
+        this.messageId = UUID.randomUUID().toString();
+        this.timestamp = LocalDateTime.now();
         this.pedidoId = pedidoId;
-    }
-
-    public String getEstadoAnterior() {
-        return estadoAnterior;
-    }
-
-    public void setEstadoAnterior(String estadoAnterior) {
         this.estadoAnterior = estadoAnterior;
-    }
-
-    public String getEstadoNuevo() {
-        return estadoNuevo;
-    }
-
-    public void setEstadoNuevo(String estadoNuevo) {
         this.estadoNuevo = estadoNuevo;
+        this.usuarioModificador = usuarioModificador;
+    }
+    
+    public PedidoEstadoEvent(String pedidoId, String estadoAnterior, String estadoNuevo, 
+                           String usuarioModificador, String repartidorId, String vehiculoId) {
+        this.messageId = UUID.randomUUID().toString();
+        this.timestamp = LocalDateTime.now();
+        this.pedidoId = pedidoId;
+        this.estadoAnterior = estadoAnterior;
+        this.estadoNuevo = estadoNuevo;
+        this.usuarioModificador = usuarioModificador;
+        this.repartidorId = repartidorId;
+        this.vehiculoId = vehiculoId;
     }
 
-    public LocalDateTime getFecha() {
-        return fecha;
-    }
-
-    public void setFecha(LocalDateTime fecha) {
-        this.fecha = fecha;
-    }
 }

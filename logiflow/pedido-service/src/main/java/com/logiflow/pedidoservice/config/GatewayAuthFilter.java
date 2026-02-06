@@ -38,23 +38,25 @@ public class GatewayAuthFilter extends OncePerRequestFilter {
             String token = authHeader.substring(7);
             
             try {
+                // ... dentro de tu bloque try ...
                 if (jwtUtils.validateToken(token)) {
                     String username = jwtUtils.extractUsername(token);
                     List<String> roles = jwtUtils.extractRoles(token);
-                    
+
                     log.info(" PEDIDO-SERVICE - Usuario: {}, Roles: {}", username, roles);
-                    
+
                     List<SimpleGrantedAuthority> authorities = roles.stream()
                             .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
                             .toList();
 
-                    UsernamePasswordAuthenticationToken auth = 
-                            new UsernamePasswordAuthenticationToken(username, null, authorities);
+                    // ✅ PASO CLAVE: Cambiamos null por 'token' para que esté disponible después
+                    UsernamePasswordAuthenticationToken auth =
+                            new UsernamePasswordAuthenticationToken(username, token, authorities);
+
                     SecurityContextHolder.getContext().setAuthentication(auth);
-                    
+
                     log.info(" AUTENTICACIÓN ESTABLECIDA - Usuario: {}, Authorities: {}", username, authorities);
-                    log.info(" SecurityContext después de auth: {}", SecurityContextHolder.getContext().getAuthentication());
-                } else {
+                }else {
                     log.error(" PEDIDO-SERVICE - Token JWT inválido");
                     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                     response.getWriter().write("{\"error\":\"Token JWT inválido\"}");

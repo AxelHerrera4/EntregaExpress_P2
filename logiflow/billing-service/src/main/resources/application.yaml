@@ -21,18 +21,31 @@ spring:
     port: 5672
     username: admin
     password: admin
+    listener:
+      simple:
+        retry:
+          enabled: true
+          initial-interval: 3000
+          max-attempts: 3
+
+  # 🛡️ ESTA ES LA PROPIEDAD QUE CORRIGE TU ERROR
+  amqp:
+    deserialization:
+      trust:
+        all: true
 
 server:
   port: 8082
 
+# Configuración personalizada de RabbitMQ
 rabbitmq:
   exchange:
     pedidos: pedidos.exchange
-
   queue:
+    pedido-creado: pedido.creado
     pedido-estado: pedido.estado.actualizado
-
   routing-key:
+    pedido-creado: pedido.creado
     pedido-estado: pedido.estado.actualizado
 
 jwt:

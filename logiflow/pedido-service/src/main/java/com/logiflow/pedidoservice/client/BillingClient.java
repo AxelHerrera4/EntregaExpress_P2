@@ -5,6 +5,8 @@ import com.logiflow.pedidoservice.dto.FacturaResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -27,30 +29,42 @@ public class BillingClient {
      * Crea una factura en el Billing Service
      *
      * @param request datos del pedido para calcular la tarifa
+     * @param token
      * @return respuesta con la factura creada
      */
-    public FacturaResponse crearFactura(FacturaRequest request) {
-        try {
-            log.info("Llamando a Billing Service para crear factura - pedidoId: {}", request.getPedidoId());
 
-            String url = billingServiceUrl + "/api/facturas";
 
-            FacturaResponse response = restTemplate.postForObject(
-                    url,
-                    request,
-                    FacturaResponse.class
-            );
+        public FacturaResponse crearFactura(FacturaRequest request, String token) {
+            try {
+                log.info("Llamando a Billing Service para crear factura - pedidoId: {}", request.getPedidoId());
 
-            log.info("Factura creada exitosamente - facturaId: {}, monto: {}",
-                    response.getId(), response.getMontoTotal());
+                String url = billingServiceUrl + "/api/facturas";
 
-            return response;
+                // 🔹 CONFIGURACIÓN DE HEADERS
+                HttpHeaders headers = new HttpHeaders();
 
-        } catch (RestClientException e) {
-            log.error("Error al comunicarse con Billing Service: {}", e.getMessage());
-            throw new RuntimeException("No se pudo crear la factura: " + e.getMessage(), e);
+                // Verificamos si el token ya trae la palabra "Bearer "
+                String tokenHeader = token.startsWith("Bearer ") ? token : "Bearer " + token;
+                headers.set("Authorization", tokenHeader);
+
+                // 🔹 Envolvemos request + headers
+                HttpEntity<FacturaRequest> entity = new HttpEntity<>(request, headers);
+
+                // 🔹 Hacemos el POST (Cambiamos postForObject por exchange para mayor control si fuera necesario)
+                FacturaResponse response = restTemplate.postForObject(
+                        url,
+                        entity,
+                        FacturaResponse.class
+                );
+
+                log.info("✅ Factura creada exitosamente - facturaId: {}", response.getId());
+                return response;
+
+            } catch (RestClientException e) {
+                log.error("❌ Error al comunicarse con Billing Service: {}", e.getMessage());
+                throw new RuntimeException("No se pudo crear la factura: " + e.getMessage(), e);
+            }
         }
-    }
 
     /**
      * Obtiene una factura por ID del pedido
