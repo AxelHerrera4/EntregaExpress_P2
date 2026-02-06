@@ -199,10 +199,26 @@ services:
       - SPRING_PROFILES_ACTIVE=docker
       - JWT_SECRET=MiSuperClaveSecretaMuyLarga123456789
       - JWT_ISSUER=auth-service
+
+      # Ruta 0 -> authservice
+      - SPRING_CLOUD_GATEWAY_ROUTES_0_ID=auth-route
       - SPRING_CLOUD_GATEWAY_ROUTES_0_URI=http://authservice:8081
+      - SPRING_CLOUD_GATEWAY_ROUTES_0_PREDICATES_0=Path=/auth/**
+
+      # Ruta 1 -> billing-service
+      - SPRING_CLOUD_GATEWAY_ROUTES_1_ID=billing-route
       - SPRING_CLOUD_GATEWAY_ROUTES_1_URI=http://billing-service:8082
+      - SPRING_CLOUD_GATEWAY_ROUTES_1_PREDICATES_0=Path=/billing/**
+
+      # Ruta 2 -> fleet-service
+      - SPRING_CLOUD_GATEWAY_ROUTES_2_ID=fleet-route
       - SPRING_CLOUD_GATEWAY_ROUTES_2_URI=http://fleet-service:8083
+      - SPRING_CLOUD_GATEWAY_ROUTES_2_PREDICATES_0=Path=/fleet/**
+
+      # Ruta 3 -> pedido-service
+      - SPRING_CLOUD_GATEWAY_ROUTES_3_ID=pedido-route
       - SPRING_CLOUD_GATEWAY_ROUTES_3_URI=http://pedido-service:8084
+      - SPRING_CLOUD_GATEWAY_ROUTES_3_PREDICATES_0=Path=/pedido/**
     networks:
       - logiflow-network
     depends_on:

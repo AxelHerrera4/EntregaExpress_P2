@@ -1,0 +1,86 @@
+{
+  "info": {
+    "name": "Tracking Service - LogiFlow",
+    "description": "Colección de pruebas para el microservicio de tracking",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Tracking",
+      "item": [
+        {
+          "name": "Enviar Ubicación",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"repartidorId\": 1,\n  \"latitud\": -0.1807,\n  \"longitud\": -78.4678,\n  \"timestamp\": \"2026-02-05T23:30:00\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8090/api/tracking/track",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8090",
+              "path": [
+                "api",
+                "tracking",
+                "track"
+              ]
+            },
+            "description": "Envía la ubicación de un repartidor a RabbitMQ"
+          },
+          "response": []
+        },
+        {
+          "name": "Enviar Ubicación - Repartidor 2",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"repartidorId\": 2,\n  \"latitud\": -0.2025,\n  \"longitud\": -78.4936,\n  \"timestamp\": \"2026-02-05T23:35:00\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8090/api/tracking/track",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8090",
+              "path": [
+                "api",
+                "tracking",
+                "track"
+              ]
+            },
+            "description": "Envía la ubicación de otro repartidor"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8090",
+      "type": "string"
+    }
+  ]
+}
+
