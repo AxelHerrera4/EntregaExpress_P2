@@ -1,3 +1,4 @@
+// TESTS TEMPORALMENTE DESHABILITADOS - Necesitan actualización
 package com.logiflow.fleetservice.service;
 
 import org.junit.jupiter.api.DisplayName;

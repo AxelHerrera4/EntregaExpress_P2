@@ -1,7 +1,9 @@
 package com.logiflow.fleetservice.model.entity.vehiculo;
 
+import com.logiflow.fleetservice.dto.InformacionRuta;
+import com.logiflow.fleetservice.model.entity.enums.EstadoVehiculo;
+import com.logiflow.fleetservice.model.entity.enums.TipoEntrega;
 import com.logiflow.fleetservice.model.entity.enums.TipoVehiculo;
-import com.logiflow.fleetservice.model.interfaces.IRegistrableGPS;
 import com.logiflow.fleetservice.model.interfaces.IRuteable;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -11,10 +13,13 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.UUID;
 
-
+/**
+ * Clase abstracta que define el comportamiento común de todos los vehículos.
+ * NO puede ser instanciada directamente.
+ * Según documentación Fleet Service
+ */
 @Entity
 @Table(name = "vehiculos")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
@@ -22,48 +27,34 @@ import java.util.List;
 @EntityListeners(AuditingEntityListener.class)
 @Getter
 @Setter
-public abstract class VehiculoEntrega implements IRuteable, IRegistrableGPS {
+public abstract class VehiculoEntrega implements IRuteable {
 
   @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
+  @GeneratedValue(strategy = GenerationType.AUTO)
+  @Column(columnDefinition = "uuid")
+  private UUID id;
 
   @Column(nullable = false, unique = true, length = 20)
-  private String placa;
+  protected String placa;
 
   @Column(nullable = false, length = 50)
-  private String marca;
+  protected String marca;
 
   @Column(nullable = false, length = 50)
-  private String modelo;
+  protected String modelo;
 
   @Column(nullable = false)
-  private Integer anio;
+  protected Integer anio;
 
-  @Column(name = "kilometraje")
-  private Integer kilometraje;
+  @Column(name = "capacidad_carga")
+  protected Double capacidadCarga;
 
-  @Transient
-  private TipoVehiculo tipo;
-
-  @Embedded
-  @AttributeOverrides({
-          @AttributeOverride(name = "latitud", column = @Column(name = "ultima_latitud")),
-          @AttributeOverride(name = "longitud", column = @Column(name = "ultima_longitud"))
-  })
-  private Coordenada ultimaUbicacion;
-
-  @Column(name = "ultima_actualizacion_gps")
-  private LocalDateTime ultimaActualizacionGPS;
-
-  @Column(name = "capacidad_carga_kg")
-  private Double capacidadCargaKg;
-
-  @Column(name = "consumo_combustible_km_litro")
-  private Double consumoCombustibleKmPorLitro;
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false, length = 30)
+  protected EstadoVehiculo estado = EstadoVehiculo.ACTIVO;
 
   @Column(name = "activo")
-  private Boolean activo = true;
+  protected Boolean activo = true;
 
   @CreatedDate
   @Column(name = "created_at", nullable = false, updatable = false)
@@ -73,133 +64,58 @@ public abstract class VehiculoEntrega implements IRuteable, IRegistrableGPS {
   @Column(name = "updated_at")
   private LocalDateTime updatedAt;
 
-  // ========== TEMPLATE METHOD PATTERN ==========
+  // ========== CONSTRUCTOR PROTEGIDO ==========
 
   /**
-   * Template Method: Define el algoritmo general para calcular el costo de una ruta
-   * Las subclases implementan los pasos específicos
+   * Constructor protegido para forzar uso de subclases
    */
-  public final double calcularCostoRuta(double distanciaKm) {
-    double costoBase = calcularCostoBase(distanciaKm);
-    double costoAdicional = calcularCostoAdicional(distanciaKm);
-    double costoMantenimiento = calcularCostoMantenimiento(distanciaKm);
-
-    return costoBase + costoAdicional + costoMantenimiento;
+  protected VehiculoEntrega() {
   }
 
-  /**
-   * Hook method: Cada tipo de vehículo calcula su costo base
-   */
-  protected abstract double calcularCostoBase(double distanciaKm);
-
-  /**
-   * Hook method: Costos adicionales específicos del vehículo
-   */
-  protected abstract double calcularCostoAdicional(double distanciaKm);
-
-  /**
-   * Hook method: Costo de mantenimiento por kilómetro
-   */
-  protected double calcularCostoMantenimiento(double distanciaKm) {
-    return distanciaKm * 0.05; // $0.05 por km por defecto
+  protected VehiculoEntrega(String placa, String marca, String modelo) {
+    this.placa = placa;
+    this.marca = marca;
+    this.modelo = modelo;
   }
 
-  // ========== MÉTODOS ABSTRACTOS ==========
+  // ========== MÉTODOS ABSTRACTOS QUE LAS SUBCLASES DEBEN IMPLEMENTAR ==========
 
   /**
-   * Cada tipo de vehículo define su velocidad promedio
+   * Cada subclase define su tipo de vehículo
    */
-  public abstract double getVelocidadPromedioKmH();
+  public abstract TipoVehiculo getTipo();
 
   /**
-   * Cada tipo de vehículo define su rango máximo de operación
+   * Cada subclase define su capacidad máxima
    */
-  public abstract double getRangoMaximoKm();
+  public abstract Double getCapacidadMaxima();
 
   /**
-   * Determina si el vehículo puede operar en una zona específica
+   * Verifica si el vehículo es apto para un tipo de entrega
    */
-  public abstract boolean puedeOperarEnZona(String tipoZona);
+  public abstract boolean esAptoParaEntrega(TipoEntrega tipoEntrega);
 
   // ========== IMPLEMENTACIÓN DE IRuteable ==========
 
+  /**
+   * Provee información del vehículo para el Routing Service
+   */
   @Override
-  public List<Coordenada> generarRuta(Coordenada origen, Coordenada destino) {
-    // Implementación simplificada - En producción integraría con API de mapas
-    List<Coordenada> ruta = new ArrayList<>();
-    ruta.add(origen);
+  public abstract InformacionRuta getInformacionRuta();
 
-    // Punto intermedio (simulación de ruta)
-    double latMedia = (origen.getLatitud() + destino.getLatitud()) / 2;
-    double lonMedia = (origen.getLongitud() + destino.getLongitud()) / 2;
-    ruta.add(new Coordenada(latMedia, lonMedia));
-
-    ruta.add(destino);
-    return ruta;
-  }
-
-  @Override
-  public double calcularDistancia(Coordenada origen, Coordenada destino) {
-    return origen.distanciaHasta(destino);
-  }
-
-  @Override
-  public int estimarTiempoViaje(Coordenada origen, Coordenada destino) {
-    double distanciaKm = calcularDistancia(origen, destino);
-    double tiempoHoras = distanciaKm / getVelocidadPromedioKmH();
-    return (int) Math.ceil(tiempoHoras * 60); // Convertir a minutos
-  }
-
-  @Override
-  public boolean puedeRealizarRuta(double distanciaKm) {
-    return distanciaKm <= getRangoMaximoKm() && activo;
-  }
-
-  // ========== IMPLEMENTACIÓN DE IRegistrableGPS ==========
-
-  @Override
-  public void registrarUbicacion(Coordenada coordenada, LocalDateTime timestamp) {
-    if (coordenada != null && coordenada.esValida()) {
-      this.ultimaUbicacion = coordenada;
-      this.ultimaActualizacionGPS = timestamp;
-    }
-  }
-
-  @Override
-  public Coordenada obtenerUltimaUbicacion() {
-    return this.ultimaUbicacion;
-  }
-
-  @Override
-  public LocalDateTime obtenerUltimaActualizacion() {
-    return this.ultimaActualizacionGPS;
-  }
-
-  @Override
-  public boolean ubicacionActualizada(int minutosMaximos) {
-    if (ultimaActualizacionGPS == null) {
-      return false;
-    }
-    LocalDateTime limite = LocalDateTime.now().minusMinutes(minutosMaximos);
-    return ultimaActualizacionGPS.isAfter(limite);
-  }
-
-  // ========== MÉTODOS DE NEGOCIO ==========
+  // ========== MÉTODOS CONCRETOS COMPARTIDOS ==========
 
   /**
-   * Valida si el vehículo está en condiciones de operar
+   * Verifica si el vehículo está disponible
    */
-  public boolean estaOperativo() {
-    return activo && ubicacionActualizada(30);
+  public boolean estaDisponible() {
+    return this.estado == EstadoVehiculo.ACTIVO && this.activo;
   }
 
   /**
-   * Incrementa el kilometraje del vehículo
+   * Cambia el estado del vehículo
    */
-  public void registrarKilometrajeRecorrido(double km) {
-    if (this.kilometraje == null) {
-      this.kilometraje = 0;
-    }
-    this.kilometraje += (int) Math.ceil(km);
+  public void cambiarEstado(EstadoVehiculo nuevoEstado) {
+    this.estado = nuevoEstado;
   }
 }

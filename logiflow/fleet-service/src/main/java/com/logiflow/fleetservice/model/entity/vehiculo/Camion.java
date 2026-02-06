@@ -1,94 +1,72 @@
 package com.logiflow.fleetservice.model.entity.vehiculo;
 
-
+import com.logiflow.fleetservice.dto.InformacionRuta;
+import com.logiflow.fleetservice.model.entity.enums.TipoEntrega;
 import com.logiflow.fleetservice.model.entity.enums.TipoVehiculo;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
-import jakarta.persistence.PostLoad;
-import jakarta.persistence.PostPersist;
 
 /**
- * Camión - Para entregas nacionales (furgonetas o camiones medianos/grandes)
+ * Camion - Para entregas nacionales
+ * Según documentación Fleet Service
  */
 @Entity
 @DiscriminatorValue("CAMION")
 public class Camion extends VehiculoEntrega {
 
-  private static final double VELOCIDAD_PROMEDIO = 50.0; // km/h en carretera
-  private static final double RANGO_MAXIMO = 800.0; // km
-  private static final double COSTO_BASE_POR_KM = 1.50; // USD
-
   @Column(name = "numero_ejes")
   private Integer numeroEjes;
 
-  @PostLoad
-  @PostPersist
-  private void initTipo() {
-    setTipo(TipoVehiculo.CAMION);
-  }
+  @Column(name = "capacidad_volumen")
+  private Double capacidadVolumen; // m³
 
-  @Column(name = "requiere_rampa")
-  private Boolean requiereRampa = false;
+  @Column(name = "requiere_licencia_especial")
+  private boolean requiereLicenciaEspecial;
 
-  @Override
-  protected double calcularCostoBase(double distanciaKm) {
-    double costoBase = distanciaKm * COSTO_BASE_POR_KM;
-
-    // Recargo por número de ejes
-    if (numeroEjes != null && numeroEjes > 2) {
-      costoBase += distanciaKm * 0.20 * (numeroEjes - 2);
-    }
-
-    return costoBase;
-  }
-
-  @Override
-  protected double calcularCostoAdicional(double distanciaKm) {
-    // Recargos por peajes, peso y distancia
-    double recargoPeajes = distanciaKm > 200 ? 15.0 : 8.0;
-    double recargoLargaDistancia = distanciaKm > 500 ? distanciaKm * 0.10 : 0;
-
-    return recargoPeajes + recargoLargaDistancia;
-  }
-
-  @Override
-  protected double calcularCostoMantenimiento(double distanciaKm) {
-    // Camiones tienen mayor costo de mantenimiento
-    return distanciaKm * 0.15;
-  }
-
-  @Override
-  public double getVelocidadPromedioKmH() {
-    return VELOCIDAD_PROMEDIO;
-  }
-
-  @Override
-  public double getRangoMaximoKm() {
-    return RANGO_MAXIMO;
-  }
-
-  @Override
-  public boolean puedeOperarEnZona(String tipoZona) {
-    // Camiones operan en rutas nacionales e intermunicipales
-    return "NACIONAL".equalsIgnoreCase(tipoZona) ||
-            "INTERMUNICIPAL".equalsIgnoreCase(tipoZona) ||
-            "INTERURBANA".equalsIgnoreCase(tipoZona);
+  /**
+   * Constructor con parámetros básicos
+   */
+  public Camion(String placa, String marca, String modelo, Integer ejes, Double volumen) {
+    super(placa, marca, modelo);
+    this.numeroEjes = ejes;
+    this.capacidadVolumen = volumen;
+    this.capacidadCarga = ejes * 2000.0; // Aproximado por eje
+    this.requiereLicenciaEspecial = true;
   }
 
   /**
-   * Verifica si el camión puede entrar a zonas con restricción de peso
+   * Constructor vacío para JPA
    */
-  public boolean puedeAccederZonaRestringida() {
-    Double capacidad = getCapacidadCargaKg();
-    return capacidad != null && capacidad < 5000; // Menos de 5 toneladas
+  public Camion() {
+    super();
   }
 
-  /**
-   * Capacidad para transportar grandes volúmenes
-   */
-  public int getCantidadMaximaPaquetes() {
-    return 200;
+  @Override
+  public TipoVehiculo getTipo() {
+    return TipoVehiculo.CAMION;
+  }
+
+  @Override
+  public Double getCapacidadMaxima() {
+    return this.capacidadCarga;
+  }
+
+  @Override
+  public boolean esAptoParaEntrega(TipoEntrega tipoEntrega) {
+    return tipoEntrega == TipoEntrega.NACIONAL;
+  }
+
+  @Override
+  public InformacionRuta getInformacionRuta() {
+    return InformacionRuta.builder()
+            .vehiculoId(this.getId() != null ? this.getId().toString() : null)
+            .tipo(TipoVehiculo.CAMION)
+            .capacidadCarga(this.capacidadCarga)
+            .puedeUsarCiclovias(false)
+            .numeroEjes(this.numeroEjes)
+            .capacidadVolumen(this.capacidadVolumen)
+            .build();
   }
 
   // Getters y Setters específicos
@@ -100,11 +78,19 @@ public class Camion extends VehiculoEntrega {
     this.numeroEjes = numeroEjes;
   }
 
-  public Boolean getRequiereRampa() {
-    return requiereRampa;
+  public Double getCapacidadVolumen() {
+    return capacidadVolumen;
   }
 
-  public void setRequiereRampa(Boolean requiereRampa) {
-    this.requiereRampa = requiereRampa;
+  public void setCapacidadVolumen(Double capacidadVolumen) {
+    this.capacidadVolumen = capacidadVolumen;
+  }
+
+  public boolean isRequiereLicenciaEspecial() {
+    return requiereLicenciaEspecial;
+  }
+
+  public void setRequiereLicenciaEspecial(boolean requiereLicenciaEspecial) {
+    this.requiereLicenciaEspecial = requiereLicenciaEspecial;
   }
 }

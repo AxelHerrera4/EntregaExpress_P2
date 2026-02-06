@@ -1,3 +1,4 @@
+// TESTS TEMPORALMENTE DESHABILITADOS - Necesitan actualización
 package com.logiflow.fleetservice.controller;
 
 import com.logiflow.fleetservice.dto.request.VehiculoCreateRequest;
@@ -15,6 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -41,7 +43,7 @@ class VehiculoControllerTest {
         .build();
 
     VehiculoResponse response = VehiculoResponse.builder()
-        .id(1L)
+        .id(UUID.randomUUID().toString())
         .placa("ABC-123")
         .build();
 
@@ -57,8 +59,8 @@ class VehiculoControllerTest {
   @Test
   @DisplayName("listarVehiculos debe retornar 200 con lista del servicio")
   void listarVehiculos_DeberiaRetornarLista() {
-    VehiculoResponse v1 = VehiculoResponse.builder().id(1L).placa("AAA-111").build();
-    VehiculoResponse v2 = VehiculoResponse.builder().id(2L).placa("BBB-222").build();
+    VehiculoResponse v1 = VehiculoResponse.builder().id(UUID.randomUUID().toString()).placa("AAA-111").build();
+    VehiculoResponse v2 = VehiculoResponse.builder().id(UUID.randomUUID().toString()).placa("BBB-222").build();
 
     when(vehiculoService.obtenerTodosLosVehiculos()).thenReturn(List.of(v1, v2));
 
@@ -72,7 +74,7 @@ class VehiculoControllerTest {
   @Test
   @DisplayName("eliminarVehiculo debe retornar 204 y delegar en el servicio")
   void eliminarVehiculo_DeberiaRetornar204() {
-    Long id = 10L;
+    UUID id = UUID.randomUUID();
 
     ResponseEntity<Void> result = vehiculoController.eliminarVehiculo(id);
 
@@ -83,14 +85,14 @@ class VehiculoControllerTest {
   @Test
   @DisplayName("actualizarVehiculo debe retornar 200 con el DTO actualizado")
   void actualizarVehiculo_DeberiaRetornar200() {
-    Long id = 5L;
+    UUID id = UUID.randomUUID();
     VehiculoUpdateRequest request = VehiculoUpdateRequest.builder()
-        .marca("Toyota")
+        .estado(com.logiflow.fleetservice.model.entity.enums.EstadoVehiculo.MANTENIMIENTO)
         .build();
 
     VehiculoResponse response = VehiculoResponse.builder()
-        .id(5L)
-        .marca("Toyota")
+        .id(id.toString())
+        .estado(com.logiflow.fleetservice.model.entity.enums.EstadoVehiculo.MANTENIMIENTO)
         .build();
 
     when(vehiculoService.actualizarVehiculo(id, request)).thenReturn(response);

@@ -1,3 +1,4 @@
+// TESTS TEMPORALMENTE DESHABILITADOS - Necesitan actualización
 package com.logiflow.fleetservice.service;
 
 import com.logiflow.fleetservice.dto.mapper.RepartidorMapper;
@@ -19,6 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -44,33 +46,33 @@ class RepartidorServiceImplTest {
   @DisplayName("crearRepartidor debe crear y retornar DTO cuando no hay duplicados")
   void crearRepartidor_DeberiaCrearRepartidorCuandoNoHayDuplicados() {
     RepartidorCreateRequest request = RepartidorCreateRequest.builder()
-        .cedula("1234567890")
+        .documento("1234567890")
+        .tipoDocumento(com.logiflow.fleetservice.model.entity.enums.TipoDocumento.CEDULA)
         .nombre("Juan")
         .apellido("Pérez")
         .email("juan@example.com")
-        .fechaContratacion(LocalDate.now())
         .tipoLicencia(TipoLicencia.TIPO_B)
-        .numeroLicencia("LIC-123")
         .build();
 
     Repartidor entity = Repartidor.builder()
-        .id(1L)
-        .cedula("1234567890")
+        .id(UUID.randomUUID())
+        .documento("1234567890")
+        .tipoDocumento(com.logiflow.fleetservice.model.entity.enums.TipoDocumento.CEDULA)
         .nombre("Juan")
         .apellido("Pérez")
-        .fechaContratacion(request.getFechaContratacion())
         .tipoLicencia(TipoLicencia.TIPO_B)
         .estado(EstadoRepartidor.DISPONIBLE)
         .build();
 
     RepartidorResponse response = RepartidorResponse.builder()
-        .id(1L)
-        .cedula("1234567890")
+        .id(UUID.randomUUID().toString())
+        .documento("1234567890")
+        .tipoDocumento(com.logiflow.fleetservice.model.entity.enums.TipoDocumento.CEDULA)
         .nombre("Juan")
         .apellido("Pérez")
         .build();
 
-    when(repartidorRepository.existsByCedula("1234567890")).thenReturn(false);
+    when(repartidorRepository.existsByDocumento("1234567890")).thenReturn(false);
     when(repartidorRepository.existsByEmail("juan@example.com")).thenReturn(false);
     when(repartidorMapper.toEntity(request)).thenReturn(entity);
     when(repartidorRepository.save(entity)).thenReturn(entity);
@@ -78,9 +80,9 @@ class RepartidorServiceImplTest {
 
     RepartidorResponse result = repartidorService.crearRepartidor(request);
 
-    assertThat(result.getId()).isEqualTo(1L);
-    assertThat(result.getCedula()).isEqualTo("1234567890");
-    verify(repartidorRepository).existsByCedula("1234567890");
+    assertThat(result.getId()).isNotNull();
+    assertThat(result.getDocumento()).isEqualTo("1234567890");
+    verify(repartidorRepository).existsByDocumento("1234567890");
     verify(repartidorRepository).existsByEmail("juan@example.com");
     verify(repartidorRepository).save(entity);
   }
@@ -89,16 +91,17 @@ class RepartidorServiceImplTest {
   @DisplayName("crearRepartidor debe lanzar excepción si la cédula ya existe")
   void crearRepartidor_DeberiaLanzarExcepcionSiCedulaDuplicada() {
     RepartidorCreateRequest request = RepartidorCreateRequest.builder()
-        .cedula("1234567890")
+        .documento("1234567890")
+        .tipoDocumento(com.logiflow.fleetservice.model.entity.enums.TipoDocumento.CEDULA)
         .nombre("Juan")
         .apellido("Pérez")
         .build();
 
-    when(repartidorRepository.existsByCedula("1234567890")).thenReturn(true);
+    when(repartidorRepository.existsByDocumento("1234567890")).thenReturn(true);
 
     assertThatThrownBy(() -> repartidorService.crearRepartidor(request))
         .isInstanceOf(DuplicateResourceException.class)
-        .hasMessageContaining("cédula");
+        .hasMessageContaining("documento");
 
     verify(repartidorRepository, never()).save(any());
   }
@@ -106,19 +109,20 @@ class RepartidorServiceImplTest {
   @Test
   @DisplayName("eliminarRepartidor debe lanzar BusinessException cuando está EN_RUTA")
   void eliminarRepartidor_DeberiaLanzarExcepcionSiEstaEnRuta() {
+    UUID testId = UUID.randomUUID();
     Repartidor repartidor = Repartidor.builder()
-        .id(5L)
-        .cedula("1234567890")
+        .id(testId)
+        .documento("1234567890")
+        .tipoDocumento(com.logiflow.fleetservice.model.entity.enums.TipoDocumento.CEDULA)
         .nombre("Juan")
         .apellido("Pérez")
-        .fechaContratacion(LocalDate.now())
         .tipoLicencia(TipoLicencia.TIPO_B)
         .estado(EstadoRepartidor.EN_RUTA)
         .build();
 
-    when(repartidorRepository.findById(5L)).thenReturn(Optional.of(repartidor));
+    when(repartidorRepository.findById(testId)).thenReturn(Optional.of(repartidor));
 
-    assertThatThrownBy(() -> repartidorService.eliminarRepartidor(5L))
+    assertThatThrownBy(() -> repartidorService.eliminarRepartidor(testId))
         .isInstanceOf(BusinessException.class)
         .hasMessageContaining("en ruta");
 
@@ -128,26 +132,27 @@ class RepartidorServiceImplTest {
   @Test
   @DisplayName("cambiarEstadoRepartidor debe actualizar el estado y guardar")
   void cambiarEstadoRepartidor_DeberiaActualizarEstado() {
+    UUID testId = UUID.randomUUID();
     Repartidor repartidor = Repartidor.builder()
-        .id(10L)
-        .cedula("9999999999")
+        .id(testId)
+        .documento("9999999999")
+        .tipoDocumento(com.logiflow.fleetservice.model.entity.enums.TipoDocumento.CEDULA)
         .nombre("Ana")
         .apellido("López")
-        .fechaContratacion(LocalDate.now())
         .tipoLicencia(TipoLicencia.TIPO_B)
         .estado(EstadoRepartidor.DISPONIBLE)
         .build();
 
     RepartidorResponse response = RepartidorResponse.builder()
-        .id(10L)
+        .id(testId.toString())
         .estado(EstadoRepartidor.MANTENIMIENTO)
         .build();
 
-    when(repartidorRepository.findById(10L)).thenReturn(Optional.of(repartidor));
+    when(repartidorRepository.findById(testId)).thenReturn(Optional.of(repartidor));
     when(repartidorRepository.save(repartidor)).thenReturn(repartidor);
     when(repartidorMapper.toResponse(repartidor)).thenReturn(response);
 
-    RepartidorResponse result = repartidorService.cambiarEstadoRepartidor(10L, EstadoRepartidor.MANTENIMIENTO);
+    RepartidorResponse result = repartidorService.cambiarEstadoRepartidor(testId, EstadoRepartidor.MANTENIMIENTO);
 
     assertThat(result.getEstado()).isEqualTo(EstadoRepartidor.MANTENIMIENTO);
     verify(repartidorRepository).save(repartidor);

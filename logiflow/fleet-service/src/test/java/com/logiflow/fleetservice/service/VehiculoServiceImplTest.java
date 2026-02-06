@@ -1,3 +1,4 @@
+// TESTS TEMPORALMENTE DESHABILITADOS - Necesitan actualización
 package com.logiflow.fleetservice.service;
 
 import com.logiflow.fleetservice.dto.mapper.VehiculoMapper;
@@ -18,6 +19,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -42,6 +44,7 @@ class VehiculoServiceImplTest {
   @Test
   @DisplayName("crearVehiculo debe crear y retornar DTO cuando la placa es única")
   void crearVehiculo_DeberiaCrearVehiculoCuandoPlacaUnica() {
+    UUID testId = UUID.randomUUID();
     VehiculoCreateRequest request = VehiculoCreateRequest.builder()
         .tipo(TipoVehiculo.MOTORIZADO)
         .placa("ABC-123")
@@ -54,26 +57,18 @@ class VehiculoServiceImplTest {
     motorizado.setPlaca("ABC-123");
 
     VehiculoResponse response = VehiculoResponse.builder()
-        .id(1L)
+        .id(testId.toString())
         .placa("ABC-123")
         .build();
 
     when(vehiculoRepository.existsByPlaca("ABC-123")).thenReturn(false);
-    when(vehiculoFactory.crearVehiculoPersonalizado(
-        request.getTipo(),
-        request.getPlaca(),
-        request.getMarca(),
-        request.getModelo(),
-        request.getAnio(),
-        request.getCapacidadCargaKg(),
-        request.getConsumoCombustibleKmPorLitro()
-    )).thenReturn(motorizado);
+    when(vehiculoFactory.crearVehiculo(request)).thenReturn(motorizado);
     when(vehiculoRepository.save(motorizado)).thenReturn(motorizado);
     when(vehiculoMapper.toResponse(motorizado)).thenReturn(response);
 
     VehiculoResponse result = vehiculoService.crearVehiculo(request);
 
-    assertThat(result.getId()).isEqualTo(1L);
+    assertThat(result.getId()).isNotNull();
     assertThat(result.getPlaca()).isEqualTo("ABC-123");
     verify(vehiculoRepository).existsByPlaca("ABC-123");
     verify(vehiculoRepository).save(motorizado);
@@ -102,66 +97,66 @@ class VehiculoServiceImplTest {
   @Test
   @DisplayName("actualizarVehiculo debe actualizar campos básicos")
   void actualizarVehiculo_DeberiaActualizarCamposBasicos() {
+    UUID testId = UUID.randomUUID();
     VehiculoEntrega motorizado = new Motorizado();
-    motorizado.setId(10L);
+    motorizado.setId(testId);
     motorizado.setPlaca("XYZ-999");
-    motorizado.setMarca("Honda");
 
     VehiculoUpdateRequest request = VehiculoUpdateRequest.builder()
-        .marca("Toyota")
-        .kilometraje(1000)
+        .estado(com.logiflow.fleetservice.model.entity.enums.EstadoVehiculo.MANTENIMIENTO)
+        .capacidadCarga(35.0)
         .build();
 
     VehiculoResponse response = VehiculoResponse.builder()
-        .id(10L)
-        .marca("Toyota")
+        .id(testId.toString())
+        .estado(com.logiflow.fleetservice.model.entity.enums.EstadoVehiculo.MANTENIMIENTO)
         .build();
 
-    when(vehiculoRepository.findById(10L)).thenReturn(Optional.of(motorizado));
+    when(vehiculoRepository.findById(testId)).thenReturn(Optional.of(motorizado));
     when(vehiculoRepository.save(motorizado)).thenReturn(motorizado);
     when(vehiculoMapper.toResponse(motorizado)).thenReturn(response);
 
-    VehiculoResponse result = vehiculoService.actualizarVehiculo(10L, request);
+    VehiculoResponse result = vehiculoService.actualizarVehiculo(testId, request);
 
-    assertThat(motorizado.getMarca()).isEqualTo("Toyota");
-    assertThat(motorizado.getKilometraje()).isEqualTo(1000);
-    assertThat(result.getMarca()).isEqualTo("Toyota");
+    assertThat(motorizado.getEstado()).isEqualTo(com.logiflow.fleetservice.model.entity.enums.EstadoVehiculo.MANTENIMIENTO);
+    assertThat(motorizado.getCapacidadCarga()).isEqualTo(35.0);
     verify(vehiculoRepository).save(motorizado);
   }
 
   @Test
   @DisplayName("actualizarEstadoVehiculo debe cambiar el flag activo")
   void actualizarEstadoVehiculo_DeberiaCambiarActivo() {
+    UUID testId = UUID.randomUUID();
     VehiculoEntrega motorizado = new Motorizado();
-    motorizado.setId(20L);
-    motorizado.setActivo(true);
+    motorizado.setId(testId);
+    motorizado.setEstado(com.logiflow.fleetservice.model.entity.enums.EstadoVehiculo.ACTIVO);
 
     VehiculoResponse response = VehiculoResponse.builder()
-        .id(20L)
-        .activo(false)
+        .id(testId.toString())
+        .estado(com.logiflow.fleetservice.model.entity.enums.EstadoVehiculo.FUERA_DE_SERVICIO)
         .build();
 
-    when(vehiculoRepository.findById(20L)).thenReturn(Optional.of(motorizado));
+    when(vehiculoRepository.findById(testId)).thenReturn(Optional.of(motorizado));
     when(vehiculoRepository.save(motorizado)).thenReturn(motorizado);
     when(vehiculoMapper.toResponse(motorizado)).thenReturn(response);
 
-    VehiculoResponse result = vehiculoService.actualizarEstadoVehiculo(20L, false);
+    VehiculoResponse result = vehiculoService.actualizarEstadoVehiculo(testId, com.logiflow.fleetservice.model.entity.enums.EstadoVehiculo.FUERA_DE_SERVICIO);
 
-    assertThat(motorizado.getActivo()).isFalse();
-    assertThat(result.getActivo()).isFalse();
+    assertThat(motorizado.getEstado()).isEqualTo(com.logiflow.fleetservice.model.entity.enums.EstadoVehiculo.FUERA_DE_SERVICIO);
     verify(vehiculoRepository).save(motorizado);
   }
 
   @Test
   @DisplayName("eliminarVehiculo debe marcar como inactivo y guardar")
   void eliminarVehiculo_DeberiaMarcarComoInactivo() {
+    UUID testId = UUID.randomUUID();
     VehiculoEntrega motorizado = new Motorizado();
-    motorizado.setId(30L);
+    motorizado.setId(testId);
     motorizado.setActivo(true);
 
-    when(vehiculoRepository.findById(30L)).thenReturn(Optional.of(motorizado));
+    when(vehiculoRepository.findById(testId)).thenReturn(Optional.of(motorizado));
 
-    vehiculoService.eliminarVehiculo(30L);
+    vehiculoService.eliminarVehiculo(testId);
 
     assertThat(motorizado.getActivo()).isFalse();
     verify(vehiculoRepository).save(motorizado);

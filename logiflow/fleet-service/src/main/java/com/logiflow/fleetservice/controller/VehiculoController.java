@@ -4,6 +4,7 @@ package com.logiflow.fleetservice.controller;
 import com.logiflow.fleetservice.dto.request.VehiculoCreateRequest;
 import com.logiflow.fleetservice.dto.request.VehiculoUpdateRequest;
 import com.logiflow.fleetservice.dto.response.VehiculoResponse;
+import com.logiflow.fleetservice.service.VehiculoAsignacionService;
 import com.logiflow.fleetservice.service.VehiculoServiceImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -20,6 +21,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 
 @RestController
@@ -31,6 +33,7 @@ import java.util.List;
 public class VehiculoController {
 
     private final VehiculoServiceImpl vehiculoService;
+    private final VehiculoAsignacionService asignacionService;
 
     @PostMapping
     @PreAuthorize("hasAnyRole('SUPERVISOR', 'GERENTE', 'ADMINISTRADOR_SISTEMA')")
@@ -62,7 +65,7 @@ public class VehiculoController {
     })
     public ResponseEntity<VehiculoResponse> obtenerVehiculoPorId(
             @Parameter(description = "ID del vehículo", required = true)
-            @PathVariable Long id
+            @PathVariable UUID id
     ) {
         log.info("GET /vehiculos/{} - Consultando vehículo", id);
         VehiculoResponse response = vehiculoService.obtenerVehiculoPorId(id);
@@ -91,7 +94,7 @@ public class VehiculoController {
     })
     public ResponseEntity<VehiculoResponse> actualizarVehiculo(
             @Parameter(description = "ID del vehículo", required = true)
-            @PathVariable Long id,
+            @PathVariable UUID id,
             @Valid @RequestBody VehiculoUpdateRequest request
     ) {
         log.info("PATCH /vehiculos/{} - Actualizando vehículo", id);
@@ -102,14 +105,14 @@ public class VehiculoController {
     @PatchMapping("/{id}/estado")
     @PreAuthorize("hasAnyRole('SUPERVISOR', 'GERENTE', 'ADMINISTRADOR_SISTEMA')")
     @Operation(summary = "Cambiar estado del vehículo",
-            description = "Activa o desactiva un vehículo")
+            description = "Cambiar estado de un vehículo")
     @ApiResponse(responseCode = "200", description = "Estado actualizado")
     public ResponseEntity<VehiculoResponse> cambiarEstado(
-            @PathVariable Long id,
-            @RequestParam Boolean activo
+            @PathVariable UUID id,
+            @RequestParam com.logiflow.fleetservice.model.entity.enums.EstadoVehiculo estado
     ) {
-        log.info("PATCH /vehiculos/{}/estado - Cambiando a: {}", id, activo);
-        VehiculoResponse response = vehiculoService.actualizarEstadoVehiculo(id, activo);
+        log.info("PATCH /vehiculos/{}/estado - Cambiando a: {}", id, estado);
+        VehiculoResponse response = vehiculoService.actualizarEstadoVehiculo(id, estado);
         return ResponseEntity.ok(response);
     }
 
@@ -123,10 +126,28 @@ public class VehiculoController {
     })
     public ResponseEntity<Void> eliminarVehiculo(
             @Parameter(description = "ID del vehículo", required = true)
-            @PathVariable Long id
+            @PathVariable UUID id
     ) {
         log.info("DELETE /vehiculos/{} - Eliminando vehículo", id);
         vehiculoService.eliminarVehiculo(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/disponibles-por-peso")
+    @PreAuthorize("hasAnyRole('SUPERVISOR', 'GERENTE', 'ADMINISTRADOR_SISTEMA')")
+    @Operation(summary = "Obtener vehículos disponibles para un peso específico",
+            description = "Retorna vehículos disponibles según capacidad de carga. " +
+                    "Motorizado: hasta 30kg, VehículoLiviano: 31-1000kg, Camión: más de 1000kg")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Lista de vehículos disponibles"),
+            @ApiResponse(responseCode = "400", description = "Peso inválido")
+    })
+    public ResponseEntity<List<VehiculoResponse>> obtenerVehiculosDisponiblesPorPeso(
+            @Parameter(description = "Peso de la carga en kilogramos", required = true)
+            @RequestParam Double peso
+    ) {
+        log.info("GET /vehiculos/disponibles-por-peso?peso={}", peso);
+        List<VehiculoResponse> vehiculos = asignacionService.obtenerVehiculosDisponiblesPorPeso(peso);
+        return ResponseEntity.ok(vehiculos);
     }
 }

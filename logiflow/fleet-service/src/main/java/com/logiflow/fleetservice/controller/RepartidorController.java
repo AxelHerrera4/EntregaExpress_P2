@@ -1,6 +1,7 @@
 package com.logiflow.fleetservice.controller;
 
 
+import com.logiflow.fleetservice.dto.request.CoordenadasUpdateRequest;
 import com.logiflow.fleetservice.dto.request.RepartidorCreateRequest;
 import com.logiflow.fleetservice.dto.request.RepartidorUpdateRequest;
 import com.logiflow.fleetservice.dto.response.RepartidorResponse;
@@ -21,6 +22,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/repartidores")
@@ -58,7 +60,7 @@ public class RepartidorController {
   })
   public ResponseEntity<RepartidorResponse> obtenerRepartidorPorId(
           @Parameter(description = "ID del repartidor", required = true)
-          @PathVariable Long id
+          @PathVariable UUID id
   ) {
     log.info("GET /repartidores/{}", id);
     RepartidorResponse response = repartidorService.obtenerRepartidorPorId(id);
@@ -84,7 +86,7 @@ public class RepartidorController {
           @ApiResponse(responseCode = "404", description = "No encontrado")
   })
   public ResponseEntity<RepartidorResponse> actualizarRepartidor(
-          @PathVariable Long id,
+          @PathVariable UUID id,
           @Valid @RequestBody RepartidorUpdateRequest request
   ) {
     log.info("PATCH /repartidores/{}", id);
@@ -98,7 +100,7 @@ public class RepartidorController {
           description = "Cambia entre DISPONIBLE, EN_RUTA, MANTENIMIENTO, etc.")
   @ApiResponse(responseCode = "200", description = "Estado actualizado")
   public ResponseEntity<RepartidorResponse> cambiarEstado(
-          @PathVariable Long id,
+          @PathVariable UUID id,
           @RequestParam EstadoRepartidor estado
   ) {
     log.info("PATCH /repartidores/{}/estado -> {}", id, estado);
@@ -116,7 +118,7 @@ public class RepartidorController {
           @ApiResponse(responseCode = "400", description = "No se puede eliminar (está en ruta)")
   })
   public ResponseEntity<Void> eliminarRepartidor(
-          @PathVariable Long id
+          @PathVariable UUID id
   ) {
     log.info("DELETE /repartidores/{}", id);
     repartidorService.eliminarRepartidor(id);
@@ -129,8 +131,8 @@ public class RepartidorController {
           description = "Valida licencia y tipo de vehículo antes de asignar")
   @ApiResponse(responseCode = "200", description = "Vehículo asignado")
   public ResponseEntity<Void> asignarVehiculo(
-          @PathVariable Long id,
-          @RequestParam Long vehiculoId
+          @PathVariable UUID id,
+          @RequestParam UUID vehiculoId
   ) {
     log.info("POST /repartidores/{}/asignar-vehiculo/{}", id, vehiculoId);
     repartidorService.asignarVehiculo(id, vehiculoId);
@@ -142,10 +144,29 @@ public class RepartidorController {
   @Operation(summary = "Remover vehículo del repartidor")
   @ApiResponse(responseCode = "204", description = "Vehículo removido")
   public ResponseEntity<Void> removerVehiculo(
-          @PathVariable Long id
+          @PathVariable UUID id
   ) {
     log.info("DELETE /repartidores/{}/vehiculo", id);
     repartidorService.removerVehiculo(id);
     return ResponseEntity.noContent().build();
+  }
+
+  @PostMapping("/{id}/coordenadas")
+  @PreAuthorize("hasAnyRole('REPARTIDOR_MOTORIZADO', 'REPARTIDOR_VEHICULO', 'REPARTIDOR_CAMION', 'SUPERVISOR', 'GERENTE', 'ADMINISTRADOR_SISTEMA')")
+  @Operation(summary = "Actualizar coordenadas GPS del repartidor",
+          description = "Actualiza la última ubicación conocida del repartidor (caché)")
+  @ApiResponses(value = {
+          @ApiResponse(responseCode = "200", description = "Coordenadas actualizadas"),
+          @ApiResponse(responseCode = "404", description = "Repartidor no encontrado"),
+          @ApiResponse(responseCode = "400", description = "Coordenadas inválidas")
+  })
+  public ResponseEntity<Void> actualizarCoordenadas(
+          @PathVariable UUID id,
+          @Valid @RequestBody CoordenadasUpdateRequest request
+  ) {
+    log.info("POST /repartidores/{}/coordenadas - lat: {}, lon: {}", 
+             id, request.getLatitud(), request.getLongitud());
+    repartidorService.actualizarCoordenadas(id, request.getLatitud(), request.getLongitud());
+    return ResponseEntity.ok().build();
   }
 }

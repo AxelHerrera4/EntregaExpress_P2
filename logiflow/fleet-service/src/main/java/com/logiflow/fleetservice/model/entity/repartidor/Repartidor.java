@@ -1,7 +1,7 @@
 package com.logiflow.fleetservice.model.entity.repartidor;
 
-
 import com.logiflow.fleetservice.model.entity.enums.EstadoRepartidor;
+import com.logiflow.fleetservice.model.entity.enums.TipoDocumento;
 import com.logiflow.fleetservice.model.entity.enums.TipoLicencia;
 import com.logiflow.fleetservice.model.entity.vehiculo.*;
 import jakarta.persistence.*;
@@ -16,17 +16,17 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.UUID;
 
 /**
  * Entidad Repartidor - Representa a un conductor de la flota
+ * Según documentación Fleet Service
  */
 @Entity
 @Table(name = "repartidores", indexes = {
         @Index(name = "idx_repartidor_estado", columnList = "estado"),
         @Index(name = "idx_repartidor_zona", columnList = "zona_asignada"),
-        @Index(name = "idx_repartidor_cedula", columnList = "cedula", unique = true)
+        @Index(name = "idx_repartidor_documento", columnList = "documento", unique = true)
 })
 @EntityListeners(AuditingEntityListener.class)
 @Getter
@@ -37,11 +37,9 @@ import java.util.Set;
 public class Repartidor {
 
   @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
-
-  @Column(nullable = false, unique = true, length = 20)
-  private String cedula;
+  @GeneratedValue(strategy = GenerationType.AUTO)
+  @Column(columnDefinition = "uuid")
+  private UUID id;
 
   @Column(nullable = false, length = 100)
   private String nombre;
@@ -49,96 +47,47 @@ public class Repartidor {
   @Column(nullable = false, length = 100)
   private String apellido;
 
-  @Column(unique = true, length = 100)
-  private String email;
+  @Column(nullable = false, unique = true, length = 20)
+  private String documento;
+
+  @Enumerated(EnumType.STRING)
+  @Column(name = "tipo_documento", nullable = false, length = 20)
+  private TipoDocumento tipoDocumento;
 
   @Column(length = 20)
   private String telefono;
 
-  @Column(length = 500)
-  private String direccion;
-
-  @Column(name = "fecha_nacimiento")
-  private LocalDate fechaNacimiento;
-
-  @Column(name = "fecha_contratacion", nullable = false)
-  private LocalDate fechaContratacion;
-
-  // ========== LICENCIA ==========
+  @Column(unique = true, length = 100)
+  private String email;
 
   @Enumerated(EnumType.STRING)
-  @Column(name = "tipo_licencia", nullable = false)
-  private TipoLicencia tipoLicencia;
-
-  @Column(name = "numero_licencia", length = 30)
-  private String numeroLicencia;
-
-  @Column(name = "fecha_vencimiento_licencia")
-  private LocalDate fechaVencimientoLicencia;
-
-  // ========== ESTADO Y DISPONIBILIDAD ==========
-
-  @Enumerated(EnumType.STRING)
-  @Column(nullable = false)
+  @Column(nullable = false, length = 20)
   @Builder.Default
   private EstadoRepartidor estado = EstadoRepartidor.DISPONIBLE;
 
-  @Column(name = "zona_asignada", length = 100)
+  @Column(name = "zona_asignada", length = 50)
   private String zonaAsignada;
 
-  @Embedded
-  @AttributeOverrides({
-          @AttributeOverride(name = "latitud", column = @Column(name = "ubicacion_actual_lat")),
-          @AttributeOverride(name = "longitud", column = @Column(name = "ubicacion_actual_lon"))
-  })
-  private Coordenada ubicacionActual;
-
-  // ========== VEHÍCULO ASIGNADO ==========
+  @Enumerated(EnumType.STRING)
+  @Column(name = "tipo_licencia", nullable = false, length = 10)
+  private TipoLicencia tipoLicencia;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "vehiculo_id")
   private VehiculoEntrega vehiculoAsignado;
 
-  // ========== MÉTRICAS ==========
+  @Embedded
+  @AttributeOverrides({
+          @AttributeOverride(name = "latitud", column = @Column(name = "latitud")),
+          @AttributeOverride(name = "longitud", column = @Column(name = "longitud"))
+  })
+  private Coordenada ubicacionActual;
 
-  @Column(name = "entregas_completadas")
-  @Builder.Default
-  private Integer entregasCompletadas = 0;
+  @Column(name = "ultima_actualizacion_ubicacion")
+  private LocalDateTime ultimaActualizacionUbicacion;
 
-  @Column(name = "entregas_fallidas")
-  @Builder.Default
-  private Integer entregasFallidas = 0;
-
-  @Column(name = "calificacion_promedio")
-  @Builder.Default
-  private Double calificacionPromedio = 0.0;
-
-  @Column(name = "total_calificaciones")
-  @Builder.Default
-  private Integer totalCalificaciones = 0;
-
-  @Column(name = "kilometros_recorridos")
-  @Builder.Default
-  private Double kilometrosRecorridos = 0.0;
-
-  // ========== HORARIOS ==========
-
-  @ElementCollection(fetch = FetchType.EAGER)
-  @CollectionTable(
-          name = "repartidor_horarios",
-          joinColumns = @JoinColumn(name = "repartidor_id")
-  )
-  @Column(name = "dia_semana")
-  @Builder.Default
-  private Set<String> diasLaborales = new HashSet<>();
-
-  @Column(name = "hora_inicio_turno")
-  private String horaInicioTurno;
-
-  @Column(name = "hora_fin_turno")
-  private String horaFinTurno;
-
-  // ========== AUDITORÍA ==========
+  @Column(name = "fecha_contratacion", nullable = false)
+  private LocalDate fechaContratacion;
 
   @Column(name = "activo")
   @Builder.Default
@@ -152,9 +101,6 @@ public class Repartidor {
   @Column(name = "updated_at")
   private LocalDateTime updatedAt;
 
-  @Column(name = "observaciones", length = 1000)
-  private String observaciones;
-
   // ========== MÉTODOS DE NEGOCIO ==========
 
   /**
@@ -164,18 +110,7 @@ public class Repartidor {
     return activo &&
             estado == EstadoRepartidor.DISPONIBLE &&
             vehiculoAsignado != null &&
-            vehiculoAsignado.estaOperativo() &&
-            licenciaVigente();
-  }
-
-  /**
-   * Verifica si la licencia está vigente
-   */
-  public boolean licenciaVigente() {
-    if (fechaVencimientoLicencia == null) {
-      return false;
-    }
-    return fechaVencimientoLicencia.isAfter(LocalDate.now());
+            vehiculoAsignado.estaDisponible();
   }
 
   /**
@@ -216,68 +151,13 @@ public class Repartidor {
   }
 
   /**
-   * Actualiza la ubicación actual del repartidor
+   * Actualiza la ubicación actual del repartidor (caché)
    */
-  public void actualizarUbicacion(Coordenada nuevaUbicacion) {
+  public void actualizarUbicacion(Coordenada nuevaUbicacion, LocalDateTime timestamp) {
     if (nuevaUbicacion != null && nuevaUbicacion.esValida()) {
       this.ubicacionActual = nuevaUbicacion;
-
-      // Actualizar también la ubicación del vehículo
-      if (vehiculoAsignado != null) {
-        vehiculoAsignado.registrarUbicacion(nuevaUbicacion, LocalDateTime.now());
-      }
+      this.ultimaActualizacionUbicacion = timestamp;
     }
-  }
-
-  /**
-   * Registra una entrega completada
-   */
-  public void registrarEntregaCompletada(double distanciaKm) {
-    this.entregasCompletadas++;
-    this.kilometrosRecorridos += distanciaKm;
-
-    if (vehiculoAsignado != null) {
-      vehiculoAsignado.registrarKilometrajeRecorrido(distanciaKm);
-    }
-  }
-
-  /**
-   * Registra una entrega fallida
-   */
-  public void registrarEntregaFallida() {
-    this.entregasFallidas++;
-  }
-
-  /**
-   * Registra una calificación del cliente
-   */
-  public void registrarCalificacion(double calificacion) {
-    if (calificacion < 1.0 || calificacion > 5.0) {
-      throw new IllegalArgumentException("La calificación debe estar entre 1 y 5");
-    }
-
-    double sumaTotal = (calificacionPromedio * totalCalificaciones) + calificacion;
-    totalCalificaciones++;
-    calificacionPromedio = sumaTotal / totalCalificaciones;
-  }
-
-  /**
-   * Calcula la tasa de éxito del repartidor
-   */
-  public double getTasaExito() {
-    int totalEntregas = entregasCompletadas + entregasFallidas;
-    if (totalEntregas == 0) {
-      return 0.0;
-    }
-    return (entregasCompletadas * 100.0) / totalEntregas;
-  }
-
-  /**
-   * Verifica si el repartidor está en su horario laboral
-   */
-  public boolean estaEnHorarioLaboral() {
-    // Implementación simplificada
-    return activo && !diasLaborales.isEmpty();
   }
 
   /**

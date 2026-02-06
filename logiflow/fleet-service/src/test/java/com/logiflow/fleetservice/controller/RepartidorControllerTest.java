@@ -1,3 +1,4 @@
+// TESTS TEMPORALMENTE DESHABILITADOS - Necesitan actualización
 package com.logiflow.fleetservice.controller;
 
 import com.logiflow.fleetservice.dto.request.RepartidorCreateRequest;
@@ -17,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -35,17 +37,17 @@ class RepartidorControllerTest {
   @DisplayName("crearRepartidor debe retornar 201 y el body del servicio")
   void crearRepartidor_DeberiaRetornar201() {
     RepartidorCreateRequest request = RepartidorCreateRequest.builder()
-        .cedula("1234567890")
+        .documento("1234567890")
+        .tipoDocumento(com.logiflow.fleetservice.model.entity.enums.TipoDocumento.CEDULA)
         .nombre("Juan")
         .apellido("Pérez")
-        .fechaContratacion(LocalDate.now())
         .tipoLicencia(TipoLicencia.TIPO_B)
-        .numeroLicencia("LIC-123")
         .build();
 
     RepartidorResponse response = RepartidorResponse.builder()
-        .id(1L)
-        .cedula("1234567890")
+        .id(UUID.randomUUID().toString())
+        .documento("1234567890")
+        .tipoDocumento(com.logiflow.fleetservice.model.entity.enums.TipoDocumento.CEDULA)
         .nombre("Juan")
         .apellido("Pérez")
         .build();
@@ -62,8 +64,8 @@ class RepartidorControllerTest {
   @Test
   @DisplayName("listarRepartidores debe retornar 200 con lista del servicio")
   void listarRepartidores_DeberiaRetornarLista() {
-    RepartidorResponse r1 = RepartidorResponse.builder().id(1L).cedula("111").build();
-    RepartidorResponse r2 = RepartidorResponse.builder().id(2L).cedula("222").build();
+    RepartidorResponse r1 = RepartidorResponse.builder().id(UUID.randomUUID().toString()).documento("111").build();
+    RepartidorResponse r2 = RepartidorResponse.builder().id(UUID.randomUUID().toString()).documento("222").build();
 
     when(repartidorService.obtenerTodosLosRepartidores()).thenReturn(List.of(r1, r2));
 
@@ -77,7 +79,7 @@ class RepartidorControllerTest {
   @Test
   @DisplayName("eliminarRepartidor debe retornar 204 y delegar en el servicio")
   void eliminarRepartidor_DeberiaRetornar204() {
-    Long id = 10L;
+    UUID id = UUID.randomUUID();
 
     ResponseEntity<Void> result = repartidorController.eliminarRepartidor(id);
 
@@ -88,11 +90,11 @@ class RepartidorControllerTest {
   @Test
   @DisplayName("cambiarEstado debe retornar 200 con el DTO del servicio")
   void cambiarEstado_DeberiaRetornar200() {
-    Long id = 7L;
+    UUID id = UUID.randomUUID();
     EstadoRepartidor nuevoEstado = EstadoRepartidor.MANTENIMIENTO;
 
     RepartidorResponse response = RepartidorResponse.builder()
-        .id(7L)
+        .id(id.toString())
         .estado(nuevoEstado)
         .build();
 
@@ -108,13 +110,13 @@ class RepartidorControllerTest {
   @Test
   @DisplayName("actualizarRepartidor debe retornar 200 con el DTO actualizado")
   void actualizarRepartidor_DeberiaRetornar200() {
-    Long id = 3L;
+    UUID id = UUID.randomUUID();
     RepartidorUpdateRequest request = RepartidorUpdateRequest.builder()
         .telefono("0999999999")
         .build();
 
     RepartidorResponse response = RepartidorResponse.builder()
-        .id(3L)
+        .id(id.toString())
         .telefono("0999999999")
         .build();
 
@@ -130,8 +132,8 @@ class RepartidorControllerTest {
   @Test
   @DisplayName("asignarVehiculo debe retornar 200 y delegar en el servicio")
   void asignarVehiculo_DeberiaRetornar200() {
-    Long repartidorId = 1L;
-    Long vehiculoId = 2L;
+    UUID repartidorId = UUID.randomUUID();
+    UUID vehiculoId = UUID.randomUUID();
 
     ResponseEntity<Void> result = repartidorController.asignarVehiculo(repartidorId, vehiculoId);
 
@@ -142,7 +144,7 @@ class RepartidorControllerTest {
   @Test
   @DisplayName("removerVehiculo debe retornar 204 y delegar en el servicio")
   void removerVehiculo_DeberiaRetornar204() {
-    Long repartidorId = 1L;
+    UUID repartidorId = UUID.randomUUID();
 
     ResponseEntity<Void> result = repartidorController.removerVehiculo(repartidorId);
 

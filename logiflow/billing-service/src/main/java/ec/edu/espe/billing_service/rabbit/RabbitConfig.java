@@ -68,14 +68,12 @@ public class RabbitConfig {
     // Converter para JSON con soporte para LocalDateTime
     @Bean
     public MessageConverter jsonMessageConverter() {
-        Jackson2JsonMessageConverter converter = new Jackson2JsonMessageConverter();
-        
         // Configurar ObjectMapper para manejar LocalDateTime
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         
-        converter.setObjectMapper(objectMapper);
-        return converter;
+        // Pasar ObjectMapper al constructor (setObjectMapper() fue removido en Spring AMQP 3.x)
+        return new Jackson2JsonMessageConverter(objectMapper);
     }
 }

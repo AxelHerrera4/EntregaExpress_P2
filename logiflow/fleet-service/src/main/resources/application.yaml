@@ -1,4 +1,4 @@
-server:
+/*server:
   port: 8083
   servlet:
     context-path: /api
@@ -36,6 +36,21 @@ spring:
     locations: classpath:db/migration
     validate-on-migrate: true
 
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: admin
+    password: admin
+    listener:
+      simple:
+        acknowledge-mode: auto
+        prefetch: 1
+        retry:
+          enabled: true
+          initial-interval: 3000
+          max-attempts: 3
+          multiplier: 2
+
 jwt:
   secret: MiSuperClaveSecretaMuyLarga123456789
   expiration: 3600000 # 1 hour in milliseconds
@@ -46,3 +61,23 @@ springdoc:
     path: /v3/api-docs
   swagger-ui:
     path: /swagger-ui.html
+
+# Configuración personalizada de RabbitMQ
+rabbitmq:
+  exchange:
+    pedidos: pedidos.exchange
+    fleet: fleet.exchange
+    tracking: exchange-tracking
+  queue:
+    pedido-creado: fleet.pedido.creado
+    pedido-estado: fleet.pedido.estado.actualizado
+    pedido-cancelado: fleet.pedido.cancelado
+    tracking-ubicacion: fleet.tracking.ubicacion
+  routing-key:
+    pedido-creado: pedido.creado
+    pedido-estado: pedido.estado.actualizado
+    pedido-cancelado: pedido.cancelado
+    vehiculo-estado: vehiculo.estado.actualizado
+    repartidor-ubicacion: repartidor.ubicacion.actualizada
+    tracking-ubicacion: repartidor.ubicacion
+

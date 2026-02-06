@@ -88,6 +88,31 @@ services:
       retries: 5
 
   # =================================
+  # MESSAGE BROKER
+  # =================================
+
+  # RabbitMQ Message Broker
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: logiflow-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin
+    ports:
+      - "5672:5672"   # AMQP protocol
+      - "15672:15672" # Management UI
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - logiflow-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # =================================
   # MICROSERVICES
   # =================================
 
@@ -150,11 +175,17 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://fleet-db:5432/fleet_db
       - SPRING_DATASOURCE_USERNAME=fleet_user
       - SPRING_DATASOURCE_PASSWORD=fleet_password
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_RABBITMQ_PORT=5672
+      - SPRING_RABBITMQ_USERNAME=admin
+      - SPRING_RABBITMQ_PASSWORD=admin
       - JWT_SECRET=MiSuperClaveSecretaMuyLarga123456789
       - JWT_ISSUER=auth-service
       - JWT_EXPIRATION=3600000
     depends_on:
       fleet-db:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     networks:
       - logiflow-network
@@ -173,6 +204,10 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://pedido-db:5432/pedidos_db
       - SPRING_DATASOURCE_USERNAME=pedido_user
       - SPRING_DATASOURCE_PASSWORD=pedido_pass
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_RABBITMQ_PORT=5672
+      - SPRING_RABBITMQ_USERNAME=admin
+      - SPRING_RABBITMQ_PASSWORD=admin
       - BILLING_SERVICE_URL=http://billing-service:8082
       - FLEET_SERVICE_URL=http://fleet-service:8083
       - BILLING_INTEGRATION_ENABLED=true
@@ -182,6 +217,8 @@ services:
       - JWT_EXPIRATION=3600000
     depends_on:
       pedido-db:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     networks:
       - logiflow-network
@@ -252,3 +289,5 @@ volumes:
     name: logiflow-fleet-data
   pedido_data:
     name: logiflow-pedido-data
+  rabbitmq_data:
+    name: logiflow-rabbitmq-data

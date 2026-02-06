@@ -1,68 +1,85 @@
 package com.logiflow.fleetservice.model.entity.vehiculo;
 
+import com.logiflow.fleetservice.dto.InformacionRuta;
+import com.logiflow.fleetservice.model.entity.enums.TipoCarroceria;
+import com.logiflow.fleetservice.model.entity.enums.TipoEntrega;
 import com.logiflow.fleetservice.model.entity.enums.TipoVehiculo;
+import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
-import jakarta.persistence.PostLoad;
-import jakarta.persistence.PostPersist;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.EnumType;
 
 /**
- * Vehículo tipo Vehículo Liviano - Para entregas intermunicipales y suburbanas
+ * VehiculoLiviano - Para entregas intermunicipales
+ * Según documentación Fleet Service
  */
 @Entity
 @DiscriminatorValue("VEHICULO_LIVIANO")
 public class VehiculoLiviano extends VehiculoEntrega {
 
-  private static final double VELOCIDAD_PROMEDIO = 60.0; // km/h en carretera
-  private static final double RANGO_MAXIMO = 300.0; // km
-  private static final double COSTO_BASE_POR_KM = 0.80; // USD
+  @Column(name = "numero_puertas")
+  private Integer numeroPuertas;
 
-  @PostLoad
-  @PostPersist
-  private void initTipo() {
-    setTipo(TipoVehiculo.VEHICULO_LIVIANO);
-  }
+  @Enumerated(EnumType.STRING)
+  @Column(name = "tipo_carroceria", length = 20)
+  private TipoCarroceria tipoCarroceria; // SEDAN, SUV, PICKUP
 
-  @Override
-  protected double calcularCostoBase(double distanciaKm) {
-    return distanciaKm * COSTO_BASE_POR_KM;
-  }
-
-  @Override
-  protected double calcularCostoAdicional(double distanciaKm) {
-    // Recargo por peajes y vías interprovinciales
-    double recargoDistancia = distanciaKm > 100 ? distanciaKm * 0.15 : distanciaKm * 0.08;
-    return recargoDistancia + 2.0; // $2 fijo por peajes estimados
-  }
-
-  @Override
-  protected double calcularCostoMantenimiento(double distanciaKm) {
-    // Mayor costo de mantenimiento que motos
-    return distanciaKm * 0.08;
-  }
-
-  @Override
-  public double getVelocidadPromedioKmH() {
-    return VELOCIDAD_PROMEDIO;
-  }
-
-  @Override
-  public double getRangoMaximoKm() {
-    return RANGO_MAXIMO;
-  }
-
-  @Override
-  public boolean puedeOperarEnZona(String tipoZona) {
-    // Operan en zonas urbanas e intermunicipales
-    return "URBANA".equalsIgnoreCase(tipoZona) ||
-            "INTERMUNICIPAL".equalsIgnoreCase(tipoZona) ||
-            "SUBURBANA".equalsIgnoreCase(tipoZona);
+  /**
+   * Constructor con parámetros básicos
+   */
+  public VehiculoLiviano(String placa, String marca, String modelo, TipoCarroceria tipo) {
+    super(placa, marca, modelo);
+    this.tipoCarroceria = tipo;
+    this.capacidadCarga = tipo == TipoCarroceria.PICKUP ? 1000.0 : 500.0;
   }
 
   /**
-   * Capacidad para transportar paquetes medianos
+   * Constructor vacío para JPA
    */
-  public int getCantidadMaximaPaquetes() {
-    return 30;
+  public VehiculoLiviano() {
+    super();
+  }
+
+  @Override
+  public TipoVehiculo getTipo() {
+    return TipoVehiculo.VEHICULO_LIVIANO;
+  }
+
+  @Override
+  public Double getCapacidadMaxima() {
+    return this.capacidadCarga;
+  }
+
+  @Override
+  public boolean esAptoParaEntrega(TipoEntrega tipoEntrega) {
+    return tipoEntrega == TipoEntrega.INTERMUNICIPAL;
+  }
+
+  @Override
+  public InformacionRuta getInformacionRuta() {
+    return new InformacionRuta(
+            this.getId() != null ? this.getId().toString() : null,
+            TipoVehiculo.VEHICULO_LIVIANO,
+            this.capacidadCarga,
+            false // no puede usar ciclovías
+    );
+  }
+
+  // Getters y Setters específicos
+  public Integer getNumeroPuertas() {
+    return numeroPuertas;
+  }
+
+  public void setNumeroPuertas(Integer numeroPuertas) {
+    this.numeroPuertas = numeroPuertas;
+  }
+
+  public TipoCarroceria getTipoCarroceria() {
+    return tipoCarroceria;
+  }
+
+  public void setTipoCarroceria(TipoCarroceria tipoCarroceria) {
+    this.tipoCarroceria = tipoCarroceria;
   }
 }

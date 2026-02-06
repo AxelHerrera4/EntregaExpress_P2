@@ -1,11 +1,13 @@
 package com.logiflow.fleetservice.dto.request;
 
+import com.logiflow.fleetservice.model.entity.enums.TipoCarroceria;
 import com.logiflow.fleetservice.model.entity.enums.TipoVehiculo;
 import jakarta.validation.constraints.*;
 import lombok.*;
 
-// ========== VEHÍCULO DTOs ==========
-
+/**
+ * Request para crear vehículo según documentación Fleet Service
+ */
 @Data
 @Builder
 @NoArgsConstructor
@@ -29,18 +31,23 @@ public class VehiculoCreateRequest {
 
   @NotNull(message = "El año es obligatorio")
   @Min(value = 1990, message = "El año debe ser mayor a 1990")
-  @Max(value = 2025, message = "El año no puede ser mayor a 2025")
+  @Max(value = 2100, message = "El año no puede ser mayor a 2100")
   private Integer anio;
 
   @Positive(message = "La capacidad de carga debe ser positiva")
-  private Double capacidadCargaKg;
+  private Double capacidadCarga;
 
-  @Positive(message = "El consumo de combustible debe ser positivo")
-  private Double consumoCombustibleKmPorLitro;
+  // Campos específicos para Motorizado
+  private Integer cilindraje;
+  private Boolean tieneCajones;
+
+  // Campos específicos para VehiculoLiviano
+  private Integer numeroPuertas;
+  private TipoCarroceria tipoCarroceria;
 
   // Campos específicos para Camion
   @Min(value = 2, message = "El número de ejes debe ser al menos 2")
   private Integer numeroEjes;
 
-  private Boolean requiereRampa;
+  private Double capacidadVolumen;
 }

@@ -1,6 +1,5 @@
 package com.logiflow.fleetservice.repository;
 
-
 import com.logiflow.fleetservice.model.entity.enums.EstadoRepartidor;
 import com.logiflow.fleetservice.model.entity.repartidor.Repartidor;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -10,11 +9,12 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
-public interface RepartidorRepository extends JpaRepository<Repartidor, Long> {
+public interface RepartidorRepository extends JpaRepository<Repartidor, UUID> {
 
-  Optional<Repartidor> findByCedula(String cedula);
+  Optional<Repartidor> findByDocumento(String documento);
 
   Optional<Repartidor> findByEmail(String email);
 
@@ -30,7 +30,7 @@ public interface RepartidorRepository extends JpaRepository<Repartidor, Long> {
   @Query("SELECT r FROM Repartidor r WHERE r.estado = 'DISPONIBLE' " +
           "AND r.activo = true " +
           "AND r.vehiculoAsignado IS NOT NULL " +
-          "AND r.vehiculoAsignado.activo = true")
+          "AND r.vehiculoAsignado.estado = 'ACTIVO'")
   List<Repartidor> findRepartidoresDisponiblesConVehiculo();
 
   @Query("SELECT r FROM Repartidor r WHERE r.zonaAsignada = :zona " +
@@ -48,21 +48,7 @@ public interface RepartidorRepository extends JpaRepository<Repartidor, Long> {
   @Query("SELECT COUNT(r) FROM Repartidor r WHERE r.estado = :estado")
   long countByEstado(@Param("estado") EstadoRepartidor estado);
 
-  @Query("SELECT r FROM Repartidor r WHERE r.calificacionPromedio >= :minCalificacion " +
-          "AND r.activo = true ORDER BY r.calificacionPromedio DESC")
-  List<Repartidor> findTopRepartidores(@Param("minCalificacion") Double minCalificacion);
-
-  boolean existsByCedula(String cedula);
+  boolean existsByDocumento(String documento);
 
   boolean existsByEmail(String email);
-
-  // Métodos adicionales para estadísticas
-  @Query("SELECT COALESCE(SUM(r.entregasCompletadas), 0) FROM Repartidor r WHERE r.activo = true")
-  Long sumEntregasCompletadas();
-
-  @Query("SELECT COALESCE(SUM(r.entregasFallidas), 0) FROM Repartidor r WHERE r.activo = true")
-  Long sumEntregasFallidas();
-
-  @Query("SELECT AVG(r.calificacionPromedio) FROM Repartidor r WHERE r.activo = true AND r.totalCalificaciones > 0")
-  Double promedioCalificacionGeneral();
 }

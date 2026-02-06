@@ -1,11 +1,9 @@
 package com.logiflow.fleetservice.model.entity.enums;
 
 public enum EstadoRepartidor {
-  DISPONIBLE("Disponible para asignaciones"),
-  EN_RUTA("En ruta realizando una entrega"),
-  MANTENIMIENTO("Vehículo en mantenimiento"),
-  INACTIVO("Repartidor inactivo temporalmente"),
-  DESCANSO("En período de descanso");
+  DISPONIBLE("Repartidor listo para recibir asignaciones"),
+  EN_RUTA("Repartidor actualmente realizando una entrega"),
+  MANTENIMIENTO("Repartidor no disponible temporalmente");
 
   private final String descripcion;
 

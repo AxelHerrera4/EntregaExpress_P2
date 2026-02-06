@@ -5,6 +5,7 @@ import com.logiflow.fleetservice.dto.mapper.RepartidorMapper;
 import com.logiflow.fleetservice.dto.request.RepartidorCreateRequest;
 import com.logiflow.fleetservice.dto.request.RepartidorUpdateRequest;
 import com.logiflow.fleetservice.dto.response.RepartidorResponse;
+import com.logiflow.fleetservice.event.RepartidorUbicacionActualizadaEvent;
 import com.logiflow.fleetservice.exception.BusinessException;
 import com.logiflow.fleetservice.exception.DuplicateResourceException;
 import com.logiflow.fleetservice.exception.ResourceNotFoundException;
@@ -14,13 +15,16 @@ import com.logiflow.fleetservice.model.entity.vehiculo.Coordenada;
 import com.logiflow.fleetservice.model.entity.vehiculo.VehiculoEntrega;
 import com.logiflow.fleetservice.repository.RepartidorRepository;
 import com.logiflow.fleetservice.repository.VehiculoRepository;
+import com.logiflow.fleetservice.service.messaging.FleetEventPublisher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -31,13 +35,14 @@ public class RepartidorServiceImpl {
   private final RepartidorRepository repartidorRepository;
   private final VehiculoRepository vehiculoRepository;
   private final RepartidorMapper repartidorMapper;
+  private final FleetEventPublisher eventPublisher;
 
   @Transactional
   public RepartidorResponse crearRepartidor(RepartidorCreateRequest request) {
-    log.info("Creando repartidor con cédula: {}", request.getCedula());
+    log.info("Creando repartidor con documento: {}", request.getDocumento());
 
-    if (repartidorRepository.existsByCedula(request.getCedula())) {
-      throw new DuplicateResourceException("Ya existe un repartidor con cédula: " + request.getCedula());
+    if (repartidorRepository.existsByDocumento(request.getDocumento())) {
+      throw new DuplicateResourceException("Ya existe un repartidor con documento: " + request.getDocumento());
     }
 
     if (request.getEmail() != null && repartidorRepository.existsByEmail(request.getEmail())) {
@@ -49,6 +54,11 @@ public class RepartidorServiceImpl {
     if (request.getVehiculoId() != null) {
       VehiculoEntrega vehiculo = vehiculoRepository.findById(request.getVehiculoId())
               .orElseThrow(() -> new ResourceNotFoundException("Vehículo no encontrado"));
+      
+      if (vehiculo.getEstado() != com.logiflow.fleetservice.model.entity.enums.EstadoVehiculo.ACTIVO) {
+        throw new BusinessException("No se puede asignar un vehículo que no está activo");
+      }
+      
       repartidor.asignarVehiculo(vehiculo);
     }
 
@@ -58,7 +68,7 @@ public class RepartidorServiceImpl {
     return repartidorMapper.toResponse(saved);
   }
 
-  public RepartidorResponse obtenerRepartidorPorId(Long id) {
+  public RepartidorResponse obtenerRepartidorPorId(UUID id) {
     Repartidor repartidor = buscarRepartidorPorId(id);
     return repartidorMapper.toResponse(repartidor);
   }
@@ -71,7 +81,7 @@ public class RepartidorServiceImpl {
   }
 
   @Transactional
-  public RepartidorResponse actualizarRepartidor(Long id, RepartidorUpdateRequest request) {
+  public RepartidorResponse actualizarRepartidor(UUID id, RepartidorUpdateRequest request) {
     log.info("Actualizando repartidor ID: {}", id);
 
     Repartidor repartidor = buscarRepartidorPorId(id);
@@ -84,36 +94,26 @@ public class RepartidorServiceImpl {
     }
 
     if (request.getTelefono() != null) repartidor.setTelefono(request.getTelefono());
-    if (request.getDireccion() != null) repartidor.setDireccion(request.getDireccion());
     if (request.getZonaAsignada() != null) repartidor.setZonaAsignada(request.getZonaAsignada());
     if (request.getActivo() != null) repartidor.setActivo(request.getActivo());
-    if (request.getObservaciones() != null) repartidor.setObservaciones(request.getObservaciones());
-
-    if (request.getEstado() != null) {
-      repartidor.cambiarEstado(request.getEstado());
-    }
 
     if (request.getVehiculoId() != null) {
       VehiculoEntrega vehiculo = vehiculoRepository.findById(request.getVehiculoId())
               .orElseThrow(() -> new ResourceNotFoundException("Vehículo no encontrado"));
+      
+      if (vehiculo.getEstado() != com.logiflow.fleetservice.model.entity.enums.EstadoVehiculo.ACTIVO) {
+        throw new BusinessException("No se puede asignar un vehículo que no está activo");
+      }
+      
       repartidor.asignarVehiculo(vehiculo);
     }
-
-    if (request.getLatitud() != null && request.getLongitud() != null) {
-      Coordenada coordenada = new Coordenada(request.getLatitud(), request.getLongitud());
-      repartidor.actualizarUbicacion(coordenada);
-    }
-
-    if (request.getDiasLaborales() != null) repartidor.setDiasLaborales(request.getDiasLaborales());
-    if (request.getHoraInicioTurno() != null) repartidor.setHoraInicioTurno(request.getHoraInicioTurno());
-    if (request.getHoraFinTurno() != null) repartidor.setHoraFinTurno(request.getHoraFinTurno());
 
     Repartidor updated = repartidorRepository.save(repartidor);
     return repartidorMapper.toResponse(updated);
   }
 
   @Transactional
-  public RepartidorResponse cambiarEstadoRepartidor(Long id, EstadoRepartidor nuevoEstado) {
+  public RepartidorResponse cambiarEstadoRepartidor(UUID id, EstadoRepartidor nuevoEstado) {
     log.info("Cambiando estado del repartidor {} a: {}", id, nuevoEstado);
 
     Repartidor repartidor = buscarRepartidorPorId(id);
@@ -124,7 +124,7 @@ public class RepartidorServiceImpl {
   }
 
   @Transactional
-  public void eliminarRepartidor(Long id) {
+  public void eliminarRepartidor(UUID id) {
     log.info("Eliminando repartidor ID: {}", id);
 
     Repartidor repartidor = buscarRepartidorPorId(id);
@@ -134,20 +134,20 @@ public class RepartidorServiceImpl {
     }
 
     repartidor.setActivo(false);
-    repartidor.cambiarEstado(EstadoRepartidor.INACTIVO);
+    repartidor.cambiarEstado(EstadoRepartidor.MANTENIMIENTO);
     repartidorRepository.save(repartidor);
   }
 
   @Transactional
-  public void asignarVehiculo(Long repartidorId, Long vehiculoId) {
+  public void asignarVehiculo(UUID repartidorId, UUID vehiculoId) {
     log.info("Asignando vehículo {} al repartidor {}", vehiculoId, repartidorId);
 
     Repartidor repartidor = buscarRepartidorPorId(repartidorId);
     VehiculoEntrega vehiculo = vehiculoRepository.findById(vehiculoId)
             .orElseThrow(() -> new ResourceNotFoundException("Vehículo no encontrado"));
 
-    if (!vehiculo.getActivo()) {
-      throw new BusinessException("No se puede asignar un vehículo inactivo");
+    if (vehiculo.getEstado() != com.logiflow.fleetservice.model.entity.enums.EstadoVehiculo.ACTIVO) {
+      throw new BusinessException("No se puede asignar un vehículo que no está activo");
     }
 
     repartidor.asignarVehiculo(vehiculo);
@@ -157,7 +157,7 @@ public class RepartidorServiceImpl {
   }
 
   @Transactional
-  public void removerVehiculo(Long repartidorId) {
+  public void removerVehiculo(UUID repartidorId) {
     log.info("Removiendo vehículo del repartidor {}", repartidorId);
 
     Repartidor repartidor = buscarRepartidorPorId(repartidorId);
@@ -170,7 +170,37 @@ public class RepartidorServiceImpl {
     repartidorRepository.save(repartidor);
   }
 
-  private Repartidor buscarRepartidorPorId(Long id) {
+  @Transactional
+  public void actualizarCoordenadas(UUID repartidorId, Double latitud, Double longitud) {
+    log.info("Actualizando coordenadas del repartidor {} - lat: {}, lon: {}", repartidorId, latitud, longitud);
+
+    Repartidor repartidor = buscarRepartidorPorId(repartidorId);
+
+    // Actualizar coordenadas
+    Coordenada nuevaUbicacion = new Coordenada(latitud, longitud);
+    repartidor.setUbicacionActual(nuevaUbicacion);
+
+    Repartidor updated = repartidorRepository.save(repartidor);
+    
+    // Publicar evento de actualización de ubicación
+    RepartidorUbicacionActualizadaEvent event = RepartidorUbicacionActualizadaEvent.builder()
+        .repartidorId(updated.getId().toString())
+        .nombreCompleto(updated.getNombre() + " " + updated.getApellido())
+        .latitud(latitud)
+        .longitud(longitud)
+        .zona(updated.getZonaAsignada())
+        .estado(updated.getEstado().name())
+        .fechaActualizacion(LocalDateTime.now())
+        .build();
+    
+    eventPublisher.publishRepartidorUbicacionActualizada(event);
+    
+    log.info("Coordenadas actualizadas exitosamente para repartidor {}", repartidorId);
+  }
+
+  // ========== MÉTODOS PRIVADOS ==========
+
+  private Repartidor buscarRepartidorPorId(UUID id) {
     return repartidorRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Repartidor no encontrado con ID: " + id));
   }

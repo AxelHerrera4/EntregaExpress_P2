@@ -131,12 +131,14 @@ class DireccionTest {
     @Test
     @DisplayName("Debería crear direccion con all args constructor")
     void deberiaCrearDireccionConAllArgsConstructor() {
-        Direccion direccionCompleta = new Direccion("Calle Test", "789", "Cuenca", "Azuay");
+        Direccion direccionCompleta = new Direccion("Calle Test", "789", "Cuenca", "Azuay", -2.9001, -79.0059);
 
         assertNotNull(direccionCompleta);
         assertEquals("Calle Test", direccionCompleta.getCalle());
         assertEquals("789", direccionCompleta.getNumero());
         assertEquals("Cuenca", direccionCompleta.getCiudad());
         assertEquals("Azuay", direccionCompleta.getProvincia());
+        assertEquals(-2.9001, direccionCompleta.getLatitud());
+        assertEquals(-79.0059, direccionCompleta.getLongitud());
     }
 }

@@ -67,7 +67,6 @@ public class AsignacionService {
 
         Repartidor repartidor = repartidorSeleccionado.get();
         VehiculoEntrega vehiculo = repartidor.getVehiculoAsignado();
-
         // Cambiar estado del repartidor a EN_RUTA
         repartidor.setEstado(EstadoRepartidor.EN_RUTA);
         repartidorRepository.save(repartidor);
@@ -112,37 +111,21 @@ public class AsignacionService {
 
     /**
      * Selecciona el mejor repartidor disponible
-     * Criterios:
-     * - Debe tener vehículo asignado y activo
-     * - El vehículo debe soportar el peso del pedido
-     * - Prioriza por mejor calificación
-     * - Prioriza por más experiencia (entregas completadas)
+     * NOTA: Esta funcionalidad está fuera del scope de la Fase 1 según documentación
+     * Requiere métricas y calificaciones no implementadas en el modelo actual
      */
     private Optional<Repartidor> seleccionarMejorRepartidor(
             List<Repartidor> repartidores,
             Double pesoRequerido
     ) {
+        // Implementación simplificada temporal
         return repartidores.stream()
                 // Filtrar: debe tener vehículo asignado y activo
                 .filter(r -> r.getVehiculoAsignado() != null)
-                .filter(r -> r.getVehiculoAsignado().getActivo())
+                .filter(r -> r.getVehiculoAsignado().getEstado() == com.logiflow.fleetservice.model.entity.enums.EstadoVehiculo.ACTIVO)
                 // Filtrar: el vehículo debe soportar el peso
-                .filter(r -> r.getVehiculoAsignado().getCapacidadCargaKg() >= pesoRequerido)
-                // Ordenar por calificación (descendente)
-                .sorted((r1, r2) -> {
-                    // Primero por calificación
-                    int compareCalificacion = Double.compare(
-                            r2.getCalificacionPromedio() != null ? r2.getCalificacionPromedio() : 0.0,
-                            r1.getCalificacionPromedio() != null ? r1.getCalificacionPromedio() : 0.0
-                    );
-                    if (compareCalificacion != 0) return compareCalificacion;
-
-                    // Luego por experiencia (entregas completadas)
-                    return Integer.compare(
-                            r2.getEntregasCompletadas() != null ? r2.getEntregasCompletadas() : 0,
-                            r1.getEntregasCompletadas() != null ? r1.getEntregasCompletadas() : 0
-                    );
-                })
+                .filter(r -> r.getVehiculoAsignado().getCapacidadCarga() >= pesoRequerido)
+                // Retornar el primero disponible (sin métricas de calificación)
                 .findFirst();
     }
 }

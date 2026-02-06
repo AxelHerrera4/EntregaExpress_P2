@@ -1,46 +1,68 @@
 package com.logiflow.fleetservice.dto.response;
-import com.logiflow.fleetservice.dto.CoordenadaDTO;
+
 import com.logiflow.fleetservice.model.entity.enums.EstadoRepartidor;
+import com.logiflow.fleetservice.model.entity.enums.TipoDocumento;
 import com.logiflow.fleetservice.model.entity.enums.TipoLicencia;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Set;
-
-
+/**
+ * Response de Repartidor según documentación Fleet Service
+ */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class RepartidorResponse {
-  private Long id;
-  private String cedula;
+  
+  private String id;
   private String nombre;
   private String apellido;
-  private String nombreCompleto;
-  private String email;
+  private String documento;
+  private TipoDocumento tipoDocumento;
   private String telefono;
-  private String direccion;
-  private String fechaNacimiento;
-  private String fechaContratacion;
-  private TipoLicencia tipoLicencia;
-  private String numeroLicencia;
-  private String fechaVencimientoLicencia;
-  private Boolean licenciaVigente;
+  private String email;
   private EstadoRepartidor estado;
   private String zonaAsignada;
-  private CoordenadaDTO ubicacionActual;
-  private VehiculoResponse vehiculoAsignado;
-  private Integer entregasCompletadas;
-  private Integer entregasFallidas;
-  private Double calificacionPromedio;
-  private Double tasaExito;
-  private Double kilometrosRecorridos;
-  private Set<String> diasLaborales;
-  private String horaInicioTurno;
-  private String horaFinTurno;
+  private TipoLicencia tipoLicencia;
+  private String vehiculoId;
+  
+  // Objeto anidado con información del vehículo
+  private VehiculoInfo vehiculo;
+  
+  // Ubicación actual (caché)
+  private UbicacionInfo ubicacionActual;
+  
+  private String fechaContratacion;
   private Boolean activo;
-  private Boolean disponible;
+  private String createdAt;
+  private String updatedAt;
+
+  /**
+   * Información básica del vehículo asignado
+   */
+  @Data
+  @Builder
+  @NoArgsConstructor
+  @AllArgsConstructor
+  public static class VehiculoInfo {
+    private String placa;
+    private String tipo;
+    private String estado;
+  }
+
+  /**
+   * Información de ubicación del repartidor (caché)
+   */
+  @Data
+  @Builder
+  @NoArgsConstructor
+  @AllArgsConstructor
+  public static class UbicacionInfo {
+    private Double latitud;
+    private Double longitud;
+    private String ultimaActualizacion;
+  }
 }
