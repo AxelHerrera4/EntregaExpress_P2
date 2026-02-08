@@ -1,9 +1,11 @@
+version: '3.8'
+
 services:
   # =================================
-  # DATABASES
+  # INFRAESTRUCTURA (Bases de Datos & RabbitMQ)
   # =================================
 
-  # Auth Service Database
+  # Auth DB
   authservice-db:
     image: postgres:16-alpine
     container_name: logiflow-authservice-db
@@ -20,11 +22,11 @@ services:
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U admin -d jwt_demo"]
-      interval: 30s
-      timeout: 10s
+      interval: 10s
+      timeout: 5s
       retries: 5
 
-  # Billing Service Database
+  # Billing DB
   billing-db:
     image: postgres:16-alpine
     container_name: logiflow-billing-db
@@ -41,11 +43,11 @@ services:
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U billing -d db_billing_users"]
-      interval: 30s
-      timeout: 10s
+      interval: 10s
+      timeout: 5s
       retries: 5
 
-  # Fleet Service Database
+  # Fleet DB
   fleet-db:
     image: postgres:16-alpine
     container_name: logiflow-fleet-db
@@ -62,11 +64,11 @@ services:
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U fleet_user -d fleet_db"]
-      interval: 30s
-      timeout: 10s
+      interval: 10s
+      timeout: 5s
       retries: 5
 
-  # Pedido Service Database
+  # Pedido DB
   pedido-db:
     image: postgres:16-alpine
     container_name: logiflow-pedido-db
@@ -83,15 +85,11 @@ services:
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U pedido_user -d pedidos_db"]
-      interval: 30s
-      timeout: 10s
+      interval: 10s
+      timeout: 5s
       retries: 5
 
-  # =================================
-  # MESSAGE BROKER
-  # =================================
-
-  # RabbitMQ Message Broker
+  # RabbitMQ Broker
   rabbitmq:
     image: rabbitmq:3.13-management-alpine
     container_name: logiflow-rabbitmq
@@ -99,8 +97,8 @@ services:
       RABBITMQ_DEFAULT_USER: admin
       RABBITMQ_DEFAULT_PASS: admin
     ports:
-      - "5672:5672"   # AMQP protocol
-      - "15672:15672" # Management UI
+      - "5672:5672"
+      - "15672:15672"
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     networks:
@@ -108,12 +106,12 @@ services:
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "ping"]
-      interval: 30s
-      timeout: 10s
+      interval: 10s
+      timeout: 5s
       retries: 5
 
   # =================================
-  # MICROSERVICES
+  # MICROSERVICIOS (Java Spring Boot)
   # =================================
 
   # Auth Service
@@ -125,6 +123,7 @@ services:
     ports:
       - "8081:8081"
     environment:
+      - JAVA_TOOL_OPTIONS=-Xms128m -Xmx256m # Límite de RAM
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_DATASOURCE_URL=jdbc:postgresql://authservice-db:5432/jwt_demo
       - SPRING_DATASOURCE_USERNAME=admin
@@ -149,6 +148,7 @@ services:
     ports:
       - "8082:8082"
     environment:
+      - JAVA_TOOL_OPTIONS=-Xms128m -Xmx256m # Límite de RAM
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_DATASOURCE_URL=jdbc:postgresql://billing-db:5432/db_billing_users
       - SPRING_DATASOURCE_USERNAME=billing
@@ -171,6 +171,7 @@ services:
     ports:
       - "8083:8083"
     environment:
+      - JAVA_TOOL_OPTIONS=-Xms128m -Xmx256m # Límite de RAM
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_DATASOURCE_URL=jdbc:postgresql://fleet-db:5432/fleet_db
       - SPRING_DATASOURCE_USERNAME=fleet_user
@@ -181,7 +182,7 @@ services:
       - SPRING_RABBITMQ_PASSWORD=admin
       - JWT_SECRET=MiSuperClaveSecretaMuyLarga123456789
       - JWT_ISSUER=auth-service
-      - JWT_EXPIRATION=3600000
+      - SPRING_EXPIRATION=3600000
     depends_on:
       fleet-db:
         condition: service_healthy
@@ -200,6 +201,7 @@ services:
     ports:
       - "8084:8084"
     environment:
+      - JAVA_TOOL_OPTIONS=-Xms128m -Xmx256m # Límite de RAM
       - SPRING_PROFILES_ACTIVE=docker
       - SPRING_DATASOURCE_URL=jdbc:postgresql://pedido-db:5432/pedidos_db
       - SPRING_DATASOURCE_USERNAME=pedido_user
@@ -208,6 +210,7 @@ services:
       - SPRING_RABBITMQ_PORT=5672
       - SPRING_RABBITMQ_USERNAME=admin
       - SPRING_RABBITMQ_PASSWORD=admin
+      # URLs SIN comillas
       - BILLING_SERVICE_URL=http://billing-service:8082
       - FLEET_SERVICE_URL=http://fleet-service:8083
       - BILLING_INTEGRATION_ENABLED=true
@@ -224,7 +227,81 @@ services:
       - logiflow-network
     restart: unless-stopped
 
-  # API Gateway
+  # Tracking Service
+  tracking-service:
+    build:
+      context: ./tracking-service
+      dockerfile: Dockerfile
+    container_name: logiflow-tracking-service
+    ports:
+      - "8090:8090"
+    environment:
+      - JAVA_TOOL_OPTIONS=-Xms128m -Xmx256m # Límite de RAM
+      - SPRING_PROFILES_ACTIVE=docker
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USERNAME=admin
+      - RABBITMQ_PASSWORD=admin
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - logiflow-network
+    restart: unless-stopped
+
+  # MS Notifications
+  ms-notifications:
+    build:
+      context: ./ms-notifications
+      dockerfile: Dockerfile
+    container_name: logiflow-ms-notifications
+    ports:
+      - "8085:8080"
+    environment:
+      - JAVA_TOOL_OPTIONS=-Xms128m -Xmx256m # Límite de RAM
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_RABBITMQ_PORT=5672
+      - SPRING_RABBITMQ_USERNAME=admin
+      - SPRING_RABBITMQ_PASSWORD=admin
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - logiflow-network
+    restart: unless-stopped
+
+  # Delivery GraphQL Service
+  delivery-graphql-service:
+    build:
+      context: ./delivery-graphql-service
+      dockerfile: Dockerfile
+    container_name: logiflow-delivery-graphql-service
+    ports:
+      - "4000:4000"
+    environment:
+      # Si es Java, usa JAVA_TOOL_OPTIONS. Si es Node, esto no afecta.
+      - JAVA_TOOL_OPTIONS=-Xms128m -Xmx256m 
+      - PORT=4000
+      - PEDIDO_SERVICE_URL=http://pedido-service:8084
+      - FLEET_SERVICE_URL=http://fleet-service:8083
+      - TRACKING_SERVICE_URL=http://tracking-service:8090
+      - HTTP_TIMEOUT=5000
+    depends_on:
+      pedido-service:
+        condition: service_started
+      fleet-service:
+        condition: service_started
+      tracking-service:
+        condition: service_started
+    networks:
+      - logiflow-network
+    restart: unless-stopped
+
+  # =================================
+  # API GATEWAY (Punto de Entrada)
+  # =================================
+# API Gateway
   api-gateway:
     build:
       context: ./api-gateway
@@ -233,57 +310,53 @@ services:
     ports:
       - "8000:8000"
     environment:
+      - JAVA_TOOL_OPTIONS=-Xms128m -Xmx256m
       - SPRING_PROFILES_ACTIVE=docker
       - JWT_SECRET=MiSuperClaveSecretaMuyLarga123456789
       - JWT_ISSUER=auth-service
+
+      # --- SOLUCIÓN: Usar PrefixPath=/api en lugar de RewritePath ---
+      # Esto convierte "/auth/..." en "/api/auth/..." automáticamente
+      # sin usar variables complicadas.
 
       # Ruta 0 -> authservice
       - SPRING_CLOUD_GATEWAY_ROUTES_0_ID=auth-route
       - SPRING_CLOUD_GATEWAY_ROUTES_0_URI=http://authservice:8081
       - SPRING_CLOUD_GATEWAY_ROUTES_0_PREDICATES_0=Path=/auth/**
-      - SPRING_CLOUD_GATEWAY_ROUTES_0_FILTERS_0=RewritePath=/auth/(?<path>.*), /api/auth/$\{path}
+      - SPRING_CLOUD_GATEWAY_ROUTES_0_FILTERS_0=PrefixPath=/api
 
       # Ruta 1 -> billing-service
       - SPRING_CLOUD_GATEWAY_ROUTES_1_ID=billing-route
       - SPRING_CLOUD_GATEWAY_ROUTES_1_URI=http://billing-service:8082
       - SPRING_CLOUD_GATEWAY_ROUTES_1_PREDICATES_0=Path=/billing/**
-      - SPRING_CLOUD_GATEWAY_ROUTES_1_FILTERS_0=RewritePath=/billing/(?<path>.*), /api/$\{path}
+      - SPRING_CLOUD_GATEWAY_ROUTES_1_FILTERS_0=PrefixPath=/api
 
       # Ruta 2 -> fleet-service
       - SPRING_CLOUD_GATEWAY_ROUTES_2_ID=fleet-route
       - SPRING_CLOUD_GATEWAY_ROUTES_2_URI=http://fleet-service:8083
       - SPRING_CLOUD_GATEWAY_ROUTES_2_PREDICATES_0=Path=/fleet/**
-      - SPRING_CLOUD_GATEWAY_ROUTES_2_FILTERS_0=RewritePath=/fleet/(?<path>.*), /api/$\{path}
+      - SPRING_CLOUD_GATEWAY_ROUTES_2_FILTERS_0=PrefixPath=/api
 
       # Ruta 3 -> pedido-service
       - SPRING_CLOUD_GATEWAY_ROUTES_3_ID=pedido-route
       - SPRING_CLOUD_GATEWAY_ROUTES_3_URI=http://pedido-service:8084
       - SPRING_CLOUD_GATEWAY_ROUTES_3_PREDICATES_0=Path=/pedido/**
-      - SPRING_CLOUD_GATEWAY_ROUTES_3_FILTERS_0=RewritePath=/pedido/(?<path>.*), /api/$\{path}
+      - SPRING_CLOUD_GATEWAY_ROUTES_3_FILTERS_0=PrefixPath=/api
     networks:
       - logiflow-network
     depends_on:
-        authservice:
-            condition: service_started
-        billing-service:
-            condition: service_started
-        fleet-service:
-            condition: service_started
-        pedido-service:
-            condition: service_started
+      authservice:
+        condition: service_started
     restart: unless-stopped
-
+    
 # =================================
-# NETWORKS
+# REDES Y VOLUMENES
 # =================================
 networks:
   logiflow-network:
     driver: bridge
     name: logiflow-network
 
-# =================================
-# VOLUMES
-# =================================
 volumes:
   authservice_data:
     name: logiflow-authservice-data

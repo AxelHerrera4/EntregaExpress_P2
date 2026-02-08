@@ -1,0 +1,2003 @@
+{
+	"info": {
+		"_postman_id": "logiflow-complete-collection",
+		"name": "LogiFlow - Complete API Collection",
+		"description": "Colección completa de todos los endpoints de los microservicios de LogiFlow, incluyendo acceso directo y a través del API Gateway (puerto 8000).\n\n## Microservicios:\n- **Auth Service** (8081)\n- **Billing Service** (8082)\n- **Fleet Service** (8083)\n- **Pedido Service** (8084)\n- **Tracking Service** (8090)\n- **Notifications Service** (8080)\n- **Delivery GraphQL Service** (4000)\n- **API Gateway** (8000)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "gateway_url",
+			"value": "http://localhost:8000",
+			"type": "string"
+		},
+		{
+			"key": "auth_url",
+			"value": "http://localhost:8081",
+			"type": "string"
+		},
+		{
+			"key": "billing_url",
+			"value": "http://localhost:8082",
+			"type": "string"
+		},
+		{
+			"key": "fleet_url",
+			"value": "http://localhost:8083",
+			"type": "string"
+		},
+		{
+			"key": "pedido_url",
+			"value": "http://localhost:8084",
+			"type": "string"
+		},
+		{
+			"key": "tracking_url",
+			"value": "http://localhost:8090",
+			"type": "string"
+		},
+		{
+			"key": "notifications_url",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "graphql_url",
+			"value": "http://localhost:4000",
+			"type": "string"
+		},
+		{
+			"key": "access_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "refresh_token",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "🔐 Auth Service",
+			"description": "Servicio de autenticación - Puerto 8081\nGateway: /api/auth/**",
+			"item": [
+				{
+					"name": "Directo (8081)",
+					"item": [
+						{
+							"name": "Register",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200 || pm.response.code === 201) {",
+											"    var jsonData = pm.response.json();",
+											"    if (jsonData.accessToken) {",
+											"        pm.collectionVariables.set('access_token', jsonData.accessToken);",
+											"    }",
+											"    if (jsonData.refreshToken) {",
+											"        pm.collectionVariables.set('refresh_token', jsonData.refreshToken);",
+											"    }",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{ "key": "Content-Type", "value": "application/json" }
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"username\": \"testuser\",\n    \"email\": \"testuser@example.com\",\n    \"password\": \"password123\",\n    \"roles\": [\"ROLE_USER\"]\n}"
+								},
+								"url": {
+									"raw": "{{auth_url}}/api/auth/register",
+									"host": ["{{auth_url}}"],
+									"path": ["api", "auth", "register"]
+								},
+								"description": "Registrar un nuevo usuario"
+							}
+						},
+						{
+							"name": "Login",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    var jsonData = pm.response.json();",
+											"    if (jsonData.accessToken) {",
+											"        pm.collectionVariables.set('access_token', jsonData.accessToken);",
+											"    }",
+											"    if (jsonData.refreshToken) {",
+											"        pm.collectionVariables.set('refresh_token', jsonData.refreshToken);",
+											"    }",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{ "key": "Content-Type", "value": "application/json" }
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"username\": \"testuser\",\n    \"password\": \"password123\"\n}"
+								},
+								"url": {
+									"raw": "{{auth_url}}/api/auth/login",
+									"host": ["{{auth_url}}"],
+									"path": ["api", "auth", "login"]
+								},
+								"description": "Iniciar sesión y obtener tokens JWT"
+							}
+						},
+						{
+							"name": "Refresh Token",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    var jsonData = pm.response.json();",
+											"    if (jsonData.accessToken) {",
+											"        pm.collectionVariables.set('access_token', jsonData.accessToken);",
+											"    }",
+											"    if (jsonData.refreshToken) {",
+											"        pm.collectionVariables.set('refresh_token', jsonData.refreshToken);",
+											"    }",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{ "key": "Content-Type", "value": "text/plain" }
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{{refresh_token}}"
+								},
+								"url": {
+									"raw": "{{auth_url}}/api/auth/token/refresh",
+									"host": ["{{auth_url}}"],
+									"path": ["api", "auth", "token", "refresh"]
+								},
+								"description": "Refrescar el token de acceso usando el refresh token"
+							}
+						},
+						{
+							"name": "Revoke Token",
+							"request": {
+								"method": "POST",
+								"header": [
+									{ "key": "Content-Type", "value": "text/plain" }
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{{refresh_token}}"
+								},
+								"url": {
+									"raw": "{{auth_url}}/api/auth/token/revoke",
+									"host": ["{{auth_url}}"],
+									"path": ["api", "auth", "token", "revoke"]
+								},
+								"description": "Revocar un refresh token"
+							}
+						}
+					]
+				},
+				{
+					"name": "Via Gateway (8000)",
+					"item": [
+						{
+							"name": "Register",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200 || pm.response.code === 201) {",
+											"    var jsonData = pm.response.json();",
+											"    if (jsonData.accessToken) {",
+											"        pm.collectionVariables.set('access_token', jsonData.accessToken);",
+											"    }",
+											"    if (jsonData.refreshToken) {",
+											"        pm.collectionVariables.set('refresh_token', jsonData.refreshToken);",
+											"    }",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{ "key": "Content-Type", "value": "application/json" }
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"username\": \"testuser\",\n    \"email\": \"testuser@example.com\",\n    \"password\": \"password123\",\n    \"roles\": [\"ROLE_USER\"]\n}"
+								},
+								"url": {
+									"raw": "{{gateway_url}}/api/auth/register",
+									"host": ["{{gateway_url}}"],
+									"path": ["api", "auth", "register"]
+								},
+								"description": "Registrar usuario (via API Gateway)"
+							}
+						},
+						{
+							"name": "Login",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    var jsonData = pm.response.json();",
+											"    if (jsonData.accessToken) {",
+											"        pm.collectionVariables.set('access_token', jsonData.accessToken);",
+											"    }",
+											"    if (jsonData.refreshToken) {",
+											"        pm.collectionVariables.set('refresh_token', jsonData.refreshToken);",
+											"    }",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{ "key": "Content-Type", "value": "application/json" }
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"username\": \"testuser\",\n    \"password\": \"password123\"\n}"
+								},
+								"url": {
+									"raw": "{{gateway_url}}/api/auth/login",
+									"host": ["{{gateway_url}}"],
+									"path": ["api", "auth", "login"]
+								},
+								"description": "Login (via API Gateway)"
+							}
+						},
+						{
+							"name": "Refresh Token",
+							"request": {
+								"method": "POST",
+								"header": [
+									{ "key": "Content-Type", "value": "text/plain" }
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{{refresh_token}}"
+								},
+								"url": {
+									"raw": "{{gateway_url}}/api/auth/token/refresh",
+									"host": ["{{gateway_url}}"],
+									"path": ["api", "auth", "token", "refresh"]
+								},
+								"description": "Refresh token (via API Gateway)"
+							}
+						},
+						{
+							"name": "Revoke Token",
+							"request": {
+								"method": "POST",
+								"header": [
+									{ "key": "Content-Type", "value": "text/plain" }
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{{refresh_token}}"
+								},
+								"url": {
+									"raw": "{{gateway_url}}/api/auth/token/revoke",
+									"host": ["{{gateway_url}}"],
+									"path": ["api", "auth", "token", "revoke"]
+								},
+								"description": "Revoke token (via API Gateway)"
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "💰 Billing Service",
+			"description": "Servicio de facturación - Puerto 8082\nGateway: /billing/** → /api/**",
+			"item": [
+				{
+					"name": "Tarifas",
+					"item": [
+						{
+							"name": "Directo (8082)",
+							"item": [
+								{
+									"name": "Crear Tarifa Base",
+									"request": {
+										"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+										"method": "POST",
+										"header": [
+											{ "key": "Content-Type", "value": "application/json" }
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"tipoEntrega\": \"ESTANDAR\",\n    \"tarifaBase\": 5.50\n}"
+										},
+										"url": {
+											"raw": "{{billing_url}}/api/tarifas",
+											"host": ["{{billing_url}}"],
+											"path": ["api", "tarifas"]
+										},
+										"description": "Crear una tarifa base por tipo de entrega"
+									}
+								},
+								{
+									"name": "Obtener Tarifa por Tipo Entrega",
+									"request": {
+										"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+										"method": "GET",
+										"url": {
+											"raw": "{{billing_url}}/api/tarifas/ESTANDAR",
+											"host": ["{{billing_url}}"],
+											"path": ["api", "tarifas", "ESTANDAR"]
+										},
+										"description": "Obtener tarifa por tipo de entrega"
+									}
+								},
+								{
+									"name": "Actualizar Tarifa Base",
+									"request": {
+										"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+										"method": "PUT",
+										"header": [
+											{ "key": "Content-Type", "value": "application/json" }
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"tipoEntrega\": \"ESTANDAR\",\n    \"tarifaBase\": 6.00\n}"
+										},
+										"url": {
+											"raw": "{{billing_url}}/api/tarifas/ESTANDAR",
+											"host": ["{{billing_url}}"],
+											"path": ["api", "tarifas", "ESTANDAR"]
+										},
+										"description": "Actualizar tarifa base"
+									}
+								},
+								{
+									"name": "Listar Todas las Tarifas",
+									"request": {
+										"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+										"method": "GET",
+										"url": {
+											"raw": "{{billing_url}}/api/tarifas/all",
+											"host": ["{{billing_url}}"],
+											"path": ["api", "tarifas", "all"]
+										},
+										"description": "Listar todas las tarifas base"
+									}
+								}
+							]
+						},
+						{
+							"name": "Via Gateway (8000)",
+							"item": [
+								{
+									"name": "Crear Tarifa Base",
+									"request": {
+										"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+										"method": "POST",
+										"header": [
+											{ "key": "Content-Type", "value": "application/json" }
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"tipoEntrega\": \"ESTANDAR\",\n    \"tarifaBase\": 5.50\n}"
+										},
+										"url": {
+											"raw": "{{gateway_url}}/billing/tarifas",
+											"host": ["{{gateway_url}}"],
+											"path": ["billing", "tarifas"]
+										},
+										"description": "Crear tarifa (via Gateway: /billing/** → /api/**)"
+									}
+								},
+								{
+									"name": "Obtener Tarifa por Tipo Entrega",
+									"request": {
+										"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+										"method": "GET",
+										"url": {
+											"raw": "{{gateway_url}}/billing/tarifas/ESTANDAR",
+											"host": ["{{gateway_url}}"],
+											"path": ["billing", "tarifas", "ESTANDAR"]
+										}
+									}
+								},
+								{
+									"name": "Actualizar Tarifa Base",
+									"request": {
+										"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+										"method": "PUT",
+										"header": [
+											{ "key": "Content-Type", "value": "application/json" }
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"tipoEntrega\": \"ESTANDAR\",\n    \"tarifaBase\": 6.00\n}"
+										},
+										"url": {
+											"raw": "{{gateway_url}}/billing/tarifas/ESTANDAR",
+											"host": ["{{gateway_url}}"],
+											"path": ["billing", "tarifas", "ESTANDAR"]
+										}
+									}
+								},
+								{
+									"name": "Listar Todas las Tarifas",
+									"request": {
+										"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+										"method": "GET",
+										"url": {
+											"raw": "{{gateway_url}}/billing/tarifas/all",
+											"host": ["{{gateway_url}}"],
+											"path": ["billing", "tarifas", "all"]
+										}
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "Facturas",
+					"item": [
+						{
+							"name": "Directo (8082)",
+							"item": [
+								{
+									"name": "Crear Factura",
+									"request": {
+										"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+										"method": "POST",
+										"header": [
+											{ "key": "Content-Type", "value": "application/json" }
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"pedidoId\": \"pedido-001\",\n    \"tipoEntrega\": \"ESTANDAR\",\n    \"distanciaKm\": 15.5\n}"
+										},
+										"url": {
+											"raw": "{{billing_url}}/api/facturas",
+											"host": ["{{billing_url}}"],
+											"path": ["api", "facturas"]
+										},
+										"description": "Crear factura en estado BORRADOR"
+									}
+								},
+								{
+									"name": "Obtener Factura por ID",
+									"request": {
+										"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+										"method": "GET",
+										"url": {
+											"raw": "{{billing_url}}/api/facturas/{{factura_id}}",
+											"host": ["{{billing_url}}"],
+											"path": ["api", "facturas", "{{factura_id}}"]
+										},
+										"description": "Obtener factura por UUID"
+									}
+								},
+								{
+									"name": "Obtener Factura por Pedido ID",
+									"request": {
+										"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+										"method": "GET",
+										"url": {
+											"raw": "{{billing_url}}/api/facturas/pedido/pedido-001",
+											"host": ["{{billing_url}}"],
+											"path": ["api", "facturas", "pedido", "pedido-001"]
+										},
+										"description": "Obtener factura por ID del pedido"
+									}
+								},
+								{
+									"name": "Actualizar Estado Factura",
+									"request": {
+										"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+										"method": "PATCH",
+										"url": {
+											"raw": "{{billing_url}}/api/facturas/{{factura_id}}/estado?estado=EMITIDA",
+											"host": ["{{billing_url}}"],
+											"path": ["api", "facturas", "{{factura_id}}", "estado"],
+											"query": [
+												{ "key": "estado", "value": "EMITIDA", "description": "Valores: BORRADOR, EMITIDA, PAGADA, CANCELADA, VENCIDA" }
+											]
+										},
+										"description": "Cambiar estado de factura"
+									}
+								},
+								{
+									"name": "Listar Facturas (paginado)",
+									"request": {
+										"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+										"method": "GET",
+										"url": {
+											"raw": "{{billing_url}}/api/facturas?page=0&size=20&sortBy=fechaCreacion&sortDirection=DESC",
+											"host": ["{{billing_url}}"],
+											"path": ["api", "facturas"],
+											"query": [
+												{ "key": "page", "value": "0" },
+												{ "key": "size", "value": "20" },
+												{ "key": "sortBy", "value": "fechaCreacion" },
+												{ "key": "sortDirection", "value": "DESC" },
+												{ "key": "estado", "value": "", "disabled": true, "description": "Filtro opcional: BORRADOR, EMITIDA, etc." },
+												{ "key": "fechaDesde", "value": "", "disabled": true, "description": "ISO DateTime: 2026-01-01T00:00:00" },
+												{ "key": "fechaHasta", "value": "", "disabled": true, "description": "ISO DateTime: 2026-12-31T23:59:59" }
+											]
+										},
+										"description": "Listar facturas con paginación y filtros opcionales"
+									}
+								},
+								{
+									"name": "Estadísticas de Facturas",
+									"request": {
+										"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+										"method": "GET",
+										"url": {
+											"raw": "{{billing_url}}/api/facturas/estadisticas",
+											"host": ["{{billing_url}}"],
+											"path": ["api", "facturas", "estadisticas"]
+										},
+										"description": "Obtener resumen estadístico de facturas"
+									}
+								}
+							]
+						},
+						{
+							"name": "Via Gateway (8000)",
+							"item": [
+								{
+									"name": "Crear Factura",
+									"request": {
+										"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+										"method": "POST",
+										"header": [
+											{ "key": "Content-Type", "value": "application/json" }
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"pedidoId\": \"pedido-001\",\n    \"tipoEntrega\": \"ESTANDAR\",\n    \"distanciaKm\": 15.5\n}"
+										},
+										"url": {
+											"raw": "{{gateway_url}}/billing/facturas",
+											"host": ["{{gateway_url}}"],
+											"path": ["billing", "facturas"]
+										}
+									}
+								},
+								{
+									"name": "Obtener Factura por ID",
+									"request": {
+										"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+										"method": "GET",
+										"url": {
+											"raw": "{{gateway_url}}/billing/facturas/{{factura_id}}",
+											"host": ["{{gateway_url}}"],
+											"path": ["billing", "facturas", "{{factura_id}}"]
+										}
+									}
+								},
+								{
+									"name": "Obtener Factura por Pedido ID",
+									"request": {
+										"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+										"method": "GET",
+										"url": {
+											"raw": "{{gateway_url}}/billing/facturas/pedido/pedido-001",
+											"host": ["{{gateway_url}}"],
+											"path": ["billing", "facturas", "pedido", "pedido-001"]
+										}
+									}
+								},
+								{
+									"name": "Actualizar Estado Factura",
+									"request": {
+										"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+										"method": "PATCH",
+										"url": {
+											"raw": "{{gateway_url}}/billing/facturas/{{factura_id}}/estado?estado=EMITIDA",
+											"host": ["{{gateway_url}}"],
+											"path": ["billing", "facturas", "{{factura_id}}", "estado"],
+											"query": [
+												{ "key": "estado", "value": "EMITIDA" }
+											]
+										}
+									}
+								},
+								{
+									"name": "Listar Facturas (paginado)",
+									"request": {
+										"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+										"method": "GET",
+										"url": {
+											"raw": "{{gateway_url}}/billing/facturas?page=0&size=20&sortBy=fechaCreacion&sortDirection=DESC",
+											"host": ["{{gateway_url}}"],
+											"path": ["billing", "facturas"],
+											"query": [
+												{ "key": "page", "value": "0" },
+												{ "key": "size", "value": "20" },
+												{ "key": "sortBy", "value": "fechaCreacion" },
+												{ "key": "sortDirection", "value": "DESC" }
+											]
+										}
+									}
+								},
+								{
+									"name": "Estadísticas de Facturas",
+									"request": {
+										"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+										"method": "GET",
+										"url": {
+											"raw": "{{gateway_url}}/billing/facturas/estadisticas",
+											"host": ["{{gateway_url}}"],
+											"path": ["billing", "facturas", "estadisticas"]
+										}
+									}
+								}
+							]
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "🚛 Fleet Service",
+			"description": "Servicio de flota - Puerto 8083\nGateway: /fleet/** → /api/**",
+			"item": [
+				{
+					"name": "Vehículos",
+					"item": [
+						{
+							"name": "Directo (8083)",
+							"item": [
+								{
+									"name": "Crear Vehículo",
+									"request": {
+										"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+										"method": "POST",
+										"header": [
+											{ "key": "Content-Type", "value": "application/json" }
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"tipo\": \"CAMION\",\n    \"placa\": \"ABC-1234\",\n    \"marca\": \"Toyota\",\n    \"modelo\": \"Hino 300\",\n    \"anio\": 2023,\n    \"capacidadCarga\": 3500.0,\n    \"numeroEjes\": 2\n}"
+										},
+										"url": {
+											"raw": "{{fleet_url}}/api/vehiculos",
+											"host": ["{{fleet_url}}"],
+											"path": ["api", "vehiculos"]
+										},
+										"description": "Crear un vehículo. Tipos: MOTO, AUTO, CAMIONETA, CAMION"
+									}
+								},
+								{
+									"name": "Obtener Vehículo por ID",
+									"request": {
+										"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+										"method": "GET",
+										"url": {
+											"raw": "{{fleet_url}}/api/vehiculos/{{vehiculo_id}}",
+											"host": ["{{fleet_url}}"],
+											"path": ["api", "vehiculos", "{{vehiculo_id}}"]
+										}
+									}
+								},
+								{
+									"name": "Listar Todos los Vehículos",
+									"request": {
+										"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+										"method": "GET",
+										"url": {
+											"raw": "{{fleet_url}}/api/vehiculos",
+											"host": ["{{fleet_url}}"],
+											"path": ["api", "vehiculos"]
+										}
+									}
+								},
+								{
+									"name": "Actualizar Vehículo (parcial)",
+									"request": {
+										"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+										"method": "PATCH",
+										"header": [
+											{ "key": "Content-Type", "value": "application/json" }
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"estado\": \"EN_RUTA\",\n    \"capacidadCarga\": 4000.0,\n    \"activo\": true\n}"
+										},
+										"url": {
+											"raw": "{{fleet_url}}/api/vehiculos/{{vehiculo_id}}",
+											"host": ["{{fleet_url}}"],
+											"path": ["api", "vehiculos", "{{vehiculo_id}}"]
+										},
+										"description": "Actualización parcial de vehículo"
+									}
+								},
+								{
+									"name": "Cambiar Estado Vehículo",
+									"request": {
+										"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+										"method": "PATCH",
+										"url": {
+											"raw": "{{fleet_url}}/api/vehiculos/{{vehiculo_id}}/estado?estado=DISPONIBLE",
+											"host": ["{{fleet_url}}"],
+											"path": ["api", "vehiculos", "{{vehiculo_id}}", "estado"],
+											"query": [
+												{ "key": "estado", "value": "DISPONIBLE", "description": "DISPONIBLE, EN_RUTA, EN_MANTENIMIENTO, FUERA_DE_SERVICIO" }
+											]
+										}
+									}
+								},
+								{
+									"name": "Eliminar Vehículo (soft)",
+									"request": {
+										"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+										"method": "DELETE",
+										"url": {
+											"raw": "{{fleet_url}}/api/vehiculos/{{vehiculo_id}}",
+											"host": ["{{fleet_url}}"],
+											"path": ["api", "vehiculos", "{{vehiculo_id}}"]
+										}
+									}
+								},
+								{
+									"name": "Vehículos Disponibles por Peso",
+									"request": {
+										"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+										"method": "GET",
+										"url": {
+											"raw": "{{fleet_url}}/api/vehiculos/disponibles-por-peso?peso=500",
+											"host": ["{{fleet_url}}"],
+											"path": ["api", "vehiculos", "disponibles-por-peso"],
+											"query": [
+												{ "key": "peso", "value": "500" }
+											]
+										},
+										"description": "Buscar vehículos disponibles que soporten el peso indicado"
+									}
+								}
+							]
+						},
+						{
+							"name": "Via Gateway (8000)",
+							"item": [
+								{
+									"name": "Crear Vehículo",
+									"request": {
+										"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+										"method": "POST",
+										"header": [
+											{ "key": "Content-Type", "value": "application/json" }
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"tipo\": \"CAMION\",\n    \"placa\": \"ABC-1234\",\n    \"marca\": \"Toyota\",\n    \"modelo\": \"Hino 300\",\n    \"anio\": 2023,\n    \"capacidadCarga\": 3500.0,\n    \"numeroEjes\": 2\n}"
+										},
+										"url": {
+											"raw": "{{gateway_url}}/fleet/vehiculos",
+											"host": ["{{gateway_url}}"],
+											"path": ["fleet", "vehiculos"]
+										}
+									}
+								},
+								{
+									"name": "Obtener Vehículo por ID",
+									"request": {
+										"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+										"method": "GET",
+										"url": {
+											"raw": "{{gateway_url}}/fleet/vehiculos/{{vehiculo_id}}",
+											"host": ["{{gateway_url}}"],
+											"path": ["fleet", "vehiculos", "{{vehiculo_id}}"]
+										}
+									}
+								},
+								{
+									"name": "Listar Todos los Vehículos",
+									"request": {
+										"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+										"method": "GET",
+										"url": {
+											"raw": "{{gateway_url}}/fleet/vehiculos",
+											"host": ["{{gateway_url}}"],
+											"path": ["fleet", "vehiculos"]
+										}
+									}
+								},
+								{
+									"name": "Actualizar Vehículo (parcial)",
+									"request": {
+										"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+										"method": "PATCH",
+										"header": [
+											{ "key": "Content-Type", "value": "application/json" }
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"estado\": \"EN_RUTA\",\n    \"capacidadCarga\": 4000.0,\n    \"activo\": true\n}"
+										},
+										"url": {
+											"raw": "{{gateway_url}}/fleet/vehiculos/{{vehiculo_id}}",
+											"host": ["{{gateway_url}}"],
+											"path": ["fleet", "vehiculos", "{{vehiculo_id}}"]
+										}
+									}
+								},
+								{
+									"name": "Cambiar Estado Vehículo",
+									"request": {
+										"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+										"method": "PATCH",
+										"url": {
+											"raw": "{{gateway_url}}/fleet/vehiculos/{{vehiculo_id}}/estado?estado=DISPONIBLE",
+											"host": ["{{gateway_url}}"],
+											"path": ["fleet", "vehiculos", "{{vehiculo_id}}", "estado"],
+											"query": [
+												{ "key": "estado", "value": "DISPONIBLE" }
+											]
+										}
+									}
+								},
+								{
+									"name": "Eliminar Vehículo (soft)",
+									"request": {
+										"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+										"method": "DELETE",
+										"url": {
+											"raw": "{{gateway_url}}/fleet/vehiculos/{{vehiculo_id}}",
+											"host": ["{{gateway_url}}"],
+											"path": ["fleet", "vehiculos", "{{vehiculo_id}}"]
+										}
+									}
+								},
+								{
+									"name": "Vehículos Disponibles por Peso",
+									"request": {
+										"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+										"method": "GET",
+										"url": {
+											"raw": "{{gateway_url}}/fleet/vehiculos/disponibles-por-peso?peso=500",
+											"host": ["{{gateway_url}}"],
+											"path": ["fleet", "vehiculos", "disponibles-por-peso"],
+											"query": [
+												{ "key": "peso", "value": "500" }
+											]
+										}
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "Repartidores",
+					"item": [
+						{
+							"name": "Directo (8083)",
+							"item": [
+								{
+									"name": "Crear Repartidor",
+									"request": {
+										"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+										"method": "POST",
+										"header": [
+											{ "key": "Content-Type", "value": "application/json" }
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"nombre\": \"Juan\",\n    \"apellido\": \"Pérez\",\n    \"documento\": \"1234567890\",\n    \"tipoDocumento\": \"CEDULA\",\n    \"telefono\": \"0991234567\",\n    \"email\": \"juan.perez@example.com\",\n    \"zonaAsignada\": \"NORTE\",\n    \"tipoLicencia\": \"TIPO_B\"\n}"
+										},
+										"url": {
+											"raw": "{{fleet_url}}/api/repartidores",
+											"host": ["{{fleet_url}}"],
+											"path": ["api", "repartidores"]
+										},
+										"description": "Crear un nuevo repartidor"
+									}
+								},
+								{
+									"name": "Obtener Repartidor por ID",
+									"request": {
+										"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+										"method": "GET",
+										"url": {
+											"raw": "{{fleet_url}}/api/repartidores/{{repartidor_id}}",
+											"host": ["{{fleet_url}}"],
+											"path": ["api", "repartidores", "{{repartidor_id}}"]
+										}
+									}
+								},
+								{
+									"name": "Listar Todos los Repartidores",
+									"request": {
+										"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+										"method": "GET",
+										"url": {
+											"raw": "{{fleet_url}}/api/repartidores",
+											"host": ["{{fleet_url}}"],
+											"path": ["api", "repartidores"]
+										}
+									}
+								},
+								{
+									"name": "Actualizar Repartidor (parcial)",
+									"request": {
+										"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+										"method": "PATCH",
+										"header": [
+											{ "key": "Content-Type", "value": "application/json" }
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"email\": \"nuevo.email@example.com\",\n    \"telefono\": \"0999876543\",\n    \"zonaAsignada\": \"SUR\"\n}"
+										},
+										"url": {
+											"raw": "{{fleet_url}}/api/repartidores/{{repartidor_id}}",
+											"host": ["{{fleet_url}}"],
+											"path": ["api", "repartidores", "{{repartidor_id}}"]
+										}
+									}
+								},
+								{
+									"name": "Cambiar Estado Repartidor",
+									"request": {
+										"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+										"method": "PATCH",
+										"url": {
+											"raw": "{{fleet_url}}/api/repartidores/{{repartidor_id}}/estado?estado=DISPONIBLE",
+											"host": ["{{fleet_url}}"],
+											"path": ["api", "repartidores", "{{repartidor_id}}", "estado"],
+											"query": [
+												{ "key": "estado", "value": "DISPONIBLE", "description": "DISPONIBLE, EN_RUTA, DESCANSO, INACTIVO" }
+											]
+										}
+									}
+								},
+								{
+									"name": "Eliminar Repartidor (soft)",
+									"request": {
+										"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+										"method": "DELETE",
+										"url": {
+											"raw": "{{fleet_url}}/api/repartidores/{{repartidor_id}}",
+											"host": ["{{fleet_url}}"],
+											"path": ["api", "repartidores", "{{repartidor_id}}"]
+										}
+									}
+								},
+								{
+									"name": "Asignar Vehículo a Repartidor",
+									"request": {
+										"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+										"method": "POST",
+										"url": {
+											"raw": "{{fleet_url}}/api/repartidores/{{repartidor_id}}/asignar-vehiculo?vehiculoId={{vehiculo_id}}",
+											"host": ["{{fleet_url}}"],
+											"path": ["api", "repartidores", "{{repartidor_id}}", "asignar-vehiculo"],
+											"query": [
+												{ "key": "vehiculoId", "value": "{{vehiculo_id}}" }
+											]
+										}
+									}
+								},
+								{
+									"name": "Desasignar Vehículo de Repartidor",
+									"request": {
+										"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+										"method": "DELETE",
+										"url": {
+											"raw": "{{fleet_url}}/api/repartidores/{{repartidor_id}}/vehiculo",
+											"host": ["{{fleet_url}}"],
+											"path": ["api", "repartidores", "{{repartidor_id}}", "vehiculo"]
+										}
+									}
+								},
+								{
+									"name": "Actualizar Coordenadas GPS",
+									"request": {
+										"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+										"method": "POST",
+										"header": [
+											{ "key": "Content-Type", "value": "application/json" }
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"latitud\": -0.1807,\n    \"longitud\": -78.4678\n}"
+										},
+										"url": {
+											"raw": "{{fleet_url}}/api/repartidores/{{repartidor_id}}/coordenadas",
+											"host": ["{{fleet_url}}"],
+											"path": ["api", "repartidores", "{{repartidor_id}}", "coordenadas"]
+										},
+										"description": "Actualizar ubicación GPS del repartidor"
+									}
+								}
+							]
+						},
+						{
+							"name": "Via Gateway (8000)",
+							"item": [
+								{
+									"name": "Crear Repartidor",
+									"request": {
+										"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+										"method": "POST",
+										"header": [{ "key": "Content-Type", "value": "application/json" }],
+										"body": { "mode": "raw", "raw": "{\n    \"nombre\": \"Juan\",\n    \"apellido\": \"Pérez\",\n    \"documento\": \"1234567890\",\n    \"tipoDocumento\": \"CEDULA\",\n    \"telefono\": \"0991234567\",\n    \"email\": \"juan.perez@example.com\",\n    \"zonaAsignada\": \"NORTE\",\n    \"tipoLicencia\": \"TIPO_B\"\n}" },
+										"url": { "raw": "{{gateway_url}}/fleet/repartidores", "host": ["{{gateway_url}}"], "path": ["fleet", "repartidores"] }
+									}
+								},
+								{
+									"name": "Obtener Repartidor por ID",
+									"request": {
+										"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+										"method": "GET",
+										"url": { "raw": "{{gateway_url}}/fleet/repartidores/{{repartidor_id}}", "host": ["{{gateway_url}}"], "path": ["fleet", "repartidores", "{{repartidor_id}}"] }
+									}
+								},
+								{
+									"name": "Listar Todos los Repartidores",
+									"request": {
+										"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+										"method": "GET",
+										"url": { "raw": "{{gateway_url}}/fleet/repartidores", "host": ["{{gateway_url}}"], "path": ["fleet", "repartidores"] }
+									}
+								},
+								{
+									"name": "Actualizar Repartidor (parcial)",
+									"request": {
+										"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+										"method": "PATCH",
+										"header": [{ "key": "Content-Type", "value": "application/json" }],
+										"body": { "mode": "raw", "raw": "{\n    \"email\": \"nuevo.email@example.com\",\n    \"telefono\": \"0999876543\"\n}" },
+										"url": { "raw": "{{gateway_url}}/fleet/repartidores/{{repartidor_id}}", "host": ["{{gateway_url}}"], "path": ["fleet", "repartidores", "{{repartidor_id}}"] }
+									}
+								},
+								{
+									"name": "Cambiar Estado Repartidor",
+									"request": {
+										"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+										"method": "PATCH",
+										"url": {
+											"raw": "{{gateway_url}}/fleet/repartidores/{{repartidor_id}}/estado?estado=DISPONIBLE",
+											"host": ["{{gateway_url}}"],
+											"path": ["fleet", "repartidores", "{{repartidor_id}}", "estado"],
+											"query": [{ "key": "estado", "value": "DISPONIBLE" }]
+										}
+									}
+								},
+								{
+									"name": "Eliminar Repartidor (soft)",
+									"request": {
+										"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+										"method": "DELETE",
+										"url": { "raw": "{{gateway_url}}/fleet/repartidores/{{repartidor_id}}", "host": ["{{gateway_url}}"], "path": ["fleet", "repartidores", "{{repartidor_id}}"] }
+									}
+								},
+								{
+									"name": "Asignar Vehículo a Repartidor",
+									"request": {
+										"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+										"method": "POST",
+										"url": {
+											"raw": "{{gateway_url}}/fleet/repartidores/{{repartidor_id}}/asignar-vehiculo?vehiculoId={{vehiculo_id}}",
+											"host": ["{{gateway_url}}"],
+											"path": ["fleet", "repartidores", "{{repartidor_id}}", "asignar-vehiculo"],
+											"query": [{ "key": "vehiculoId", "value": "{{vehiculo_id}}" }]
+										}
+									}
+								},
+								{
+									"name": "Desasignar Vehículo de Repartidor",
+									"request": {
+										"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+										"method": "DELETE",
+										"url": { "raw": "{{gateway_url}}/fleet/repartidores/{{repartidor_id}}/vehiculo", "host": ["{{gateway_url}}"], "path": ["fleet", "repartidores", "{{repartidor_id}}", "vehiculo"] }
+									}
+								},
+								{
+									"name": "Actualizar Coordenadas GPS",
+									"request": {
+										"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+										"method": "POST",
+										"header": [{ "key": "Content-Type", "value": "application/json" }],
+										"body": { "mode": "raw", "raw": "{\n    \"latitud\": -0.1807,\n    \"longitud\": -78.4678\n}" },
+										"url": { "raw": "{{gateway_url}}/fleet/repartidores/{{repartidor_id}}/coordenadas", "host": ["{{gateway_url}}"], "path": ["fleet", "repartidores", "{{repartidor_id}}", "coordenadas"] }
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "Asignaciones",
+					"item": [
+						{
+							"name": "Directo (8083)",
+							"item": [
+								{
+									"name": "Crear Asignación Automática",
+									"request": {
+										"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+										"method": "POST",
+										"header": [
+											{ "key": "Content-Type", "value": "application/json" }
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n    \"pedidoId\": \"pedido-001\",\n    \"modalidadServicio\": \"DELIVERY\",\n    \"tipoEntrega\": \"ESTANDAR\",\n    \"prioridad\": \"MEDIA\",\n    \"ciudadOrigen\": \"Quito\",\n    \"ciudadDestino\": \"Quito\",\n    \"peso\": 25.0\n}"
+										},
+										"url": {
+											"raw": "{{fleet_url}}/api/asignaciones",
+											"host": ["{{fleet_url}}"],
+											"path": ["api", "asignaciones"]
+										},
+										"description": "Asignar automáticamente repartidor y vehículo a un pedido"
+									}
+								},
+								{
+									"name": "Liberar Asignación",
+									"request": {
+										"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+										"method": "DELETE",
+										"url": {
+											"raw": "{{fleet_url}}/api/asignaciones/pedido/pedido-001/liberar",
+											"host": ["{{fleet_url}}"],
+											"path": ["api", "asignaciones", "pedido", "pedido-001", "liberar"]
+										},
+										"description": "Liberar asignación por cancelación de pedido"
+									}
+								}
+							]
+						},
+						{
+							"name": "Via Gateway (8000)",
+							"item": [
+								{
+									"name": "Crear Asignación Automática",
+									"request": {
+										"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+										"method": "POST",
+										"header": [{ "key": "Content-Type", "value": "application/json" }],
+										"body": { "mode": "raw", "raw": "{\n    \"pedidoId\": \"pedido-001\",\n    \"modalidadServicio\": \"DELIVERY\",\n    \"tipoEntrega\": \"ESTANDAR\",\n    \"prioridad\": \"MEDIA\",\n    \"ciudadOrigen\": \"Quito\",\n    \"ciudadDestino\": \"Quito\",\n    \"peso\": 25.0\n}" },
+										"url": { "raw": "{{gateway_url}}/fleet/asignaciones", "host": ["{{gateway_url}}"], "path": ["fleet", "asignaciones"] }
+									}
+								},
+								{
+									"name": "Liberar Asignación",
+									"request": {
+										"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+										"method": "DELETE",
+										"url": { "raw": "{{gateway_url}}/fleet/asignaciones/pedido/pedido-001/liberar", "host": ["{{gateway_url}}"], "path": ["fleet", "asignaciones", "pedido", "pedido-001", "liberar"] }
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "Health Check",
+					"item": [
+						{
+							"name": "Health Check (directo)",
+							"request": {
+								"method": "GET",
+								"url": { "raw": "{{fleet_url}}/api/health", "host": ["{{fleet_url}}"], "path": ["api", "health"] }
+							}
+						},
+						{
+							"name": "Health Check (gateway)",
+							"request": {
+								"method": "GET",
+								"url": { "raw": "{{gateway_url}}/fleet/health", "host": ["{{gateway_url}}"], "path": ["fleet", "health"] }
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "📦 Pedido Service",
+			"description": "Servicio de pedidos - Puerto 8084\nGateway: /pedido/** → /api/**",
+			"item": [
+				{
+					"name": "Directo (8084)",
+					"item": [
+						{
+							"name": "Crear Pedido",
+							"request": {
+								"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+								"method": "POST",
+								"header": [
+									{ "key": "Content-Type", "value": "application/json" }
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"clienteId\": \"cliente-001\",\n    \"direccionOrigen\": {\n        \"calle\": \"Av. Amazonas N34-56\",\n        \"ciudad\": \"Quito\",\n        \"provincia\": \"Pichincha\",\n        \"codigoPostal\": \"170150\",\n        \"referencia\": \"Frente al parque\"\n    },\n    \"direccionDestino\": {\n        \"calle\": \"Av. 6 de Diciembre N45-78\",\n        \"ciudad\": \"Quito\",\n        \"provincia\": \"Pichincha\",\n        \"codigoPostal\": \"170501\",\n        \"referencia\": \"Edificio azul\"\n    },\n    \"modalidadServicio\": \"DELIVERY\",\n    \"tipoEntrega\": \"ESTANDAR\",\n    \"peso\": 5.0,\n    \"telefonoContacto\": \"0991234567\",\n    \"nombreDestinatario\": \"María García\"\n}"
+								},
+								"url": {
+									"raw": "{{pedido_url}}/api/pedidos",
+									"host": ["{{pedido_url}}"],
+									"path": ["api", "pedidos"]
+								},
+								"description": "Crear un nuevo pedido"
+							}
+						},
+						{
+							"name": "Obtener Pedido por ID",
+							"request": {
+								"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+								"method": "GET",
+								"url": {
+									"raw": "{{pedido_url}}/api/pedidos/{{pedido_id}}",
+									"host": ["{{pedido_url}}"],
+									"path": ["api", "pedidos", "{{pedido_id}}"]
+								}
+							}
+						},
+						{
+							"name": "Listar Todos los Pedidos",
+							"request": {
+								"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+								"method": "GET",
+								"url": {
+									"raw": "{{pedido_url}}/api/pedidos",
+									"host": ["{{pedido_url}}"],
+									"path": ["api", "pedidos"]
+								}
+							}
+						},
+						{
+							"name": "Pedidos por Cliente",
+							"request": {
+								"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+								"method": "GET",
+								"url": {
+									"raw": "{{pedido_url}}/api/pedidos/cliente/cliente-001",
+									"host": ["{{pedido_url}}"],
+									"path": ["api", "pedidos", "cliente", "cliente-001"]
+								}
+							}
+						},
+						{
+							"name": "Actualizar Pedido (parcial)",
+							"request": {
+								"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+								"method": "PATCH",
+								"header": [
+									{ "key": "Content-Type", "value": "application/json" }
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"estado\": \"EN_PROCESO\",\n    \"prioridad\": \"ALTA\",\n    \"descripcion\": \"Paquete frágil\"\n}"
+								},
+								"url": {
+									"raw": "{{pedido_url}}/api/pedidos/{{pedido_id}}",
+									"host": ["{{pedido_url}}"],
+									"path": ["api", "pedidos", "{{pedido_id}}"]
+								}
+							}
+						},
+						{
+							"name": "Cancelar Pedido",
+							"request": {
+								"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+								"method": "PATCH",
+								"url": {
+									"raw": "{{pedido_url}}/api/pedidos/{{pedido_id}}/cancelar",
+									"host": ["{{pedido_url}}"],
+									"path": ["api", "pedidos", "{{pedido_id}}", "cancelar"]
+								}
+							}
+						},
+						{
+							"name": "Eliminar Pedido",
+							"request": {
+								"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+								"method": "DELETE",
+								"url": {
+									"raw": "{{pedido_url}}/api/pedidos/{{pedido_id}}",
+									"host": ["{{pedido_url}}"],
+									"path": ["api", "pedidos", "{{pedido_id}}"]
+								}
+							}
+						},
+						{
+							"name": "Reintentar Asignación",
+							"request": {
+								"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+								"method": "POST",
+								"url": {
+									"raw": "{{pedido_url}}/api/pedidos/{{pedido_id}}/reintentar-asignacion",
+									"host": ["{{pedido_url}}"],
+									"path": ["api", "pedidos", "{{pedido_id}}", "reintentar-asignacion"]
+								},
+								"description": "Reintenta asignación automática vía RabbitMQ"
+							}
+						},
+						{
+							"name": "Asignar Repartidor y Vehículo",
+							"request": {
+								"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+								"method": "PATCH",
+								"url": {
+									"raw": "{{pedido_url}}/api/pedidos/{{pedido_id}}/asignar?repartidorId={{repartidor_id}}&vehiculoId={{vehiculo_id}}",
+									"host": ["{{pedido_url}}"],
+									"path": ["api", "pedidos", "{{pedido_id}}", "asignar"],
+									"query": [
+										{ "key": "repartidorId", "value": "{{repartidor_id}}" },
+										{ "key": "vehiculoId", "value": "{{vehiculo_id}}" }
+									]
+								}
+							}
+						},
+						{
+							"name": "Pedidos Pendientes de Asignación",
+							"request": {
+								"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+								"method": "GET",
+								"url": {
+									"raw": "{{pedido_url}}/api/pedidos/pendientes-asignacion",
+									"host": ["{{pedido_url}}"],
+									"path": ["api", "pedidos", "pendientes-asignacion"]
+								}
+							}
+						},
+						{
+							"name": "Pedidos por Repartidor",
+							"request": {
+								"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+								"method": "GET",
+								"url": {
+									"raw": "{{pedido_url}}/api/pedidos/repartidor/{{repartidor_id}}",
+									"host": ["{{pedido_url}}"],
+									"path": ["api", "pedidos", "repartidor", "{{repartidor_id}}"]
+								}
+							}
+						},
+						{
+							"name": "Pedidos por Modalidad",
+							"request": {
+								"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+								"method": "GET",
+								"url": {
+									"raw": "{{pedido_url}}/api/pedidos/modalidad/DELIVERY",
+									"host": ["{{pedido_url}}"],
+									"path": ["api", "pedidos", "modalidad", "DELIVERY"]
+								},
+								"description": "Modalidades: DELIVERY, PICKUP, ENVIO_PAQUETE"
+							}
+						},
+						{
+							"name": "Asociar Factura a Pedido",
+							"request": {
+								"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+								"method": "PATCH",
+								"url": {
+									"raw": "{{pedido_url}}/api/pedidos/{{pedido_id}}/factura?facturaId={{factura_id}}&tarifa=15.50",
+									"host": ["{{pedido_url}}"],
+									"path": ["api", "pedidos", "{{pedido_id}}", "factura"],
+									"query": [
+										{ "key": "facturaId", "value": "{{factura_id}}" },
+										{ "key": "tarifa", "value": "15.50" }
+									]
+								}
+							}
+						},
+						{
+							"name": "Pedidos Sin Factura",
+							"request": {
+								"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+								"method": "GET",
+								"url": {
+									"raw": "{{pedido_url}}/api/pedidos/sin-factura",
+									"host": ["{{pedido_url}}"],
+									"path": ["api", "pedidos", "sin-factura"]
+								}
+							}
+						},
+						{
+							"name": "Pedidos de Alta Prioridad",
+							"request": {
+								"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+								"method": "GET",
+								"url": {
+									"raw": "{{pedido_url}}/api/pedidos/alta-prioridad",
+									"host": ["{{pedido_url}}"],
+									"path": ["api", "pedidos", "alta-prioridad"]
+								}
+							}
+						},
+						{
+							"name": "Debug Auth",
+							"request": {
+								"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+								"method": "GET",
+								"url": {
+									"raw": "{{pedido_url}}/api/pedidos/debug-auth",
+									"host": ["{{pedido_url}}"],
+									"path": ["api", "pedidos", "debug-auth"]
+								},
+								"description": "Debug: ver información de autenticación"
+							}
+						}
+					]
+				},
+				{
+					"name": "Via Gateway (8000)",
+					"item": [
+						{
+							"name": "Crear Pedido",
+							"request": {
+								"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+								"method": "POST",
+								"header": [{ "key": "Content-Type", "value": "application/json" }],
+								"body": { "mode": "raw", "raw": "{\n    \"clienteId\": \"cliente-001\",\n    \"direccionOrigen\": {\n        \"calle\": \"Av. Amazonas N34-56\",\n        \"ciudad\": \"Quito\",\n        \"provincia\": \"Pichincha\",\n        \"codigoPostal\": \"170150\",\n        \"referencia\": \"Frente al parque\"\n    },\n    \"direccionDestino\": {\n        \"calle\": \"Av. 6 de Diciembre N45-78\",\n        \"ciudad\": \"Quito\",\n        \"provincia\": \"Pichincha\",\n        \"codigoPostal\": \"170501\",\n        \"referencia\": \"Edificio azul\"\n    },\n    \"modalidadServicio\": \"DELIVERY\",\n    \"tipoEntrega\": \"ESTANDAR\",\n    \"peso\": 5.0,\n    \"telefonoContacto\": \"0991234567\",\n    \"nombreDestinatario\": \"María García\"\n}" },
+								"url": { "raw": "{{gateway_url}}/pedido/pedidos", "host": ["{{gateway_url}}"], "path": ["pedido", "pedidos"] }
+							}
+						},
+						{
+							"name": "Obtener Pedido por ID",
+							"request": {
+								"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+								"method": "GET",
+								"url": { "raw": "{{gateway_url}}/pedido/pedidos/{{pedido_id}}", "host": ["{{gateway_url}}"], "path": ["pedido", "pedidos", "{{pedido_id}}"] }
+							}
+						},
+						{
+							"name": "Listar Todos los Pedidos",
+							"request": {
+								"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+								"method": "GET",
+								"url": { "raw": "{{gateway_url}}/pedido/pedidos", "host": ["{{gateway_url}}"], "path": ["pedido", "pedidos"] }
+							}
+						},
+						{
+							"name": "Pedidos por Cliente",
+							"request": {
+								"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+								"method": "GET",
+								"url": { "raw": "{{gateway_url}}/pedido/pedidos/cliente/cliente-001", "host": ["{{gateway_url}}"], "path": ["pedido", "pedidos", "cliente", "cliente-001"] }
+							}
+						},
+						{
+							"name": "Actualizar Pedido (parcial)",
+							"request": {
+								"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+								"method": "PATCH",
+								"header": [{ "key": "Content-Type", "value": "application/json" }],
+								"body": { "mode": "raw", "raw": "{\n    \"estado\": \"EN_PROCESO\",\n    \"prioridad\": \"ALTA\"\n}" },
+								"url": { "raw": "{{gateway_url}}/pedido/pedidos/{{pedido_id}}", "host": ["{{gateway_url}}"], "path": ["pedido", "pedidos", "{{pedido_id}}"] }
+							}
+						},
+						{
+							"name": "Cancelar Pedido",
+							"request": {
+								"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+								"method": "PATCH",
+								"url": { "raw": "{{gateway_url}}/pedido/pedidos/{{pedido_id}}/cancelar", "host": ["{{gateway_url}}"], "path": ["pedido", "pedidos", "{{pedido_id}}", "cancelar"] }
+							}
+						},
+						{
+							"name": "Eliminar Pedido",
+							"request": {
+								"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+								"method": "DELETE",
+								"url": { "raw": "{{gateway_url}}/pedido/pedidos/{{pedido_id}}", "host": ["{{gateway_url}}"], "path": ["pedido", "pedidos", "{{pedido_id}}"] }
+							}
+						},
+						{
+							"name": "Reintentar Asignación",
+							"request": {
+								"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+								"method": "POST",
+								"url": { "raw": "{{gateway_url}}/pedido/pedidos/{{pedido_id}}/reintentar-asignacion", "host": ["{{gateway_url}}"], "path": ["pedido", "pedidos", "{{pedido_id}}", "reintentar-asignacion"] }
+							}
+						},
+						{
+							"name": "Asignar Repartidor y Vehículo",
+							"request": {
+								"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+								"method": "PATCH",
+								"url": {
+									"raw": "{{gateway_url}}/pedido/pedidos/{{pedido_id}}/asignar?repartidorId={{repartidor_id}}&vehiculoId={{vehiculo_id}}",
+									"host": ["{{gateway_url}}"],
+									"path": ["pedido", "pedidos", "{{pedido_id}}", "asignar"],
+									"query": [
+										{ "key": "repartidorId", "value": "{{repartidor_id}}" },
+										{ "key": "vehiculoId", "value": "{{vehiculo_id}}" }
+									]
+								}
+							}
+						},
+						{
+							"name": "Pedidos Pendientes de Asignación",
+							"request": {
+								"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+								"method": "GET",
+								"url": { "raw": "{{gateway_url}}/pedido/pedidos/pendientes-asignacion", "host": ["{{gateway_url}}"], "path": ["pedido", "pedidos", "pendientes-asignacion"] }
+							}
+						},
+						{
+							"name": "Pedidos por Repartidor",
+							"request": {
+								"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+								"method": "GET",
+								"url": { "raw": "{{gateway_url}}/pedido/pedidos/repartidor/{{repartidor_id}}", "host": ["{{gateway_url}}"], "path": ["pedido", "pedidos", "repartidor", "{{repartidor_id}}"] }
+							}
+						},
+						{
+							"name": "Pedidos por Modalidad",
+							"request": {
+								"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+								"method": "GET",
+								"url": { "raw": "{{gateway_url}}/pedido/pedidos/modalidad/DELIVERY", "host": ["{{gateway_url}}"], "path": ["pedido", "pedidos", "modalidad", "DELIVERY"] }
+							}
+						},
+						{
+							"name": "Asociar Factura a Pedido",
+							"request": {
+								"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+								"method": "PATCH",
+								"url": {
+									"raw": "{{gateway_url}}/pedido/pedidos/{{pedido_id}}/factura?facturaId={{factura_id}}&tarifa=15.50",
+									"host": ["{{gateway_url}}"],
+									"path": ["pedido", "pedidos", "{{pedido_id}}", "factura"],
+									"query": [
+										{ "key": "facturaId", "value": "{{factura_id}}" },
+										{ "key": "tarifa", "value": "15.50" }
+									]
+								}
+							}
+						},
+						{
+							"name": "Pedidos Sin Factura",
+							"request": {
+								"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+								"method": "GET",
+								"url": { "raw": "{{gateway_url}}/pedido/pedidos/sin-factura", "host": ["{{gateway_url}}"], "path": ["pedido", "pedidos", "sin-factura"] }
+							}
+						},
+						{
+							"name": "Pedidos de Alta Prioridad",
+							"request": {
+								"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+								"method": "GET",
+								"url": { "raw": "{{gateway_url}}/pedido/pedidos/alta-prioridad", "host": ["{{gateway_url}}"], "path": ["pedido", "pedidos", "alta-prioridad"] }
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "📍 Tracking Service",
+			"description": "Servicio de rastreo GPS - Puerto 8090\n(Sin ruta en Gateway)",
+			"item": [
+				{
+					"name": "Enviar Ubicación (Track)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"repartidorId\": 1,\n    \"latitud\": -0.1807,\n    \"longitud\": -78.4678,\n    \"timestamp\": \"2026-02-08T10:30:00\"\n}"
+						},
+						"url": {
+							"raw": "{{tracking_url}}/api/tracking/track",
+							"host": ["{{tracking_url}}"],
+							"path": ["api", "tracking", "track"]
+						},
+						"description": "Enviar ubicación de repartidor a RabbitMQ"
+					}
+				}
+			]
+		},
+		{
+			"name": "🔔 Notifications Service",
+			"description": "Servicio de notificaciones - Puerto 8080\n(Sin ruta en Gateway)",
+			"item": [
+				{
+					"name": "Notificaciones",
+					"item": [
+						{
+							"name": "Listar Todas las Notificaciones",
+							"request": {
+								"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+								"method": "GET",
+								"url": {
+									"raw": "{{notifications_url}}/api/notifications",
+									"host": ["{{notifications_url}}"],
+									"path": ["api", "notifications"]
+								}
+							}
+						},
+						{
+							"name": "Obtener Notificación por ID",
+							"request": {
+								"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+								"method": "GET",
+								"url": {
+									"raw": "{{notifications_url}}/api/notifications/{{notification_id}}",
+									"host": ["{{notifications_url}}"],
+									"path": ["api", "notifications", "{{notification_id}}"]
+								}
+							}
+						},
+						{
+							"name": "Notificaciones por Order ID",
+							"request": {
+								"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+								"method": "GET",
+								"url": {
+									"raw": "{{notifications_url}}/api/notifications/order/{{order_id}}",
+									"host": ["{{notifications_url}}"],
+									"path": ["api", "notifications", "order", "{{order_id}}"]
+								}
+							}
+						},
+						{
+							"name": "Notificaciones por Recipient",
+							"request": {
+								"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+								"method": "GET",
+								"url": {
+									"raw": "{{notifications_url}}/api/notifications/recipient/testuser@example.com",
+									"host": ["{{notifications_url}}"],
+									"path": ["api", "notifications", "recipient", "testuser@example.com"]
+								}
+							}
+						},
+						{
+							"name": "Enviar Notificación",
+							"request": {
+								"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+								"method": "POST",
+								"url": {
+									"raw": "{{notifications_url}}/api/notifications/{{notification_id}}/send",
+									"host": ["{{notifications_url}}"],
+									"path": ["api", "notifications", "{{notification_id}}", "send"]
+								},
+								"description": "Disparar el envío de una notificación"
+							}
+						}
+					]
+				},
+				{
+					"name": "Test Events",
+					"item": [
+						{
+							"name": "Publicar Evento Order Created",
+							"request": {
+								"method": "POST",
+								"header": [
+									{ "key": "Content-Type", "value": "application/json" }
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"orderId\": \"550e8400-e29b-41d4-a716-446655440000\",\n    \"customerId\": \"550e8400-e29b-41d4-a716-446655440001\",\n    \"customerEmail\": \"cliente@example.com\",\n    \"customerName\": \"Juan Pérez\",\n    \"totalAmount\": 25.50,\n    \"createdAt\": \"2026-02-08T10:00:00\"\n}"
+								},
+								"url": {
+									"raw": "{{notifications_url}}/api/test/events/order-created",
+									"host": ["{{notifications_url}}"],
+									"path": ["api", "test", "events", "order-created"]
+								},
+								"description": "Publicar evento de prueba: orden creada"
+							}
+						},
+						{
+							"name": "Publicar Evento Order Status Updated",
+							"request": {
+								"method": "POST",
+								"header": [
+									{ "key": "Content-Type", "value": "application/json" }
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"orderId\": \"550e8400-e29b-41d4-a716-446655440000\",\n    \"customerId\": \"550e8400-e29b-41d4-a716-446655440001\",\n    \"customerEmail\": \"cliente@example.com\",\n    \"customerName\": \"Juan Pérez\",\n    \"previousStatus\": \"PENDIENTE\",\n    \"newStatus\": \"EN_PROCESO\",\n    \"updatedAt\": \"2026-02-08T11:00:00\"\n}"
+								},
+								"url": {
+									"raw": "{{notifications_url}}/api/test/events/order-status-updated",
+									"host": ["{{notifications_url}}"],
+									"path": ["api", "test", "events", "order-status-updated"]
+								},
+								"description": "Publicar evento de prueba: cambio de estado"
+							}
+						},
+						{
+							"name": "Publicar Sample Order Created",
+							"request": {
+								"method": "POST",
+								"url": {
+									"raw": "{{notifications_url}}/api/test/events/order-created/sample",
+									"host": ["{{notifications_url}}"],
+									"path": ["api", "test", "events", "order-created", "sample"]
+								},
+								"description": "Publicar evento de muestra (datos pre-cargados)"
+							}
+						},
+						{
+							"name": "Publicar Sample Status Updated",
+							"request": {
+								"method": "POST",
+								"url": {
+									"raw": "{{notifications_url}}/api/test/events/order-status-updated/sample",
+									"host": ["{{notifications_url}}"],
+									"path": ["api", "test", "events", "order-status-updated", "sample"],
+									"query": [
+										{ "key": "orderId", "value": "", "disabled": true, "description": "UUID opcional del pedido" }
+									]
+								},
+								"description": "Publicar evento de muestra de cambio de estado"
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "🔮 Delivery GraphQL Service",
+			"description": "Servicio GraphQL - Puerto 4000\nGateway: /graphql/** → /**",
+			"item": [
+				{
+					"name": "Directo (4000)",
+					"item": [
+						{
+							"name": "Query: Obtener Pedido por ID",
+							"request": {
+								"method": "POST",
+								"header": [
+									{ "key": "Content-Type", "value": "application/json" }
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"query\": \"query { pedido(id: \\\"pedido-001\\\") { id clienteId estado prioridad modalidadServicio tipoEntrega peso direccionOrigen { calle ciudad } direccionDestino { calle ciudad } repartidor { id nombre apellido estado } vehiculo { id placa tipo marca } factura { id total estado } } }\"\n}"
+								},
+								"url": {
+									"raw": "{{graphql_url}}/graphql",
+									"host": ["{{graphql_url}}"],
+									"path": ["graphql"]
+								}
+							}
+						},
+						{
+							"name": "Query: Listar Pedidos",
+							"request": {
+								"method": "POST",
+								"header": [{ "key": "Content-Type", "value": "application/json" }],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"query\": \"query { pedidos { id clienteId estado prioridad modalidadServicio tipoEntrega peso } }\"\n}"
+								},
+								"url": { "raw": "{{graphql_url}}/graphql", "host": ["{{graphql_url}}"], "path": ["graphql"] }
+							}
+						},
+						{
+							"name": "Query: Pedidos Pendientes Asignación",
+							"request": {
+								"method": "POST",
+								"header": [{ "key": "Content-Type", "value": "application/json" }],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"query\": \"query { pedidosPendientesAsignacion { id clienteId estado prioridad peso } }\"\n}"
+								},
+								"url": { "raw": "{{graphql_url}}/graphql", "host": ["{{graphql_url}}"], "path": ["graphql"] }
+							}
+						},
+						{
+							"name": "Query: Obtener Repartidor",
+							"request": {
+								"method": "POST",
+								"header": [{ "key": "Content-Type", "value": "application/json" }],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"query\": \"query { repartidor(id: \\\"{{repartidor_id}}\\\") { id nombre apellido estado zonaAsignada telefono email vehiculoId latitud longitud } }\"\n}"
+								},
+								"url": { "raw": "{{graphql_url}}/graphql", "host": ["{{graphql_url}}"], "path": ["graphql"] }
+							}
+						},
+						{
+							"name": "Query: Listar Repartidores",
+							"request": {
+								"method": "POST",
+								"header": [{ "key": "Content-Type", "value": "application/json" }],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"query\": \"query { repartidores { id nombre apellido estado zonaAsignada vehiculoId } }\"\n}"
+								},
+								"url": { "raw": "{{graphql_url}}/graphql", "host": ["{{graphql_url}}"], "path": ["graphql"] }
+							}
+						},
+						{
+							"name": "Query: Obtener Vehículo",
+							"request": {
+								"method": "POST",
+								"header": [{ "key": "Content-Type", "value": "application/json" }],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"query\": \"query { vehiculo(id: \\\"{{vehiculo_id}}\\\") { id tipo placa marca modelo anio estado capacidadCarga activo } }\"\n}"
+								},
+								"url": { "raw": "{{graphql_url}}/graphql", "host": ["{{graphql_url}}"], "path": ["graphql"] }
+							}
+						},
+						{
+							"name": "Query: Listar Vehículos",
+							"request": {
+								"method": "POST",
+								"header": [{ "key": "Content-Type", "value": "application/json" }],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"query\": \"query { vehiculos { id tipo placa marca modelo estado capacidadCarga activo } }\"\n}"
+								},
+								"url": { "raw": "{{graphql_url}}/graphql", "host": ["{{graphql_url}}"], "path": ["graphql"] }
+							}
+						},
+						{
+							"name": "Query: Flota Activa (Mapa)",
+							"request": {
+								"method": "POST",
+								"header": [{ "key": "Content-Type", "value": "application/json" }],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"query\": \"query { flotaActiva { repartidorId nombre apellido estado latitud longitud vehiculoPlaca vehiculoTipo pedidoActualId } }\"\n}"
+								},
+								"url": { "raw": "{{graphql_url}}/graphql", "host": ["{{graphql_url}}"], "path": ["graphql"] }
+							}
+						},
+						{
+							"name": "Query: Resumen de Flota",
+							"request": {
+								"method": "POST",
+								"header": [{ "key": "Content-Type", "value": "application/json" }],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"query\": \"query { flotaResumen { totalRepartidores disponibles enRuta enDescanso totalVehiculos vehiculosDisponibles vehiculosEnRuta } }\"\n}"
+								},
+								"url": { "raw": "{{graphql_url}}/graphql", "host": ["{{graphql_url}}"], "path": ["graphql"] }
+							}
+						},
+						{
+							"name": "Query: Estadísticas por Cobertura",
+							"request": {
+								"method": "POST",
+								"header": [{ "key": "Content-Type", "value": "application/json" }],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"query\": \"query { estadisticasPorCobertura(cobertura: \\\"LOCAL\\\") { cobertura totalPedidos pedidosPendientes pedidosEnProceso pedidosEntregados tiempoPromedioEntrega } }\"\n}"
+								},
+								"url": { "raw": "{{graphql_url}}/graphql", "host": ["{{graphql_url}}"], "path": ["graphql"] }
+							}
+						},
+						{
+							"name": "Query: Rutas Populares",
+							"request": {
+								"method": "POST",
+								"header": [{ "key": "Content-Type", "value": "application/json" }],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"query\": \"query { rutasPopulares(limite: 5) { ciudadOrigen ciudadDestino totalPedidos } }\"\n}"
+								},
+								"url": { "raw": "{{graphql_url}}/graphql", "host": ["{{graphql_url}}"], "path": ["graphql"] }
+							}
+						},
+						{
+							"name": "Query: Cache Metrics",
+							"request": {
+								"method": "POST",
+								"header": [{ "key": "Content-Type", "value": "application/json" }],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"query\": \"query { cacheMetrics { hits misses hitRate totalRequests } }\"\n}"
+								},
+								"url": { "raw": "{{graphql_url}}/graphql", "host": ["{{graphql_url}}"], "path": ["graphql"] }
+							}
+						},
+						{
+							"name": "Mutation: Cancelar Pedido",
+							"request": {
+								"method": "POST",
+								"header": [{ "key": "Content-Type", "value": "application/json" }],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"query\": \"mutation { cancelarPedido(input: { pedidoId: \\\"pedido-001\\\", motivo: \\\"Cliente solicitó cancelación\\\" }) { id estado } }\"\n}"
+								},
+								"url": { "raw": "{{graphql_url}}/graphql", "host": ["{{graphql_url}}"], "path": ["graphql"] }
+							}
+						}
+					]
+				},
+				{
+					"name": "Via Gateway (8000)",
+					"item": [
+						{
+							"name": "Query: Listar Pedidos",
+							"request": {
+								"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+								"method": "POST",
+								"header": [{ "key": "Content-Type", "value": "application/json" }],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"query\": \"query { pedidos { id clienteId estado prioridad modalidadServicio tipoEntrega peso } }\"\n}"
+								},
+								"url": { "raw": "{{gateway_url}}/graphql", "host": ["{{gateway_url}}"], "path": ["graphql"] }
+							}
+						},
+						{
+							"name": "Query: Obtener Pedido por ID",
+							"request": {
+								"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+								"method": "POST",
+								"header": [{ "key": "Content-Type", "value": "application/json" }],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"query\": \"query { pedido(id: \\\"pedido-001\\\") { id clienteId estado prioridad repartidor { id nombre } vehiculo { id placa } factura { id total } } }\"\n}"
+								},
+								"url": { "raw": "{{gateway_url}}/graphql", "host": ["{{gateway_url}}"], "path": ["graphql"] }
+							}
+						},
+						{
+							"name": "Query: Resumen de Flota",
+							"request": {
+								"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+								"method": "POST",
+								"header": [{ "key": "Content-Type", "value": "application/json" }],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"query\": \"query { flotaResumen { totalRepartidores disponibles enRuta totalVehiculos vehiculosDisponibles } }\"\n}"
+								},
+								"url": { "raw": "{{gateway_url}}/graphql", "host": ["{{gateway_url}}"], "path": ["graphql"] }
+							}
+						},
+						{
+							"name": "Mutation: Cancelar Pedido",
+							"request": {
+								"auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }] },
+								"method": "POST",
+								"header": [{ "key": "Content-Type", "value": "application/json" }],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"query\": \"mutation { cancelarPedido(input: { pedidoId: \\\"pedido-001\\\", motivo: \\\"Cancelación vía gateway\\\" }) { id estado } }\"\n}"
+								},
+								"url": { "raw": "{{gateway_url}}/graphql", "host": ["{{gateway_url}}"], "path": ["graphql"] }
+							}
+						}
+					]
+				}
+			]
+		}
+	]
+}
