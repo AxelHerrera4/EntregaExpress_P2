@@ -3,41 +3,34 @@
 # Spring Boot + Java 21
 # ==================================
 
-# Etapa 1: Build
-FROM maven:3.9.6-eclipse-temurin-21-alpine AS build
+FROM maven:3.9.6-eclipse-temurin-21-alpine AS builder
 
 WORKDIR /app
 
-# Copiar pom.xml y código fuente
+# Copiamos primero el pom.xml para aprovechar la caché de capas de Docker
 COPY pom.xml .
+# Descargamos dependencias (esto se cacheará si no cambias el pom.xml)
+RUN mvn dependency:go-offline
+
+# Copiamos el código fuente
 COPY src ./src
 
-# Compilar
-RUN mvn clean package -DskipTests -B
+# Compilamos el proyecto y generamos el JAR (saltando tests para rapidez)
+RUN mvn clean package -DskipTests
 
-# ==================================
-# Etapa 2: Runtime
-# ==================================
+# ===============================
+# ETAPA 2: Ejecución (Runtime)
+# ===============================
 FROM eclipse-temurin:21-jre-alpine
 
-# Información del mantenedor
-LABEL maintainer="logiflow@espe.edu.ec"
-LABEL description="Tracking Service - LogiFlow"
-
-# Instalamos CURL para healthcheck
-RUN apk add --no-cache curl
-
-# Crear usuario seguro
-RUN addgroup -S spring && adduser -S spring -G spring
-
-# Directorio de trabajo
 WORKDIR /app
 
-# Copiar el JAR de la aplicación
-COPY --from=build /app/target/*.jar app.jar
-RUN chown spring:spring app.jar
+# Instalar curl para healthchecks (opcional)
+RUN apk add --no-cache curl
 
-USER spring:spring
+# Copiamos SOLO el JAR generado en la etapa anterior
+# Nota: El asterisco *.jar nos evita tener que saber la versión exacta (0.0.1-SNAPSHOT)
+COPY --from=builder /app/target/*.jar /app/app.jar
 
 # Exponer el puerto
 EXPOSE 8090
@@ -49,6 +42,7 @@ ENV SPRING_RABBITMQ_PORT=5672
 ENV SPRING_RABBITMQ_USERNAME=admin
 ENV SPRING_RABBITMQ_PASSWORD=admin
 
-# Ejecutar la aplicación
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENV JAVA_OPTS="-Xms128m -Xmx512m -Djava.security.egd=file:/dev/./urandom"
+
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar /app/app.jar"]
 

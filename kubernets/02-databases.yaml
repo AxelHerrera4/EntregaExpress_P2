@@ -1,0 +1,380 @@
+---
+# ==========================================
+# AUTH SERVICE DATABASE
+# ==========================================
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: authservice-db-pvc
+  namespace: logiflow
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: authservice-db
+  namespace: logiflow
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: authservice-db
+  template:
+    metadata:
+      labels:
+        app: authservice-db
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:16-alpine
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_DB
+          value: "jwt_demo"
+        - name: POSTGRES_USER
+          value: "admin"
+        - name: POSTGRES_PASSWORD
+          value: "admin"
+        volumeMounts:
+        - name: authservice-db-storage
+          mountPath: /var/lib/postgresql/data
+      volumes:
+      - name: authservice-db-storage
+        persistentVolumeClaim:
+          claimName: authservice-db-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: authservice-db
+  namespace: logiflow
+spec:
+  ports:
+    - port: 5432
+      targetPort: 5432
+  selector:
+    app: authservice-db
+
+---
+# ==========================================
+# BILLING SERVICE DATABASE
+# ==========================================
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: billing-db-pvc
+  namespace: logiflow
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: billing-db
+  namespace: logiflow
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: billing-db
+  template:
+    metadata:
+      labels:
+        app: billing-db
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:16-alpine
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_DB
+          value: "db_billing_users"
+        - name: POSTGRES_USER
+          value: "billing"
+        - name: POSTGRES_PASSWORD
+          value: "qwerty123"
+        volumeMounts:
+        - name: billing-db-storage
+          mountPath: /var/lib/postgresql/data
+      volumes:
+      - name: billing-db-storage
+        persistentVolumeClaim:
+          claimName: billing-db-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: billing-db
+  namespace: logiflow
+spec:
+  ports:
+    - port: 5432
+      targetPort: 5432
+  selector:
+    app: billing-db
+
+---
+# ==========================================
+# FLEET SERVICE DATABASE
+# ==========================================
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: fleet-db-pvc
+  namespace: logiflow
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fleet-db
+  namespace: logiflow
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fleet-db
+  template:
+    metadata:
+      labels:
+        app: fleet-db
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:16-alpine
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_DB
+          value: "fleet_db"
+        - name: POSTGRES_USER
+          value: "fleet_user"
+        - name: POSTGRES_PASSWORD
+          value: "fleet_password"
+        volumeMounts:
+        - name: fleet-db-storage
+          mountPath: /var/lib/postgresql/data
+      volumes:
+      - name: fleet-db-storage
+        persistentVolumeClaim:
+          claimName: fleet-db-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fleet-db
+  namespace: logiflow
+spec:
+  ports:
+    - port: 5432
+      targetPort: 5432
+  selector:
+    app: fleet-db
+
+---
+# ==========================================
+# PEDIDO SERVICE DATABASE
+# ==========================================
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pedido-db-pvc
+  namespace: logiflow
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pedido-db
+  namespace: logiflow
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pedido-db
+  template:
+    metadata:
+      labels:
+        app: pedido-db
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:16-alpine
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_DB
+          value: "pedidos_db"
+        - name: POSTGRES_USER
+          value: "pedido_user"
+        - name: POSTGRES_PASSWORD
+          value: "pedido_pass"
+        volumeMounts:
+        - name: pedido-db-storage
+          mountPath: /var/lib/postgresql/data
+      volumes:
+      - name: pedido-db-storage
+        persistentVolumeClaim:
+          claimName: pedido-db-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pedido-db
+  namespace: logiflow
+spec:
+  ports:
+    - port: 5432
+      targetPort: 5432
+  selector:
+    app: pedido-db
+
+---
+# ==========================================
+# NOTIFICATIONS SERVICE DATABASE
+# ==========================================
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: notifications-db-pvc
+  namespace: logiflow
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notifications-db
+  namespace: logiflow
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: notifications-db
+  template:
+    metadata:
+      labels:
+        app: notifications-db
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:16-alpine
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_DB
+          value: "db_notification"
+        - name: POSTGRES_USER
+          value: "parkin"
+        - name: POSTGRES_PASSWORD
+          value: "qwerty123"
+        volumeMounts:
+        - name: notifications-db-storage
+          mountPath: /var/lib/postgresql/data
+      volumes:
+      - name: notifications-db-storage
+        persistentVolumeClaim:
+          claimName: notifications-db-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: notifications-db
+  namespace: logiflow
+spec:
+  ports:
+    - port: 5432
+      targetPort: 5432
+  selector:
+    app: notifications-db
+
+---
+# ==========================================
+# RABBITMQ MESSAGE BROKER
+# ==========================================
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: rabbitmq-pvc
+  namespace: logiflow
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rabbitmq
+  namespace: logiflow
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rabbitmq
+  template:
+    metadata:
+      labels:
+        app: rabbitmq
+    spec:
+      containers:
+      - name: rabbitmq
+        image: rabbitmq:3.13-management-alpine
+        ports:
+        - containerPort: 5672
+        - containerPort: 15672
+        env:
+        - name: RABBITMQ_DEFAULT_USER
+          value: "admin"
+        - name: RABBITMQ_DEFAULT_PASS
+          value: "admin"
+        volumeMounts:
+        - name: rabbitmq-storage
+          mountPath: /var/lib/rabbitmq
+      volumes:
+      - name: rabbitmq-storage
+        persistentVolumeClaim:
+          claimName: rabbitmq-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq
+  namespace: logiflow
+spec:
+  ports:
+    - name: amqp
+      port: 5672
+      targetPort: 5672
+    - name: management
+      port: 15672
+      targetPort: 15672
+  selector:
+    app: rabbitmq

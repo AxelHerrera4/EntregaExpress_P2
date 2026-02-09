@@ -1,0 +1,140 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: authservice-ingress
+  namespace: logiflow
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+  - host: authservice.logiflow.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: authservice
+            port:
+              number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: billing-service-ingress
+  namespace: logiflow
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+  - host: billing-service.logiflow.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: billing-service
+            port:
+              number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: fleet-service-ingress
+  namespace: logiflow
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+  - host: fleet-service.logiflow.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: fleet-service
+            port:
+              number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: pedido-service-ingress
+  namespace: logiflow
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+  - host: pedido-service.logiflow.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: pedido-service
+            port:
+              number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tracking-service-ingress
+  namespace: logiflow
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+  - host: tracking-service.logiflow.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: tracking-service
+            port:
+              number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ms-notifications-ingress
+  namespace: logiflow
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+  - host: ms-notifications.logiflow.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: ms-notifications
+            port:
+              number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: delivery-graphql-service-ingress
+  namespace: logiflow
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+  - host: delivery-graphql-service.logiflow.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: delivery-graphql-service
+            port:
+              number: 80

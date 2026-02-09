@@ -1,0 +1,493 @@
+---
+# ==========================================
+# CONFIGURACIÓN COMÚN (Variables de Entorno)
+# ==========================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logiflow-config
+  namespace: logiflow
+data:
+  NODE_ENV: "production"
+  DB_HOST: "postgres-service"
+  RABBITMQ_HOST: "rabbitmq-service"
+
+---
+# ==========================================
+# MICROSERVICIOS (Backend)
+# ==========================================
+
+# --- Auth Service ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service
+  namespace: logiflow
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auth-service
+  template:
+    metadata:
+      labels:
+        app: auth-service
+    spec:
+      containers:
+      - name: auth-service
+        image: micaelasalcedo/authservice:latest
+        ports:
+        - containerPort: 8081
+        envFrom:
+        - configMapRef:
+            name: logiflow-config
+        env:
+        - name: SPRING_DATASOURCE_URL
+          value: "jdbc:postgresql://authservice-db:5432/jwt_demo"
+        - name: SPRING_DATASOURCE_USERNAME
+          value: "admin"
+        - name: SPRING_DATASOURCE_PASSWORD
+          value: "admin"
+        - name: JWT_SECRET
+          value: "MiSuperClaveSecretaMuyLarga123456789"
+        - name: JWT_ISSUER
+          value: "auth-service"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: authservice
+  namespace: logiflow
+spec:
+  selector:
+    app: auth-service
+  ports:
+    - protocol: TCP
+      port: 8081
+      targetPort: 8081
+
+---
+# --- Billing Service ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: billing-service
+  namespace: logiflow
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: billing-service
+  template:
+    metadata:
+      labels:
+        app: billing-service
+    spec:
+      containers:
+      - name: billing-service
+        image: micaelasalcedo/billing-service:latest
+        ports:
+        - containerPort: 8082
+        envFrom:
+        - configMapRef:
+            name: logiflow-config
+        env:
+        - name: SPRING_DATASOURCE_URL
+          value: "jdbc:postgresql://billing-db:5432/db_billing_users"
+        - name: SPRING_DATASOURCE_USERNAME
+          value: "billing"
+        - name: SPRING_DATASOURCE_PASSWORD
+          value: "qwerty123"
+        - name: JWT_SECRET
+          value: "MiSuperClaveSecretaMuyLarga123456789"
+        - name: JWT_ISSUER
+          value: "auth-service"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: billing-service
+  namespace: logiflow
+spec:
+  selector:
+    app: billing-service
+  ports:
+    - protocol: TCP
+      port: 8082
+      targetPort: 8082
+
+---
+# --- Fleet Service ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fleet-service
+  namespace: logiflow
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fleet-service
+  template:
+    metadata:
+      labels:
+        app: fleet-service
+    spec:
+      containers:
+      - name: fleet-service
+        image: micaelasalcedo/fleet-service:latest
+        ports:
+        - containerPort: 8083
+        envFrom:
+        - configMapRef:
+            name: logiflow-config
+        env:
+        - name: SPRING_DATASOURCE_URL
+          value: "jdbc:postgresql://fleet-db:5432/fleet_db"
+        - name: SPRING_DATASOURCE_USERNAME
+          value: "fleet_user"
+        - name: SPRING_DATASOURCE_PASSWORD
+          value: "fleet_password"
+        - name: SPRING_RABBITMQ_HOST
+          value: "rabbitmq"
+        - name: SPRING_RABBITMQ_PORT
+          value: "5672"
+        - name: SPRING_RABBITMQ_USERNAME
+          value: "admin"
+        - name: SPRING_RABBITMQ_PASSWORD
+          value: "admin"
+        - name: JWT_SECRET
+          value: "MiSuperClaveSecretaMuyLarga123456789"
+        - name: JWT_ISSUER
+          value: "auth-service"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fleet-service
+  namespace: logiflow
+spec:
+  selector:
+    app: fleet-service
+  ports:
+    - protocol: TCP
+      port: 8083
+      targetPort: 8083
+
+---
+# --- Pedido Service ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pedido-service
+  namespace: logiflow
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pedido-service
+  template:
+    metadata:
+      labels:
+        app: pedido-service
+    spec:
+      containers:
+      - name: pedido-service
+        image: micaelasalcedo/pedido-service:latest
+        ports:
+        - containerPort: 8084
+        envFrom:
+        - configMapRef:
+            name: logiflow-config
+        env:
+        - name: SPRING_DATASOURCE_URL
+          value: "jdbc:postgresql://pedido-db:5432/pedidos_db"
+        - name: SPRING_DATASOURCE_USERNAME
+          value: "pedido_user"
+        - name: SPRING_DATASOURCE_PASSWORD
+          value: "pedido_pass"
+        - name: SPRING_RABBITMQ_HOST
+          value: "rabbitmq"
+        - name: SPRING_RABBITMQ_PORT
+          value: "5672"
+        - name: SPRING_RABBITMQ_USERNAME
+          value: "admin"
+        - name: SPRING_RABBITMQ_PASSWORD
+          value: "admin"
+        - name: BILLING_SERVICE_URL
+          value: "http://billing-service:8082"
+        - name: FLEET_SERVICE_URL
+          value: "http://fleet-service:8083"
+        - name: BILLING_INTEGRATION_ENABLED
+          value: "true"
+        - name: FLEET_INTEGRATION_ENABLED
+          value: "true"
+        - name: JWT_SECRET
+          value: "MiSuperClaveSecretaMuyLarga123456789"
+        - name: JWT_ISSUER
+          value: "auth-service"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pedido-service
+  namespace: logiflow
+spec:
+  selector:
+    app: pedido-service
+  ports:
+    - protocol: TCP
+      port: 8084
+      targetPort: 8084
+
+---
+# --- Tracking Service ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tracking-service
+  namespace: logiflow
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tracking-service
+  template:
+    metadata:
+      labels:
+        app: tracking-service
+    spec:
+      containers:
+      - name: tracking-service
+        image: micaelasalcedo/tracking-service:latest
+        ports:
+        - containerPort: 8090
+        envFrom:
+        - configMapRef:
+            name: logiflow-config
+        env:
+        - name: SPRING_RABBITMQ_HOST
+          value: "rabbitmq"
+        - name: SPRING_RABBITMQ_PORT
+          value: "5672"
+        - name: SPRING_RABBITMQ_USERNAME
+          value: "admin"
+        - name: SPRING_RABBITMQ_PASSWORD
+          value: "admin"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tracking-service
+  namespace: logiflow
+spec:
+  selector:
+    app: tracking-service
+  ports:
+    - protocol: TCP
+      port: 8090
+      targetPort: 8090
+
+---
+# --- MS Notifications ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ms-notifications
+  namespace: logiflow
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ms-notifications
+  template:
+    metadata:
+      labels:
+        app: ms-notifications
+    spec:
+      containers:
+      - name: ms-notifications
+        image: micaelasalcedo/ms-notifications:latest
+        ports:
+        - containerPort: 8080
+        envFrom:
+        - configMapRef:
+            name: logiflow-config
+        env:
+        - name: SPRING_DATASOURCE_URL
+          value: "jdbc:postgresql://notifications-db:5432/db_notification"
+        - name: SPRING_DATASOURCE_USERNAME
+          value: "parkin"
+        - name: SPRING_DATASOURCE_PASSWORD
+          value: "qwerty123"
+        - name: SPRING_RABBITMQ_HOST
+          value: "rabbitmq"
+        - name: SPRING_RABBITMQ_PORT
+          value: "5672"
+        - name: SPRING_RABBITMQ_USERNAME
+          value: "admin"
+        - name: SPRING_RABBITMQ_PASSWORD
+          value: "admin"
+        - name: MAIL_USERNAME
+          value: "wishamigosecreto@gmail.com"
+        - name: MAIL_PASSWORD
+          value: "wocg tuks unbw csxi"
+        - name: JAVA_TOOL_OPTIONS
+          value: "-Xms128m -Xmx256m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ms-notifications
+  namespace: logiflow
+spec:
+  selector:
+    app: ms-notifications
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+
+---
+# --- Delivery GraphQL Service ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: delivery-graphql
+  namespace: logiflow
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: delivery-graphql
+  template:
+    metadata:
+      labels:
+        app: delivery-graphql
+    spec:
+      containers:
+      - name: delivery-graphql
+        image: micaelasalcedo/delivery-graphql-service:latest
+        ports:
+        - containerPort: 4000
+        envFrom:
+        - configMapRef:
+            name: logiflow-config
+        env:
+        - name: PORT
+          value: "4000"
+        - name: PEDIDO_SERVICE_URL
+          value: "http://pedido-service:8084/api"
+        - name: FLEET_SERVICE_URL
+          value: "http://fleet-service:8083/api"
+        - name: TRACKING_SERVICE_URL
+          value: "http://tracking-service:8090"
+        - name: AUTH_SERVICE_URL
+          value: "http://authservice:8081/api/auth"
+        - name: BILLING_SERVICE_URL
+          value: "http://billing-service:8082/api"
+        - name: HTTP_TIMEOUT
+          value: "30000"
+        - name: NODE_ENV
+          value: "production"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: delivery-graphql-service
+  namespace: logiflow
+spec:
+  selector:
+    app: delivery-graphql
+  ports:
+    - protocol: TCP
+      port: 4000
+      targetPort: 4000
+
+---
+# ==========================================
+# API GATEWAY (Punto de entrada)
+# ==========================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: logiflow
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+    spec:
+      containers:
+      - name: api-gateway
+        image: micaelasalcedo/api-gateway:latest
+        ports:
+        - containerPort: 8000
+        envFrom:
+        - configMapRef:
+            name: logiflow-config
+        env:
+        - name: JWT_SECRET
+          value: "MiSuperClaveSecretaMuyLarga123456789"
+        - name: JWT_ISSUER
+          value: "auth-service"
+        - name: SPRING_CLOUD_GATEWAY_ROUTES_0_ID
+          value: "auth-route"
+        - name: SPRING_CLOUD_GATEWAY_ROUTES_0_URI
+          value: "http://authservice:8081"
+        - name: SPRING_CLOUD_GATEWAY_ROUTES_0_PREDICATES_0
+          value: "Path=/api/auth/**"
+        - name: SPRING_CLOUD_GATEWAY_ROUTES_1_ID
+          value: "billing-route"
+        - name: SPRING_CLOUD_GATEWAY_ROUTES_1_URI
+          value: "http://billing-service:8082"
+        - name: SPRING_CLOUD_GATEWAY_ROUTES_1_PREDICATES_0
+          value: "Path=/billing/**"
+        - name: SPRING_CLOUD_GATEWAY_ROUTES_2_ID
+          value: "fleet-route"
+        - name: SPRING_CLOUD_GATEWAY_ROUTES_2_URI
+          value: "http://fleet-service:8083"
+        - name: SPRING_CLOUD_GATEWAY_ROUTES_2_PREDICATES_0
+          value: "Path=/fleet/**"
+        - name: SPRING_CLOUD_GATEWAY_ROUTES_3_ID
+          value: "pedido-route"
+        - name: SPRING_CLOUD_GATEWAY_ROUTES_3_URI
+          value: "http://pedido-service:8084"
+        - name: SPRING_CLOUD_GATEWAY_ROUTES_3_PREDICATES_0
+          value: "Path=/pedido/**"
+        - name: SPRING_CLOUD_GATEWAY_ROUTES_4_ID
+          value: "tracking-route"
+        - name: SPRING_CLOUD_GATEWAY_ROUTES_4_URI
+          value: "http://tracking-service:8090"
+        - name: SPRING_CLOUD_GATEWAY_ROUTES_4_PREDICATES_0
+          value: "Path=/tracking/**"
+        - name: SPRING_CLOUD_GATEWAY_ROUTES_5_ID
+          value: "notifications-route"
+        - name: SPRING_CLOUD_GATEWAY_ROUTES_5_URI
+          value: "http://ms-notifications:8080"
+        - name: SPRING_CLOUD_GATEWAY_ROUTES_5_PREDICATES_0
+          value: "Path=/notifications/**"
+        - name: SPRING_CLOUD_GATEWAY_ROUTES_6_ID
+          value: "graphql-route"
+        - name: SPRING_CLOUD_GATEWAY_ROUTES_6_URI
+          value: "http://delivery-graphql-service:4000"
+        - name: SPRING_CLOUD_GATEWAY_ROUTES_6_PREDICATES_0
+          value: "Path=/graphql/**"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway
+  namespace: logiflow
+spec:
+  selector:
+    app: api-gateway
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort: 8000
