@@ -17,9 +17,7 @@ public class NotificationMapper {
                 notification.getSubject(),
                 notification.getMessage(),
                 notification.getType(),
-                notification.getStatus(),
-                notification.getCreatedAt(),
-                notification.getSentAt()
+                notification.getCreatedAt()
         );
     }
 
@@ -35,9 +33,7 @@ public class NotificationMapper {
         notification.setSubject(dto.getSubject());
         notification.setMessage(dto.getMessage());
         notification.setType(dto.getType());
-        notification.setStatus(dto.getStatus());
         notification.setCreatedAt(dto.getCreatedAt());
-        notification.setSentAt(dto.getSentAt());
 
         return notification;
     }

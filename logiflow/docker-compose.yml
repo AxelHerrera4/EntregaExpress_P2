@@ -87,6 +87,27 @@ services:
       timeout: 10s
       retries: 5
 
+  # Notifications Service Database
+  notifications_db:
+    image: postgres:16-alpine
+    container_name: logiflow-notification-db
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_USER: parkin
+      POSTGRES_PASSWORD: qwerty123
+      POSTGRES_DB: db_notification
+    volumes:
+      - notification_data:/var/lib/postgresql/data
+    networks:
+      - logiflow-network
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U parkin -d db_notification" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   # =================================
   # MESSAGE BROKER
   # =================================
@@ -134,11 +155,16 @@ services:
       - JWT_EXPIRATION_MS=3600000
       - JWT_REFRESH_EXPIRATION_MS=86400000
     depends_on:
-      authservice-db:
-        condition: service_healthy
+      - authservice-db
     networks:
       - logiflow-network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "/bin/sh", "-c", "exit 0"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 150s
 
   # Billing Service
   billing-service:
@@ -156,11 +182,16 @@ services:
       - JWT_SECRET=MiSuperClaveSecretaMuyLarga123456789
       - JWT_ISSUER=auth-service
     depends_on:
-      billing-db:
-        condition: service_healthy
+      - billing-db
     networks:
       - logiflow-network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "/bin/sh", "-c", "exit 0"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 150s
 
   # Fleet Service
   fleet-service:
@@ -183,13 +214,17 @@ services:
       - JWT_ISSUER=auth-service
       - JWT_EXPIRATION=3600000
     depends_on:
-      fleet-db:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
+      - fleet-db
+      - rabbitmq
     networks:
       - logiflow-network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "/bin/sh", "-c", "exit 0"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 150s
 
   # Pedido Service
   pedido-service:
@@ -216,13 +251,107 @@ services:
       - JWT_ISSUER=auth-service
       - JWT_EXPIRATION=3600000
     depends_on:
-      pedido-db:
+      - pedido-db
+      - rabbitmq
+    networks:
+      - logiflow-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "/bin/sh", "-c", "exit 0"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 150s
+
+  # Tracking Service
+  tracking-service:
+    build:
+      context: ./tracking-service
+      dockerfile: Dockerfile
+    container_name: logiflow-tracking-service
+    ports:
+      - "8090:8090"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_RABBITMQ_PORT=5672
+      - SPRING_RABBITMQ_USERNAME=admin
+      - SPRING_RABBITMQ_PASSWORD=admin
+    depends_on:
+      - rabbitmq
+    networks:
+      - logiflow-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8090/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # MS Notifications - Servicio de Notificaciones
+  # MS Notifications
+  ms-notifications:
+    build:
+      context: ./ms-notifications
+      dockerfile: Dockerfile
+    container_name: logiflow-ms-notifications
+    ports:
+      - "8085:8080"
+    environment:
+      - JAVA_TOOL_OPTIONS=-Xms128m -Xmx256m # Límite de RAM
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://notifications_db:5432/db_notification
+      - SPRING_DATASOURCE_USERNAME=parkin
+      - SPRING_DATASOURCE_PASSWORD=qwerty123
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_RABBITMQ_PORT=5672
+      - SPRING_RABBITMQ_USERNAME=admin
+      - SPRING_RABBITMQ_PASSWORD=admin
+      - MAIL_USERNAME=${MAIL_USERNAME} # Lee del .env de tu PC y lo pasa al contenedor
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
+    depends_on:
+      notifications_db:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
     networks:
       - logiflow-network
     restart: unless-stopped
+
+  # Delivery GraphQL Service - BFF GraphQL
+  delivery-graphql-service:
+    build:
+      context: ./delivery-graphql-service
+      dockerfile: Dockerfile
+    container_name: logiflow-delivery-graphql-service
+    ports:
+      - "4000:4000"
+    environment:
+      - PORT=4000
+      # URLs a los servicios internos en Docker (con paths completos)
+      - PEDIDO_SERVICE_URL=http://pedido-service:8084/api
+      - FLEET_SERVICE_URL=http://fleet-service:8083/api
+      - TRACKING_SERVICE_URL=http://tracking-service:8090
+      - AUTH_SERVICE_URL=http://authservice:8081/api/auth
+      - BILLING_SERVICE_URL=http://billing-service:8082/api
+      - HTTP_TIMEOUT=30000
+      - NODE_ENV=development
+    depends_on:
+      - authservice
+      - pedido-service
+      - fleet-service
+      - billing-service
+      - tracking-service
+    networks:
+      - logiflow-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:4000/"]
+      interval: 20s
+      timeout: 5s
+      retries: 8
+      start_period: 180s
 
   # API Gateway
   api-gateway:
@@ -240,8 +369,7 @@ services:
       # Ruta 0 -> authservice
       - SPRING_CLOUD_GATEWAY_ROUTES_0_ID=auth-route
       - SPRING_CLOUD_GATEWAY_ROUTES_0_URI=http://authservice:8081
-      - SPRING_CLOUD_GATEWAY_ROUTES_0_PREDICATES_0=Path=/auth/**
-      - SPRING_CLOUD_GATEWAY_ROUTES_0_FILTERS_0=RewritePath=/auth/(?<path>.*), /api/auth/$\{path}
+      - SPRING_CLOUD_GATEWAY_ROUTES_0_PREDICATES_0=Path=/api/auth/**
 
       # Ruta 1 -> billing-service
       - SPRING_CLOUD_GATEWAY_ROUTES_1_ID=billing-route
@@ -260,18 +388,38 @@ services:
       - SPRING_CLOUD_GATEWAY_ROUTES_3_URI=http://pedido-service:8084
       - SPRING_CLOUD_GATEWAY_ROUTES_3_PREDICATES_0=Path=/pedido/**
       - SPRING_CLOUD_GATEWAY_ROUTES_3_FILTERS_0=RewritePath=/pedido/(?<path>.*), /api/$\{path}
+
+      # Ruta 4 -> tracking-service
+      - SPRING_CLOUD_GATEWAY_ROUTES_4_ID=tracking-route
+      - SPRING_CLOUD_GATEWAY_ROUTES_4_URI=http://tracking-service:8090
+      - SPRING_CLOUD_GATEWAY_ROUTES_4_PREDICATES_0=Path=/tracking/**
+      - SPRING_CLOUD_GATEWAY_ROUTES_4_FILTERS_0=RewritePath=/tracking/(?<path>.*), /api/$\{path}
+
+      # Ruta 5 -> ms-notifications
+      - SPRING_CLOUD_GATEWAY_ROUTES_5_ID=notifications-route
+      - SPRING_CLOUD_GATEWAY_ROUTES_5_URI=http://ms-notifications:8080
+      - SPRING_CLOUD_GATEWAY_ROUTES_5_PREDICATES_0=Path=/notifications/**
+      - SPRING_CLOUD_GATEWAY_ROUTES_5_FILTERS_0=RewritePath=/notifications/(?<path>.*), /api/$\{path}
+
+      # Ruta 6 -> graphql-service
+      - SPRING_CLOUD_GATEWAY_ROUTES_6_ID=graphql-route
+      - SPRING_CLOUD_GATEWAY_ROUTES_6_URI=http://delivery-graphql-service:4000
+      - SPRING_CLOUD_GATEWAY_ROUTES_6_PREDICATES_0=Path=/graphql/**
+      - SPRING_CLOUD_GATEWAY_ROUTES_6_FILTERS_0=RewritePath=/graphql(?<path>.*), $\{path}
     networks:
       - logiflow-network
     depends_on:
-        authservice:
-            condition: service_started
-        billing-service:
-            condition: service_started
-        fleet-service:
-            condition: service_started
-        pedido-service:
-            condition: service_started
+      - authservice
+      - billing-service
+      - fleet-service
+      - pedido-service
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "/bin/sh", "-c", "exit 0"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
 
 # =================================
 # NETWORKS
@@ -295,3 +443,5 @@ volumes:
     name: logiflow-pedido-data
   rabbitmq_data:
     name: logiflow-rabbitmq-data
+  notification_data:
+    name: logiflow-notification-data

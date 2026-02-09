@@ -37,13 +37,29 @@ spring:
           filters:
             - RewritePath=/pedido/(?<path>.*), /api/$\{path}
 
+        # Tracking Service - rutear a /api/**
+        - id: tracking-service
+          uri: ${SPRING_CLOUD_GATEWAY_ROUTES_4_URI:http://localhost:8090}
+          predicates:
+            - Path=/tracking/**
+          filters:
+            - RewritePath=/tracking/(?<path>.*), /api/$\{path}
+
+        # Notifications Service - rutear a /api/**
+        - id: notifications-service
+          uri: ${SPRING_CLOUD_GATEWAY_ROUTES_5_URI:http://localhost:8085}
+          predicates:
+            - Path=/notifications/**
+          filters:
+            - RewritePath=/notifications/(?<path>.*), /api/$\{path}
+
         # GraphQL Service - delivery-graphql-service
         - id: graphql-service
-          uri: ${SPRING_CLOUD_GATEWAY_ROUTES_4_URI:http://localhost:4000}
+          uri: ${SPRING_CLOUD_GATEWAY_ROUTES_6_URI:http://localhost:4000}
           predicates:
             - Path=/graphql/**
           filters:
-            - RewritePath=/graphql(?<path>.*), $\{path}
+            - RewritePath=/graphql/(?<path>.*), /$\{path}
 
 jwt:
   secret: ${JWT_SECRET:MiSuperClaveSecretaMuyLarga123456789}

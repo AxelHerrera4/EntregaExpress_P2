@@ -12,6 +12,6 @@ public interface ProcessedMessageRepository extends JpaRepository<ProcessedMessa
 
     Optional<ProcessedMessage> findByMessageId(UUID messageId);
 
-    boolean existsByMessageId(UUID messageId);
+    boolean existsByMessageId(String messageId);
 }
 

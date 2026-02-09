@@ -13,19 +13,27 @@ import org.springframework.context.annotation.Configuration;
 public class RabbitMQConfig {
 
     // Exchange names
-    public static final String ORDER_EXCHANGE = "order.exchange";
+    public static final String ORDER_EXCHANGE = "pedidos.exchange";
+    public static final String TRACKING_EXCHANGE = "exchange-tracking";
 
     // Queue names
-    public static final String ORDER_CREATED_QUEUE = "order.created.queue";
-    public static final String ORDER_STATUS_UPDATED_QUEUE = "order.status.updated.queue";
+    public static final String ORDER_CREATED_QUEUE = "pedido.creado";
+    public static final String ORDER_STATUS_UPDATED_QUEUE = "pedido.estado.actualizado";
+    public static final String TRACKING_QUEUE = "tracking.ubicacion";
 
     // Routing keys
     public static final String ORDER_CREATED_ROUTING_KEY = "pedido.creado";
     public static final String ORDER_STATUS_UPDATED_ROUTING_KEY = "pedido.estado.actualizado";
+    public static final String TRACKING_ROUTING_KEY = "repartidor.ubicacion";
 
     @Bean
     public TopicExchange orderExchange() {
         return new TopicExchange(ORDER_EXCHANGE);
+    }
+
+    @Bean
+    public TopicExchange trackingExchange() {
+        return new TopicExchange(TRACKING_EXCHANGE);
     }
 
     @Bean
@@ -37,6 +45,12 @@ public class RabbitMQConfig {
     @Bean
     public Queue orderStatusUpdatedQueue() {
         return QueueBuilder.durable(ORDER_STATUS_UPDATED_QUEUE)
+                .build();
+    }
+
+    @Bean
+    public Queue trackingQueue() {
+        return QueueBuilder.durable(TRACKING_QUEUE)
                 .build();
     }
 
@@ -54,6 +68,14 @@ public class RabbitMQConfig {
                 .bind(orderStatusUpdatedQueue)
                 .to(orderExchange)
                 .with(ORDER_STATUS_UPDATED_ROUTING_KEY);
+    }
+
+    @Bean
+    public Binding trackingBinding(Queue trackingQueue, TopicExchange trackingExchange) {
+        return BindingBuilder
+                .bind(trackingQueue)
+                .to(trackingExchange)
+                .with(TRACKING_ROUTING_KEY);
     }
 
     @Bean

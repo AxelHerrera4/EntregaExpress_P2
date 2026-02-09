@@ -50,8 +50,11 @@ async function startServer(): Promise<void> {
   try {
     console.log('🔐 Inicializando sistema de autenticación...');
     
-    // 1. Inicializar el sistema de autenticación automática
-    await authManager.initialize();
+    // 1. Inicializar el sistema de autenticación automática (no-blocking)
+    // El authManager continuará retentando en background si la autenticación falla
+    authManager.initialize().catch((err: unknown) => {
+      console.log('⚠️  Sistema de autenticación iniciando en background...', err instanceof Error ? err.message : '');
+    });
     
     // 2. Configurar interceptors para todos los clientes HTTP
     setupHttpClients();
@@ -87,9 +90,9 @@ async function startServer(): Promise<void> {
     console.log(`📊 Playground disponible en ${url}`);
     console.log('');
     console.log('🔐 Sistema de autenticación:');
-    console.log('  ✅ Autenticado automáticamente como admin');
-    console.log('  ✅ Token JWT configurado en todas las peticiones');
-    console.log('  ✅ Renovación automática de token activa');
+    console.log('  ⏳ Inicializando autenticación automática (puede tomar algunos segundos)...');
+    console.log('  ✅ Reintento automático cada 3-120 segundos hasta lograr conexión');
+    console.log('  ✅ Token JWT será configurado automáticamente en todas las peticiones una vez logueado');
     console.log('');
     console.log('🌐 Microservicios (vía API Gateway):');
     console.log(`  - Auth Service:     ${config.authServiceUrl}`);

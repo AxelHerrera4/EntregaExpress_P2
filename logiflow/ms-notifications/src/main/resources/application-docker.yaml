@@ -3,25 +3,25 @@ spring:
     name: ms-notifications
 
   datasource:
-    url: jdbc:postgresql://notifications_db:5434/db_notification
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://notifications-db:5432/db_notification}
     driver-class-name: org.postgresql.Driver
-    username: parkin
-    password: qwerty123
+    username: ${SPRING_DATASOURCE_USERNAME:parkin}
+    password: ${SPRING_DATASOURCE_PASSWORD:qwerty123}
 
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
-    show-sql: true
+    show-sql: false
 
   rabbitmq:
-    host: localhost
-    port: 5672
-    username: admin
-    password: admin
+    host: ${SPRING_RABBITMQ_HOST:rabbitmq}
+    port: ${SPRING_RABBITMQ_PORT:5672}
+    username: ${SPRING_RABBITMQ_USERNAME:admin}
+    password: ${SPRING_RABBITMQ_PASSWORD:admin}
     connection-timeout: 5000
     listener:
       simple:
@@ -52,10 +52,14 @@ server:
 
 logging:
   level:
-    logiflow.ms_notifications: DEBUG
+    logiflow.ms_notifications: INFO
     org.springframework.amqp: INFO
 
-# Configuración de clientes HTTP
-pedido:
-  service:
-    url: http://pedido-service:8084/api/pedidos
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always

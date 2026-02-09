@@ -20,7 +20,7 @@ public class Notification {
     private UUID id;
 
     @Column(nullable = false)
-    private UUID orderId;
+    private String orderId;
 
     @Column(nullable = false)
     private String recipient;

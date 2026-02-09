@@ -12,13 +12,11 @@ import java.util.UUID;
 @AllArgsConstructor
 public class NotificationDto {
     private UUID id;
-    private UUID orderId;
+    private String orderId;
     private String recipient;
     private String subject;
     private String message;
     private String type;
-    private String status;
     private LocalDateTime createdAt;
-    private LocalDateTime sentAt;
 }
 

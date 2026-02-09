@@ -26,7 +26,7 @@ public class NotificationService {
 
     @Transactional
     @CacheEvict(value = "notifications", allEntries = true)
-    public NotificationDto createNotification(UUID orderId, String recipient, String subject,
+    public NotificationDto createNotification(String orderId, String recipient, String subject,
                                              String message, String type) {
         Notification notification = new Notification();
         notification.setOrderId(orderId);
@@ -71,7 +71,7 @@ public class NotificationService {
 
     @Transactional
     @CacheEvict(value = "notifications", allEntries = true)
-    public NotificationDto createAndSendNotification(UUID orderId, String recipient,
+    public NotificationDto createAndSendNotification(String orderId, String recipient,
                                                      String subject, String message, String type) {
         NotificationDto notificationDto = createNotification(orderId, recipient, subject, message, type);
 
@@ -109,4 +109,3 @@ public class NotificationService {
                 .orElseThrow(() -> new RuntimeException("Notification not found: " + id));
     }
 }
-

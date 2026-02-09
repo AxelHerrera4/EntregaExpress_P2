@@ -50,6 +50,139 @@ Microservicio de notificaciones que consume eventos de RabbitMQ y envía alertas
 
 - **OrderEventPublisher**: Publicador de eventos (para testing)
 
+## Docker
+
+### Estructura de Docker
+
+El proyecto incluye:
+- **Dockerfile**: Construcción multi-stage optimizada para producción
+- **docker-compose.yml**: Orquestación completa de servicios
+- **.dockerignore**: Optimización de contexto de build
+
+### Dockerfile Multi-Stage
+
+#### Etapa 1: Build
+- Imagen base: `maven:3.9.6-eclipse-temurin-21-alpine`
+- Descarga dependencias (cacheadas si pom.xml no cambia)
+- Compila el proyecto sin ejecutar tests
+- Genera el JAR de la aplicación
+
+#### Etapa 2: Runtime
+- Imagen base: `eclipse-temurin:21-jre-alpine` (más ligera)
+- Usuario no-root para seguridad
+- Healthcheck integrado
+- Variables de entorno configurables
+
+### Uso con Docker
+
+#### 1. Configurar variables de entorno
+
+Crea un archivo `.env` basado en `.env.example`:
+
+```bash
+cp .env.example .env
+```
+
+Edita `.env` y agrega tus credenciales de email:
+```env
+MAIL_USERNAME=tu-email@gmail.com
+MAIL_PASSWORD=tu-app-password
+```
+
+#### 2. Ejecutar con Docker Compose
+
+```bash
+# Construir y levantar todos los servicios
+docker-compose up -d
+
+# Ver logs
+docker-compose logs -f ms-notifications
+
+# Detener servicios
+docker-compose down
+
+# Detener y eliminar volúmenes (borra la BD)
+docker-compose down -v
+```
+
+#### 3. Construir solo la imagen Docker
+
+```bash
+# Construir la imagen
+docker build -t ms-notifications:latest .
+
+# Ejecutar el contenedor manualmente
+docker run -d \
+  --name ms-notifications \
+  -p 8080:8080 \
+  -e SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/db_notification \
+  -e SPRING_RABBITMQ_HOST=rabbitmq \
+  -e MAIL_USERNAME=tu-email@gmail.com \
+  -e MAIL_PASSWORD=tu-app-password \
+  ms-notifications:latest
+```
+
+### Servicios en Docker Compose
+
+El `docker-compose.yml` incluye:
+
+1. **rabbitmq**: Broker de mensajería
+   - Puerto: 5672 (AMQP), 15672 (UI Management)
+   - Credenciales: admin/admin
+   - UI disponible en: http://localhost:15672
+
+2. **postgres**: Base de datos
+   - Puerto: 5434 (host) → 5432 (contenedor)
+   - Base de datos: db_notification
+   - Credenciales: parkin/qwerty123
+   - Volumen persistente: pgdata
+
+3. **ms-notifications**: Microservicio
+   - Puerto: 8080
+   - Healthcheck habilitado
+   - Depende de postgres y rabbitmq (espera healthchecks)
+   - Restart automático
+
+### Verificar el servicio
+
+```bash
+# Healthcheck
+curl http://localhost:8080/actuator/health
+
+# API de notificaciones
+curl http://localhost:8080/api/notifications
+
+# Swagger UI
+# http://localhost:8080/swagger-ui.html
+```
+
+### Troubleshooting
+
+#### El servicio no arranca
+```bash
+# Ver logs detallados
+docker-compose logs -f ms-notifications
+
+# Verificar que postgres y rabbitmq estén healthy
+docker-compose ps
+```
+
+#### Reconstruir después de cambios en código
+```bash
+# Reconstruir la imagen
+docker-compose build ms-notifications
+
+# Recrear el contenedor
+docker-compose up -d --force-recreate ms-notifications
+```
+
+#### Limpiar todo y empezar de cero
+```bash
+docker-compose down -v
+docker-compose build --no-cache
+docker-compose up -d
+```
+
 #### Controllers
 - **NotificationController**: API REST para consultar notificaciones
   - GET `/api/notifications` - Listar todas

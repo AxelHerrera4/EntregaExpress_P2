@@ -22,22 +22,12 @@ public class TestEventController {
 
     @PostMapping("/order-created")
     public ResponseEntity<String> publishOrderCreatedEvent(@RequestBody OrderCreatedEventDto event) {
-        // Ensure messageId is set
-        if (event.getMessageId() == null) {
-            event.setMessageId(UUID.randomUUID());
-        }
-
         eventPublisher.publishOrderCreatedEvent(event);
         return ResponseEntity.ok("Order created event published: " + event.getMessageId());
     }
 
     @PostMapping("/order-status-updated")
     public ResponseEntity<String> publishOrderStatusUpdatedEvent(@RequestBody OrderStatusUpdatedEventDto event) {
-        // Ensure messageId is set
-        if (event.getMessageId() == null) {
-            event.setMessageId(UUID.randomUUID());
-        }
-
         eventPublisher.publishOrderStatusUpdatedEvent(event);
         return ResponseEntity.ok("Order status updated event published: " + event.getMessageId());
     }

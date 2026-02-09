@@ -28,7 +28,7 @@ public class IdempotencyManager {
      * @param messageId UUID of the message
      * @return true if already processed, false otherwise
      */
-    public boolean isMessageProcessed(UUID messageId) {
+    public boolean isMessageProcessed(String messageId) {
         // Check cache first
         if (processedMessagesCache != null) {
             Boolean cachedResult = processedMessagesCache.get(messageId, Boolean.class);
@@ -58,7 +58,7 @@ public class IdempotencyManager {
      * @param eventType Type of event
      */
     @Transactional
-    public void markAsProcessed(UUID messageId, String eventType) {
+    public void markAsProcessed(String messageId, String eventType) {
         ProcessedMessage processedMessage = new ProcessedMessage();
         processedMessage.setMessageId(messageId);
         processedMessage.setEventType(eventType);

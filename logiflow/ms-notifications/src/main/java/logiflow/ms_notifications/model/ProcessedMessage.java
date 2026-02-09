@@ -22,7 +22,7 @@ public class ProcessedMessage {
     private UUID id;
 
     @Column(nullable = false, unique = true)
-    private UUID messageId;
+    private String messageId;
 
     @Column(nullable = false)
     private String eventType;

@@ -4,11 +4,18 @@ import { config } from '../utils/config';
 /**
  * AuthManager - Maneja la autenticación automática del servicio GraphQL
  * Se autentica con credenciales admin/admin123 y mantiene el token actualizado
+ * Incluye reintentos automáticos con espera exponencial para manejar servicios que inician lentamente
  */
 export class AuthManager {
   private static instance: AuthManager;
   private token: string | null = null;
   private refreshTimer: NodeJS.Timeout | null = null;
+  private retryTimer: NodeJS.Timeout | null = null;
+  private retryCount: number = 0;
+  private readonly maxRetries: number = 30; // Máximo 30 reintentos = ~5 minutos
+  private readonly initialRetryDelay: number = 3000; // 3 segundos iniciales
+  private authenticated: boolean = false;
+
   private readonly credentials = {
     username: 'admin',
     password: 'admin123'
@@ -38,26 +45,32 @@ export class AuthManager {
   }
 
   /**
-   * Inicia el sistema de autenticación automática
+   * Inicia el sistema de autenticación automática con reintentos
+   * NO lanza error si falla inicialmente, solo inicia reintentos automáticos
    */
   public async initialize(): Promise<void> {
-    console.log('[AuthManager] Iniciando autenticación automática...');
-    try {
-      await this.login();
-      this.scheduleTokenRefresh();
+    console.log('[AuthManager] Iniciando autenticación automática con reintentos...');
+    
+    // Intenta login inmediatamente
+    const loginSuccess = await this.attemptLogin();
+    
+    if (loginSuccess) {
       console.log('[AuthManager] ✅ Autenticación automática iniciada');
-    } catch (error) {
-      console.error('[AuthManager] ❌ Error al inicializar autenticación:', error);
-      throw new Error('Error al inicializar sistema de autenticación');
+      this.scheduleTokenRefresh();
+    } else {
+      // Si falla, programa reintentos automáticos
+      console.log('[AuthManager] ⚠️ Login fallido. Programando reintentos automáticos...');
+      this.scheduleRetry();
     }
   }
 
   /**
-   * Realiza login y obtiene el token JWT
+   * Intenta realizar login una sola vez
+   * Retorna true si éxito, false si falla
    */
-  private async login(): Promise<void> {
+  private async attemptLogin(): Promise<boolean> {
     try {
-      console.log(`[AuthManager] Realizando login con usuario: ${this.credentials.username}`);
+      console.log(`[AuthManager] Intento ${this.retryCount + 1}/${this.maxRetries}: Realizando login con usuario: ${this.credentials.username}`);
       
       const response = await this.authClient.post('/login', {
         username: this.credentials.username,
@@ -66,18 +79,62 @@ export class AuthManager {
 
       if (response.data && response.data.accessToken) {
         this.token = response.data.accessToken;
+        this.authenticated = true;
+        this.retryCount = 0; // Reset retry counter on success
+        
         console.log('[AuthManager] ✅ Token JWT obtenido correctamente');
         console.log(`[AuthManager] Usuario: ${response.data.username}`);
         console.log(`[AuthManager] Email: ${response.data.email}`);
         console.log(`[AuthManager] Roles: ${response.data.roles?.join(', ')}`);
         console.log(`[AuthManager] Token: ${this.token?.substring(0, 50)}...`);
+        
+        return true;
       } else {
         throw new Error('Respuesta de login inválida - no se recibió accessToken');
       }
     } catch (error: any) {
-      console.error('[AuthManager] Error en login:', error.response?.data || error.message);
-      throw error;
+      const errorMsg = error.response?.data?.message || error.message || 'Error desconocido';
+      console.error(`[AuthManager] Error en intento ${this.retryCount + 1}: ${errorMsg}`);
+      return false;
     }
+  }
+
+  /**
+   * Programa el siguiente reintento con espera exponencial
+   */
+  private scheduleRetry(): void {
+    if (this.authenticated) {
+      // Ya está autenticado, no necesita reintentos
+      return;
+    }
+
+    if (this.retryCount >= this.maxRetries) {
+      console.error('[AuthManager] ❌ Se alcanzó el máximo de reintentos. Abortando reintentos.');
+      return;
+    }
+
+    // Espera exponencial: 3s, 6s, 12s, 24s... limitado a 2 minutos max
+    const delay = Math.min(
+      this.initialRetryDelay * Math.pow(2, this.retryCount),
+      2 * 60 * 1000 // Máximo 2 minutos
+    );
+
+    if (this.retryTimer) {
+      clearTimeout(this.retryTimer);
+    }
+
+    console.log(`[AuthManager] Próximo reintento en ${Math.round(delay / 1000)} segundos...`);
+
+    this.retryTimer = setTimeout(async () => {
+      this.retryCount++;
+      const success = await this.attemptLogin();
+      
+      if (success) {
+        this.scheduleTokenRefresh();
+      } else {
+        this.scheduleRetry(); // Programa el siguiente reintento
+      }
+    }, delay);
   }
 
   /**
@@ -94,10 +151,18 @@ export class AuthManager {
     this.refreshTimer = setTimeout(async () => {
       try {
         console.log('[AuthManager] Renovando token automáticamente...');
-        await this.login();
-        this.scheduleTokenRefresh(); // Programa la siguiente renovación
+        const success = await this.attemptLogin();
+        
+        if (success) {
+          this.scheduleTokenRefresh(); // Programa la siguiente renovación
+        } else {
+          console.error('[AuthManager] Error al renovar token. Reintentando en 5 minutos...');
+          setTimeout(() => {
+            this.scheduleTokenRefresh();
+          }, 5 * 60 * 1000);
+        }
       } catch (error) {
-        console.error('[AuthManager] Error al renovar token:', error);
+        console.error('[AuthManager] Excepción al renovar token:', error);
         // En caso de error, reintenta en 5 minutos
         setTimeout(() => {
           this.scheduleTokenRefresh();
@@ -130,7 +195,7 @@ export class AuthManager {
    * Verifica si hay un token válido
    */
   public isAuthenticated(): boolean {
-    return this.token !== null;
+    return this.authenticated && this.token !== null;
   }
 
   /**
@@ -141,7 +206,12 @@ export class AuthManager {
       clearTimeout(this.refreshTimer);
       this.refreshTimer = null;
     }
+    if (this.retryTimer) {
+      clearTimeout(this.retryTimer);
+      this.retryTimer = null;
+    }
     this.token = null;
+    this.authenticated = false;
     console.log('[AuthManager] Sistema de autenticación cerrado');
   }
 
@@ -150,7 +220,13 @@ export class AuthManager {
    */
   public async forceReauth(): Promise<void> {
     console.log('[AuthManager] Forzando nueva autenticación...');
-    await this.login();
+    const success = await this.attemptLogin();
+    
+    if (!success) {
+      // Si falla, programa reintentos
+      console.log('[AuthManager] Fuerza de reauth falló, programando reintentos...');
+      this.scheduleRetry();
+    }
   }
 }
 

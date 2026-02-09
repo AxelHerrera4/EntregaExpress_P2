@@ -30,7 +30,7 @@ public class OrderEventPublisher {
                     event
             );
             log.info("Published order created event: messageId={}, orderId={}",
-                    event.getMessageId(), event.getOrderId());
+                    event.getMessageId(), event.getPedidoId());
         } catch (Exception e) {
             log.error("Failed to publish order created event", e);
             throw e;
@@ -45,7 +45,7 @@ public class OrderEventPublisher {
                     event
             );
             log.info("Published order status updated event: messageId={}, orderId={}",
-                    event.getMessageId(), event.getOrderId());
+                    event.getMessageId(), event.getPedidoId());
         } catch (Exception e) {
             log.error("Failed to publish order status updated event", e);
             throw e;
@@ -55,27 +55,17 @@ public class OrderEventPublisher {
     // Helper method to create a sample order created event
     public OrderCreatedEventDto createSampleOrderCreatedEvent() {
         return new OrderCreatedEventDto(
-                UUID.randomUUID(), // messageId
-                UUID.randomUUID(), // orderId
-                UUID.randomUUID(), // customerId
-                "customer@example.com",
-                "Juan Pérez",
-                150.50,
-                LocalDateTime.now()
+                // messageId
+                // orderId
+                // customerId
         );
     }
 
     // Helper method to create a sample order status updated event
     public OrderStatusUpdatedEventDto createSampleOrderStatusUpdatedEvent(UUID orderId) {
         return new OrderStatusUpdatedEventDto(
-                UUID.randomUUID(), // messageId
-                orderId,
-                UUID.randomUUID(), // customerId
-                "customer@example.com",
-                "Juan Pérez",
-                "PENDING",
-                "IN_TRANSIT",
-                LocalDateTime.now()
+                // messageId
+                // customerId
         );
     }
 }

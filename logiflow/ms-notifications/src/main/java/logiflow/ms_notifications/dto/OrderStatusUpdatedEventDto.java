@@ -11,13 +11,16 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class OrderStatusUpdatedEventDto {
-    private UUID messageId;
-    private UUID orderId;
-    private UUID customerId;
-    private String customerEmail;
-    private String customerName;
-    private String previousStatus;
-    private String newStatus;
-    private LocalDateTime updatedAt;
+    // Para idempotencia
+    private String messageId;
+    private LocalDateTime timestamp;
+
+    // Información del evento
+    private String pedidoId;
+    private String estadoAnterior;
+    private String estadoNuevo;
+    private String usuarioModificador; // Usuario que modificó el estado
+    private String repartidorId;
+    private String vehiculoId;
 }
 

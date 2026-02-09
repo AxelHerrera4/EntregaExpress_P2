@@ -21,27 +21,21 @@ public class OrderEventConsumer {
     @RabbitListener(queues = RabbitMQConfig.ORDER_CREATED_QUEUE)
     public void handleOrderCreatedEvent(OrderCreatedEventDto event) {
         log.info("Received order created event: messageId={}, orderId={}",
-                event.getMessageId(), event.getOrderId());
-
-        // Check idempotency - skip if already processed
-        if (idempotencyManager.isMessageProcessed(event.getMessageId())) {
-            log.warn("Message already processed, skipping: {}", event.getMessageId());
-            return;
-        }
+                event.getMessageId(), event.getPedidoId());
 
         try {
             // Build email content
             String subject = "Confirmación de Pedido - LogiFlow";
             String body = emailService.buildOrderCreatedEmailBody(
-                    event.getCustomerName(),
-                    event.getOrderId().toString(),
-                    event.getTotalAmount()
+                    event.getClienteId(),
+                    event.getPedidoId(),
+                    event.getPeso()
             );
 
             // Create and send notification
             notificationService.createAndSendNotification(
-                    event.getOrderId(),
-                    event.getCustomerEmail(),
+                    event.getPedidoId(),
+                    event.getClienteId() + "@example.com", // Assuming email can be derived from customer ID
                     subject,
                     body,
                     "ORDER_CREATED"
@@ -50,10 +44,10 @@ public class OrderEventConsumer {
             // Mark message as processed for idempotency
             idempotencyManager.markAsProcessed(event.getMessageId(), "ORDER_CREATED");
 
-            log.info("Successfully processed order created event: {}", event.getOrderId());
+            log.info("Successfully processed order created event: {}", event.getPedidoId());
         } catch (Exception e) {
             log.error("Error processing order created event: messageId={}, orderId={}",
-                    event.getMessageId(), event.getOrderId(), e);
+                    event.getMessageId(), event.getPedidoId(), e);
             throw e; // Trigger retry mechanism
         }
     }
@@ -61,7 +55,7 @@ public class OrderEventConsumer {
     @RabbitListener(queues = RabbitMQConfig.ORDER_STATUS_UPDATED_QUEUE)
     public void handleOrderStatusUpdatedEvent(OrderStatusUpdatedEventDto event) {
         log.info("Received order status updated event: messageId={}, orderId={}, newStatus={}",
-                event.getMessageId(), event.getOrderId(), event.getNewStatus());
+                event.getMessageId(), event.getPedidoId(), event.getEstadoNuevo());
 
         // Check idempotency - skip if already processed
         if (idempotencyManager.isMessageProcessed(event.getMessageId())) {
@@ -73,16 +67,16 @@ public class OrderEventConsumer {
             // Build email content
             String subject = "Actualización de Estado de Pedido - LogiFlow";
             String body = emailService.buildOrderStatusUpdatedEmailBody(
-                    event.getCustomerName(),
-                    event.getOrderId().toString(),
-                    event.getPreviousStatus(),
-                    event.getNewStatus()
+                    event.getRepartidorId(),
+                    event.getPedidoId().toString(),
+                    event.getEstadoAnterior(),
+                    event.getEstadoNuevo()
             );
 
             // Create and send notification
             notificationService.createAndSendNotification(
-                    event.getOrderId(),
-                    event.getCustomerEmail(),
+                    event.getPedidoId(),
+                    event.getUsuarioModificador() + "@example.com", // Assuming email can be derived from user ID
                     subject,
                     body,
                     "ORDER_STATUS_UPDATED"
@@ -91,10 +85,10 @@ public class OrderEventConsumer {
             // Mark message as processed for idempotency
             idempotencyManager.markAsProcessed(event.getMessageId(), "ORDER_STATUS_UPDATED");
 
-            log.info("Successfully processed order status updated event: {}", event.getOrderId());
+            log.info("Successfully processed order status updated event: {}", event.getPedidoId());
         } catch (Exception e) {
             log.error("Error processing order status updated event: messageId={}, orderId={}",
-                    event.getMessageId(), event.getOrderId(), e);
+                    event.getMessageId(), event.getPedidoId(), e);
             throw e; // Trigger retry mechanism
         }
     }
