@@ -189,6 +189,202 @@ Paso 7: PEDIDO SERVICE (finalización)
 
 ---
 
+## 🎬 Demostración del Sistema en Funcionamiento
+
+A continuación se presenta el flujo completo del sistema LogiFlow con capturas de pantalla reales demostrando cada fase del proyecto.
+
+### 1️⃣ Autenticación y Seguridad - Auth Service
+
+**Login con JWT**
+
+El sistema comienza con la autenticación centralizada. Los usuarios (cliente, repartidor, supervisor, gerente) inician sesión y obtienen un token JWT que será validado en cada petición.
+
+![Login y Autenticación](imagenes/demo/1_loging.jpeg)
+
+*Usuario autenticándose en el sistema. El Auth Service genera un JWT con claims estructurados (role, scope, userId) que será validado por el API Gateway en todas las peticiones.*
+
+---
+
+### 2️⃣ Gestión de Flota - Fleet Service
+
+**Creación de Repartidor y Vehículo (POST)**
+
+El Fleet Service permite registrar repartidores y vehículos. Utiliza el patrón Factory para crear diferentes tipos de vehículos (Motorizado, Vehículo Liviano, Camión).
+
+![POST Fleet Service - Crear Repartidor](imagenes/demo/2_flet_post.jpeg)
+
+*Creación de un nuevo repartidor con asignación de vehículo. El sistema valida el tipo de vehículo, licencia de conducir y zona de cobertura.*
+
+**Consulta de Repartidores Disponibles (GET)**
+
+![GET Fleet Service - Consultar Repartidores](imagenes/demo/3_get_fleet.jpeg)
+
+*Listado de repartidores disponibles con estados: DISPONIBLE, EN_RUTA, DESCANSO. El sistema filtra por zona y disponibilidad para asignaciones eficientes.*
+
+---
+
+### 3️⃣ Gestión de Pedidos - Pedido Service
+
+**Creación de Pedido (POST) - Orquestación de Microservicios**
+
+El Pedido Service orquesta la comunicación con Billing Service (cálculo de tarifa) y Fleet Service (asignación de repartidor).
+
+![POST Pedido Service - Crear Pedido](imagenes/demo/4_post_pedidos.jpeg)
+
+*Creación de un pedido urbano. El sistema coordina: (1) Validación de datos, (2) Cálculo de tarifa con Billing Service usando patrón Strategy, (3) Asignación de repartidor con Fleet Service, (4) Publicación de evento a RabbitMQ.*
+
+---
+
+### 4️⃣ API GraphQL - Consultas Complejas y Eficientes
+
+**Consulta de Pedidos con GraphQL**
+
+La API GraphQL permite consultas flexibles y personalizadas, evitando over-fetching y reduciendo round trips.
+
+![GraphQL - Consulta de Pedidos](imagenes/demo/5_graphQL_pedidos.jpeg)
+
+*Consulta GraphQL que obtiene pedidos con información relacionada (cliente, repartidor, vehículo, estado) en una sola petición. Ideal para dashboards de supervisores.*
+
+**Resumen de Pedidos por Estado**
+
+![GraphQL - Resumen de Pedidos](imagenes/demo/6_graphQL_pedidos_resumen.jpeg)
+
+*Query GraphQL que agrupa pedidos por estado (PENDIENTE, ASIGNADO, EN_CAMINO, ENTREGADO). Utiliza resolvers eficientes con DataLoader para evitar el problema N+1.*
+
+**Consulta de Datos Complejos**
+
+![GraphQL - Datos Estructurados](imagenes/demo/7_graphQL_DATOS.jpeg)
+
+*Consulta GraphQL anidada que recupera información completa de un pedido con sus relaciones: cliente (nombre, email), repartidor (nombre, vehículo), factura (monto, estado), direcciones (origen, destino).*
+
+**Análisis de Cobertura por Zona**
+
+![GraphQL - Cobertura de Zonas](imagenes/demo/8_graphQL_cobertura.jpeg)
+
+*Query GraphQL para obtener estadísticas de cobertura geográfica. Muestra pedidos por zona, repartidores activos y métricas de desempeño.*
+
+**Rutas Más Populares**
+
+![GraphQL - Rutas Populares](imagenes/demo/9_graph_rutas_populares.jpeg)
+
+*Análisis GraphQL de las rutas más frecuentes entre ciudades. Útil para planificación operativa y optimización de flota.*
+
+---
+
+### 5️⃣ Sistema de Caché - Optimización de Rendimiento
+
+**Redis Cache para Pedidos**
+
+El sistema implementa caché distribuido con Redis para reducir latencia en consultas frecuentes.
+
+![Cache de Pedidos con Redis](imagenes/demo/10_cache_pedidos.jpeg)
+
+*Configuración de cache para pedidos. Las consultas frecuentes (GET /pedidos/{id}) se almacenan en Redis con TTL de 5 minutos, reduciendo la carga en la base de datos PostgreSQL.*
+
+---
+
+### 6️⃣ Dashboard de Estadísticas - KPIs en Tiempo Real
+
+**Panel de Control con Métricas**
+
+![Estadísticas y KPIs](imagenes/demo/11_estadisticas.jpeg)
+
+*Dashboard de gerente/supervisor mostrando KPIs operativos: total de pedidos, pedidos por estado, tasa de éxito (OTD - On Time Delivery), costo promedio por entrega, satisfacción del cliente. Datos obtenidos mediante GraphQL.*
+
+---
+
+### 7️⃣ Mensajería Asíncrona - RabbitMQ
+
+**RabbitMQ Management Console**
+
+El sistema utiliza RabbitMQ para comunicación asíncrona entre microservicios mediante el patrón Publisher-Subscriber.
+
+![RabbitMQ - Message Broker](imagenes/demo/12_rabbit.jpeg)
+
+*Consola de administración de RabbitMQ mostrando exchanges, queues y mensajes. Los eventos principales son: pedido.creado, pedido.estado.actualizado, repartidor.ubicacion.actualizada, asignacion.completada.*
+
+**Queue de Fleet Service**
+
+![RabbitMQ - Queue Fleet](imagenes/demo/13_quee_flet.jpeg)
+
+*Cola específica del Fleet Service (fleet.pedido.reintento) que consume eventos de reintento de asignación. Implementa el patrón de reintentos automáticos cuando no hay repartidores disponibles inicialmente.*
+
+---
+
+### 8️⃣ Servicio de Notificaciones - Notifications Service
+
+**Sistema de Notificaciones Asíncrono**
+
+El Notifications Service consume eventos de RabbitMQ y envía alertas por email a clientes y repartidores.
+
+![Notifications Service](imagenes/demo/14_notificaciones.jpeg)
+
+*Logs del Notifications Service mostrando el consumo de eventos y el envío de notificaciones. Implementa deduplicación con messageId para garantizar idempotencia (un mensaje no se procesa dos veces).*
+
+**Correo Electrónico Enviado**
+
+![Email de Notificación](imagenes/demo/15_correo_email.jpeg)
+
+*Ejemplo de email enviado automáticamente cuando un pedido cambia de estado. El correo incluye: ID del pedido, estado actual, repartidor asignado, tiempo estimado de entrega y enlace de seguimiento en tiempo real.*
+
+---
+
+### 9️⃣ Seguimiento en Tiempo Real - Tracking Service
+
+**Actualización de Estado de Carga**
+
+![Estado de Carga del Pedido](imagenes/demo/16_estado_carga.jpeg)
+
+*Tracking Service publicando eventos de ubicación GPS del repartidor. Los eventos se envían a RabbitMQ y se redistribuyen vía WebSocket a los clientes suscritos, permitiendo seguimiento en tiempo real en el mapa.*
+
+---
+
+### 🔟 Microservicios en Ejecución
+
+**Todos los Servicios Activos**
+
+![Microservicios Running](imagenes/demo/17_microserv_running.jpeg)
+
+*Vista de todos los microservicios ejecutándose simultáneamente: Auth Service (8081), Billing Service (8082), Fleet Service (8083), Pedido Service (8084), Notifications Service (8085), GraphQL Service (8086), Tracking Service (8090), API Gateway (8080). Cada servicio se conecta a su base de datos PostgreSQL independiente.*
+
+---
+
+### 1️⃣1️⃣ Despliegue en Kubernetes
+
+**Minikube - Cluster Local**
+
+El sistema está preparado para desplegarse en Kubernetes con alta disponibilidad y escalabilidad horizontal.
+
+![Minikube Dashboard](imagenes/demo/19_minikube.jpeg)
+
+*Cluster Kubernetes local con Minikube. Muestra los pods, deployments y services del sistema LogiFlow desplegados en namespaces organizados.*
+
+**Mapeo de Puertos con kubectl**
+
+![kubectl Port Forwarding](imagenes/demo/18_mapeo_puertos_kubectl.jpeg)
+
+*Configuración de port-forwarding con kubectl para acceder a los servicios desde el exterior del cluster. Ejemplo: `kubectl port-forward service/api-gateway 8080:8080 -n logiflow`*
+
+---
+
+### 📊 Resumen del Flujo Completo Demostrado
+
+```
+1. 🔐 Login → JWT generado por Auth Service
+2. 🚗 Crear Repartidor → Fleet Service registra vehículo
+3. 📦 Crear Pedido → Pedido Service orquesta:
+   ├─> Billing Service calcula tarifa (Strategy Pattern)
+   └─> Fleet Service asigna repartidor disponible
+4. 📨 Evento Publicado → RabbitMQ distribuye a consumidores
+5. 📧 Notificación Enviada → Notifications Service envía email
+6. 🔍 Consulta GraphQL → Dashboard obtiene datos agregados
+7. ⚡ Cache Hit → Redis reduce latencia en consultas
+8. 📍 Tracking GPS → WebSocket actualiza mapa en tiempo real
+9. 🐳 Despliegue K8s → Escalabilidad horizontal garantizada
+```
+
+---
+
 > ⚠️ **Nota:** Si algún puerto está en uso, cámbialo en el `application.yaml` correspondiente y actualiza las configuraciones de conexión.
 
 ---

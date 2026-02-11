@@ -9,7 +9,7 @@ export const config = {
   pedidoServiceUrl: process.env.PEDIDO_SERVICE_URL || 'http://localhost:8000/pedido',
   fleetServiceUrl: process.env.FLEET_SERVICE_URL || 'http://localhost:8000/fleet',
   trackingServiceUrl: process.env.TRACKING_SERVICE_URL || 'http://localhost:8090', // Sin gateway por ahora
-  authServiceUrl: process.env.AUTH_SERVICE_URL || 'http://localhost:8000/api/auth',
+  authServiceUrl:  'http://localhost:8000/auth',
   billingServiceUrl: process.env.BILLING_SERVICE_URL || 'http://localhost:8000',
 
   // Timeout para llamadas HTTP (ms)
